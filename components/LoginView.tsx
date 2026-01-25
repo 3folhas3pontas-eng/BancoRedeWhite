@@ -1,6 +1,12 @@
 
 import React, { useState } from 'react';
 import { PlayerData } from '../types';
+import { createClient } from '@supabase/supabase-js';
+
+// Configurações diretas do Supabase
+const SUPABASE_URL = 'https://mmmazuwqcssymohcdzyj.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_bf0YEm9kQ92T5U9WFbKeeg_clS4zyLc';
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 interface LoginViewProps {
   onLoginSuccess: (player: PlayerData) => void;
@@ -22,31 +28,30 @@ const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:3001/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          username: nick.trim(), 
-          password: password 
-        })
-      });
-      
-      const data = await response.json();
-      
-      if (data.success) {
+      // Busca direta no Supabase
+      const { data, error } = await supabase
+        .from('rede_white_accounts')
+        .select('*')
+        .eq('username', nick.trim())
+        .eq('password_hash', password)
+        .single();
+
+      if (error || !data) {
+        console.error("Erro Supabase:", error);
+        alert("Acesso Negado: Nick ou Senha incorretos no servidor RedeWhite.");
+      } else {
+        // Login bem-sucedido: Passa os dados do Supabase para o App
         onLoginSuccess({
-          nick: data.player.username,
-          uuid: data.player.uuid || 'Conta RedeWhite',
-          balance: parseFloat(data.player.balance || '0'),
+          nick: data.username,
+          uuid: data.uuid,
+          balance: parseFloat(data.balance || '0'),
           creditLimit: 0,
           currentInvoice: 0
         });
-      } else {
-        alert("Acesso Negado: " + (data.message || "Verifique seus dados."));
       }
     } catch (error) {
-      console.error("Erro ao conectar ao backend:", error);
-      alert("ERRO DE CONEXÃO:\n\nNão foi possível falar com o servidor local (localhost:3001).\n\nCertifique-se de que você abriu um terminal e digitou: node server.js");
+      console.error("Erro de conexão:", error);
+      alert("ERRO DE CONEXÃO: Não foi possível alcançar o banco de dados do Supabase.");
     } finally {
       setIsLoading(false);
     }
@@ -65,7 +70,7 @@ const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
         <h1 className="text-3xl font-bold tracking-tight text-[#1A1A1A]">
           Rede<span style={{ color: primaryColor }}>White</span>
         </h1>
-        <p className="text-gray-400 font-medium text-sm mt-2">Bem-vindo ao seu Banco Digital</p>
+        <p className="text-gray-400 font-medium text-sm mt-2">Banco Digital Oficial</p>
       </div>
 
       <form onSubmit={handleLogin} className="flex flex-col gap-4">
@@ -110,8 +115,8 @@ const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
 
       <div className="mt-auto pt-10 text-center">
         <p className="text-xs text-gray-400">
-          A RedeWhite garante a segurança dos seus dados.<br/>
-          <span style={{ color: primaryColor }} className="font-bold cursor-pointer hover:underline">Esqueceu sua senha?</span>
+          Infraestrutura segura via Supabase Cloud.<br/>
+          <span style={{ color: primaryColor }} className="font-bold cursor-pointer hover:underline">Precisa de ajuda? Contate o staff.</span>
         </p>
       </div>
     </div>
