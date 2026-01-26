@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Transaction } from '../types';
 
@@ -93,7 +92,7 @@ const StatementArea: React.FC<StatementAreaProps> = ({ onBack }) => {
                         <p className="font-bold text-sm text-gray-300 italic">Estornado</p>
                       ) : (
                         <p className="font-bold text-[16px]" style={{ color: txColor }}>
-                          {isNegative ? '-' : '+'} W$ {tx.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          {isNegative ? '-' : '+'} $ {tx.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                         </p>
                       )}
                     </div>

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { View, PlayerData } from '../types';
 
@@ -61,7 +60,7 @@ const HomeView: React.FC<HomeViewProps> = ({ player, isBalanceVisible, toggleBal
           <div className="flex flex-col">
             {isBalanceVisible ? (
               <span className="text-3xl font-bold tracking-tight text-[#1A1A1A]">
-                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(player.balance).replace('R$', 'W$')}
+                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(player.balance).replace('R$', '$')}
               </span>
             ) : (
               <div className="h-10 w-48 bg-gray-100 rounded-lg animate-pulse"></div>
