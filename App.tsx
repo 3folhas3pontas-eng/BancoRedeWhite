@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { View, PlayerData } from './types';
 import LoginView from './components/LoginView';
@@ -47,8 +46,8 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gray-100">
-      <div className="w-full max-w-[430px] bg-white min-h-screen relative flex flex-col shadow-2xl overflow-hidden">
+    <div className="min-h-screen bg-white flex flex-col items-center">
+      <div className="w-full max-w-[1200px] min-h-screen relative flex flex-col bg-white">
         {renderView()}
         {user && currentView !== View.LOGIN && (
           <BottomNav currentView={currentView} onNavigate={setCurrentView} />

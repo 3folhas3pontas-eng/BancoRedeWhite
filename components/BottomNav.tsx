@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { View } from '../types';
 
@@ -18,25 +17,27 @@ const BottomNav: React.FC<BottomNavProps> = ({ currentView, onNavigate }) => {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 w-full max-w-[430px] mx-auto bg-white/95 backdrop-blur-md border-t border-[#EDEDED] flex justify-around py-4 px-2 z-40">
-      {navItems.map((item) => {
-        const isActive = currentView === item.id;
-        return (
-          <button 
-            key={item.id}
-            onClick={() => onNavigate(item.id)}
-            className="flex flex-col items-center gap-1 transition-all flex-1"
-            style={{ color: isActive ? primaryColor : '#6B6B6B' }}
-          >
-            <span className="material-icons-outlined text-[24px]">
-              {item.icon}
-            </span>
-            <span className={`text-[10px] font-bold ${isActive ? 'opacity-100' : 'opacity-60'}`}>
-              {item.label}
-            </span>
-          </button>
-        );
-      })}
+    <nav className="fixed bottom-0 left-0 right-0 w-full bg-white/95 backdrop-blur-md border-t border-[#EDEDED] flex justify-center py-4 px-2 z-40">
+      <div className="w-full max-w-[1200px] flex justify-around">
+        {navItems.map((item) => {
+          const isActive = currentView === item.id;
+          return (
+            <button 
+              key={item.id}
+              onClick={() => onNavigate(item.id)}
+              className="flex flex-col items-center gap-1 transition-all flex-1 max-w-[100px]"
+              style={{ color: isActive ? primaryColor : '#6B6B6B' }}
+            >
+              <span className="material-icons-outlined text-[24px]">
+                {item.icon}
+              </span>
+              <span className={`text-[10px] font-bold ${isActive ? 'opacity-100' : 'opacity-60'}`}>
+                {item.label}
+              </span>
+            </button>
+          );
+        })}
+      </div>
     </nav>
   );
 };
