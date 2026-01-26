@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -15,6 +16,7 @@
             -webkit-tap-highlight-color: transparent;
             user-select: none;
             background-color: #FFFFFF;
+            color: #1A1A1A;
         }
         .hide-scrollbar::-webkit-scrollbar {
             display: none;
@@ -24,15 +26,20 @@
             scrollbar-width: none;
         }
         .page-enter {
-            animation: slideIn 0.3s ease-out forwards;
+            animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
         @keyframes slideIn {
-            from { transform: translateX(20px); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
+            from { transform: translateY(10px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
         .text-primary { color: #72E8F6; }
         .bg-primary { background-color: #72E8F6; }
         .border-primary { border-color: #72E8F6; }
+        
+        /* Smooth transitions for interactive elements */
+        button, a, div {
+            transition: all 0.2s ease-in-out;
+        }
     </style>
 <script type="importmap">
 {
