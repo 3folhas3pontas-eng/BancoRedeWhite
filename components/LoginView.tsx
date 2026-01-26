@@ -1,12 +1,8 @@
 
 import React, { useState } from 'react';
 import { PlayerData } from '../types';
-import { createClient } from '@supabase/supabase-js';
 
-// Configurações diretas do Supabase
-const SUPABASE_URL = 'https://mmmazuwqcssymohcdzyj.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_bf0YEm9kQ92T5U9WFbKeeg_clS4zyLc';
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+// O Supabase foi removido temporariamente para testes de deploy estático.
 
 interface LoginViewProps {
   onLoginSuccess: (player: PlayerData) => void;
@@ -21,40 +17,23 @@ const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!nick || !password) {
-      alert("Por favor, informe seu Nick e Senha.");
+      alert("Por favor, informe seu Nick e Senha (qualquer um serve para teste).");
       return;
     }
 
     setIsLoading(true);
 
-    try {
-      // Busca direta no Supabase
-      const { data, error } = await supabase
-        .from('rede_white_accounts')
-        .select('*')
-        .eq('username', nick.trim())
-        .eq('password_hash', password)
-        .single();
-
-      if (error || !data) {
-        console.error("Erro Supabase:", error);
-        alert("Acesso Negado: Nick ou Senha incorretos no servidor RedeWhite.");
-      } else {
-        // Login bem-sucedido: Passa os dados do Supabase para o App
-        onLoginSuccess({
-          nick: data.username,
-          uuid: data.uuid,
-          balance: parseFloat(data.balance || '0'),
-          creditLimit: 0,
-          currentInvoice: 0
-        });
-      }
-    } catch (error) {
-      console.error("Erro de conexão:", error);
-      alert("ERRO DE CONEXÃO: Não foi possível alcançar o banco de dados do Supabase.");
-    } finally {
+    // Simulação de delay de rede
+    setTimeout(() => {
+      onLoginSuccess({
+        nick: nick.trim(),
+        uuid: 'DEMO-UUID-12345',
+        balance: 15000.50,
+        creditLimit: 5000,
+        currentInvoice: 120.40
+      });
       setIsLoading(false);
-    }
+    }, 800);
   };
 
   return (
@@ -70,7 +49,7 @@ const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
         <h1 className="text-3xl font-bold tracking-tight text-[#1A1A1A]">
           Rede<span style={{ color: primaryColor }}>White</span>
         </h1>
-        <p className="text-gray-400 font-medium text-sm mt-2">Banco Digital Oficial</p>
+        <p className="text-gray-400 font-medium text-sm mt-2">Banco Digital Oficial (MODO DEMO)</p>
       </div>
 
       <form onSubmit={handleLogin} className="flex flex-col gap-4">
@@ -78,7 +57,7 @@ const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
           <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Nick do Minecraft</label>
           <input 
             type="text" 
-            placeholder="Seu nick no servidor" 
+            placeholder="Qualquer nick para testar" 
             className="w-full p-4 bg-[#F5F6F7] border-none rounded-2xl text-[#1A1A1A] font-medium focus:ring-2 focus:ring-[#72E8F6] transition-all outline-none"
             value={nick} 
             onChange={(e) => setNick(e.target.value)}
@@ -89,7 +68,7 @@ const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
           <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Senha (/banco)</label>
           <input 
             type="password" 
-            placeholder="Sua senha secreta" 
+            placeholder="Qualquer senha para testar" 
             className="w-full p-4 bg-[#F5F6F7] border-none rounded-2xl text-[#1A1A1A] font-medium focus:ring-2 focus:ring-[#72E8F6] transition-all outline-none"
             value={password} 
             onChange={(e) => setPassword(e.target.value)}
@@ -115,7 +94,7 @@ const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
 
       <div className="mt-auto pt-10 text-center">
         <p className="text-xs text-gray-400">
-          Infraestrutura segura via Supabase Cloud.<br/>
+          Infraestrutura em modo de teste estático.<br/>
           <span style={{ color: primaryColor }} className="font-bold cursor-pointer hover:underline">Precisa de ajuda? Contate o staff.</span>
         </p>
       </div>
