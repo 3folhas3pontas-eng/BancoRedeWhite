@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { PlayerData } from '../types';
 import { createClient } from '@supabase/supabase-js';
 
@@ -7,12 +8,13 @@ const SUPABASE_KEY = 'sb_publishable_bf0YEm9kQ92T5U9WFbKeeg_clS4zyLc';
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 interface LoginViewProps {
-  onLoginSuccess: (player: PlayerData) => void;
+  onLoginSuccess: (player: PlayerData, remember: boolean) => void;
 }
 
 const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
   const [nick, setNick] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const primaryColor = '#72E8F6';
 
@@ -42,7 +44,7 @@ const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
           balance: parseFloat(data.balance || '0'),
           creditLimit: 0,
           currentInvoice: 0
-        });
+        }, rememberMe);
       }
     } catch (error) {
       alert("ERRO DE CONEXÃO: Não foi possível alcançar o servidor.");
@@ -54,7 +56,7 @@ const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
   return (
     <div className="flex-1 flex flex-col items-center justify-center bg-white px-6 py-10 page-enter min-h-screen">
       <div className="w-full max-w-sm flex flex-col items-center">
-        <div className="w-20 h-20 md:w-24 md:h-24 rounded-2xl overflow-hidden shadow-lg border border-gray-100 mb-6">
+        <div className="w-20 h-20 md:w-24 md:h-24 rounded-2xl overflow-hidden mb-6">
           <img 
             src="https://i.imgur.com/bPt3G5b.jpeg" 
             alt="RedeWhite Logo" 
@@ -87,6 +89,17 @@ const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
               value={password} 
               onChange={(e) => setPassword(e.target.value)}
             />
+          </div>
+
+          <div className="flex items-center gap-2 ml-1 mt-1">
+            <input 
+              type="checkbox" 
+              id="remember" 
+              className="w-5 h-5 rounded border-gray-300 text-[#72E8F6] focus:ring-[#72E8F6]"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+            />
+            <label htmlFor="remember" className="text-sm font-semibold text-[#6B6B6B] cursor-pointer">Lembre de mim</label>
           </div>
 
           <button 

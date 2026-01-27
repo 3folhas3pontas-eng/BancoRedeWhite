@@ -1,22 +1,76 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, PlayerData } from './types';
 import LoginView from './components/LoginView';
 import HomeView from './components/HomeView';
 import PixArea from './components/PixArea';
 import StatementArea from './components/StatementArea';
 import BottomNav from './components/BottomNav';
+import { createClient } from '@supabase/supabase-js';
+
+const SUPABASE_URL = 'https://mmmazuwqcssymohcdzyj.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_bf0YEm9kQ92T5U9WFbKeeg_clS4zyLc';
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<View>(View.LOGIN);
   const [user, setUser] = useState<PlayerData | null>(null);
   const [isBalanceVisible, setIsBalanceVisible] = useState(true);
 
-  const handleLoginSuccess = (playerData: PlayerData) => {
+  // Função para buscar dados atualizados do usuário
+  const refreshUserData = useCallback(async (username: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('rede_white_accounts')
+        .select('*')
+        .eq('username', username)
+        .single();
+
+      if (data && !error) {
+        setUser({
+          nick: data.username,
+          uuid: data.uuid,
+          balance: parseFloat(data.balance || '0'),
+          creditLimit: 0,
+          currentInvoice: 0
+        });
+      }
+    } catch (e) {
+      console.error("Erro ao atualizar dados:", e);
+    }
+  }, []);
+
+  // Lógica de "Lembre-me" - Carrega ao montar o app
+  useEffect(() => {
+    const savedUser = localStorage.getItem('whitebank_saved_user');
+    if (savedUser) {
+      const parsedUser = JSON.parse(savedUser) as PlayerData;
+      setUser(parsedUser);
+      setCurrentView(View.HOME);
+      refreshUserData(parsedUser.nick); // Garante que o saldo inicial esteja atualizado
+    }
+  }, [refreshUserData]);
+
+  // Lógica de Atualização Automática (a cada 10 segundos)
+  useEffect(() => {
+    if (user && currentView !== View.LOGIN) {
+      const interval = setInterval(() => {
+        refreshUserData(user.nick);
+      }, 10000);
+      return () => clearInterval(interval);
+    }
+  }, [user, currentView, refreshUserData]);
+
+  const handleLoginSuccess = (playerData: PlayerData, remember: boolean) => {
     setUser(playerData);
     setCurrentView(View.HOME);
+    if (remember) {
+      localStorage.setItem('whitebank_saved_user', JSON.stringify(playerData));
+    }
   };
 
   const handleLogout = () => {
+    localStorage.removeItem('whitebank_saved_user');
     setUser(null);
     setCurrentView(View.LOGIN);
   };
