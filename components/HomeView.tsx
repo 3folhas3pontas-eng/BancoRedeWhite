@@ -12,11 +12,11 @@ interface HomeViewProps {
 
 const HomeView: React.FC<HomeViewProps> = ({ player, isBalanceVisible, toggleBalance, onAction, onLogout }) => {
   const primaryColor = '#72E8F6';
-  const logoutColor = '#E74C3C'; // Red/Coral color for logout
+  const logoutColor = '#E74C3C';
 
   return (
     <div className="flex-1 overflow-y-auto hide-scrollbar pb-32 bg-white flex flex-col items-center">
-      {/* Header Area - Clean White */}
+      {/* Header Area */}
       <div className="w-full bg-white flex flex-col items-center">
         <div className="w-full max-w-5xl px-6 md:px-12">
           <header className="py-8 flex items-center justify-between">
@@ -50,23 +50,22 @@ const HomeView: React.FC<HomeViewProps> = ({ player, isBalanceVisible, toggleBal
             </div>
           </header>
 
-          {/* Greeting Section */}
           <div className="pb-8">
             <h2 className="text-[#1A1A1A] text-3xl font-bold">Olá, {player.nick}</h2>
-            <p className="text-gray-400 text-sm mt-1">Sua conta está ativa e segura.</p>
+            <p className="text-gray-400 text-sm mt-1">Status: Jogador Verificado</p>
           </div>
         </div>
       </div>
 
       <div className="w-full max-w-5xl px-6 md:px-12">
-        {/* Balance Card - Matching Screenshot precisely */}
+        {/* Balance Card */}
         <div className="w-full mb-12">
           <section 
             className="w-full max-w-md p-8 rounded-[32px] bg-white border border-[#EDEDED] shadow-sm group cursor-pointer hover:border-[#72E8F6] transition-all"
             onClick={() => onAction(View.EXTRATO)}
           >
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-sm font-bold text-[#6B6B6B]">Saldo disponível</h2>
+              <h2 className="text-sm font-bold text-[#6B6B6B]">Saldo virtual</h2>
               <span className="material-icons-outlined text-gray-300 group-hover:translate-x-1 transition-transform">chevron_right</span>
             </div>
             <div className="flex flex-col">
@@ -81,7 +80,7 @@ const HomeView: React.FC<HomeViewProps> = ({ player, isBalanceVisible, toggleBal
           </section>
         </div>
 
-        {/* Action Area - Circular light gray buttons with blue icons */}
+        {/* Action Area */}
         <section className="w-full py-4 mb-12">
           <div className="flex items-start gap-8 overflow-x-auto hide-scrollbar pb-2">
             {[
@@ -105,21 +104,28 @@ const HomeView: React.FC<HomeViewProps> = ({ player, isBalanceVisible, toggleBal
           </div>
         </section>
 
-        {/* Divider */}
         <div className="w-full h-[1px] bg-[#F5F6F7] mb-12"></div>
 
         {/* Security Banner */}
-        <section className="mb-8">
+        <section className="mb-12">
           <div className="flex items-start gap-5 p-6 rounded-[24px] bg-[#F5F6F7]/40 border border-[#F5F6F7]">
             <span className="material-icons-outlined text-2xl mt-0.5" style={{ color: primaryColor }}>shield</span>
             <div className="flex flex-col gap-1">
-              <h3 className="font-bold text-[#1A1A1A] text-sm">Segurança RedeWhite</h3>
+              <h3 className="font-bold text-[#1A1A1A] text-sm">Proteção de Conta</h3>
               <p className="text-[#6B6B6B] text-[13px] leading-relaxed max-w-xl">
-                Sua conta é <strong>Verificada</strong>. Protegemos seus coins com criptografia de ponta a ponta integrada ao servidor.
+                Seus coins estão seguros. Lembre-se: este é um sistema virtual para o servidor <strong>RedeWhite</strong>.
               </p>
             </div>
           </div>
         </section>
+
+        {/* Anti-Phishing Footer Disclaimer */}
+        <footer className="mt-8 pb-12 text-center opacity-40 hover:opacity-100 transition-opacity">
+          <p className="text-[10px] text-gray-500 font-medium">
+            RedeWhite Dashboard © 2024. Este site não é afiliado à Mojang AB ou ao Nubank.<br/>
+            É uma ferramenta de simulação de economia para jogo online. Não possui valor financeiro real.
+          </p>
+        </footer>
       </div>
     </div>
   );
