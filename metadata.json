@@ -1,5 +1,5 @@
 {
-  "name": "RedeWhite Dashboard - Minecraft Economy",
-  "description": "Interface de consulta de economia virtual para jogadores do servidor RedeWhite Minecraft. Este site não possui valor monetário real e é uma simulação de fã.",
+  "name": "WhiteBank - RedeWhite Dashboard",
+  "description": "Interface de consulta de economia virtual para jogadores do servidor RedeWhite Minecraft.",
   "requestFramePermissions": []
 }

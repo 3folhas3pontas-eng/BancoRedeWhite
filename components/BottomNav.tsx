@@ -13,7 +13,7 @@ const BottomNav: React.FC<BottomNavProps> = ({ currentView, onNavigate }) => {
   const navItems = [
     { id: View.HOME, label: 'Início', icon: 'home' },
     { id: View.PIX, label: 'Área Pix', icon: 'sync_alt' },
-    { id: View.LOJAS_ABERTAS, label: 'Loja', icon: 'shopping_bag' },
+    { id: View.LOJAS_ABERTAS, label: 'Lojas', icon: 'shopping_bag' },
     { id: View.CARTAO, label: 'Cartões', icon: 'credit_card' }
   ];
 

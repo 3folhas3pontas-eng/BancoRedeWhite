@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { PlayerData } from '../types';
 import { createClient } from '@supabase/supabase-js';
 
@@ -20,11 +20,7 @@ const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!nick || !password) {
-      alert("Por favor, informe seu Nick e Código de Acesso.");
-      return;
-    }
-
+    if (!nick || !password) return;
     setIsLoading(true);
 
     try {
@@ -36,7 +32,7 @@ const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
         .single();
 
       if (error || !data) {
-        alert("Acesso Negado: Nick ou Código incorretos.");
+        alert("Nick ou senha incorretos no servidor.");
       } else {
         onLoginSuccess({
           nick: data.username,
@@ -47,7 +43,7 @@ const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
         }, rememberMe);
       }
     } catch (error) {
-      alert("ERRO DE CONEXÃO: Não foi possível alcançar o servidor.");
+      alert("Erro de conexão.");
     } finally {
       setIsLoading(false);
     }
@@ -55,44 +51,45 @@ const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center bg-white px-6 py-10 page-enter min-h-screen">
-      {/* Aviso anti-phishing no topo para bots de segurança */}
-      <div className="mb-6 px-4 py-2 bg-yellow-50 border border-yellow-200 rounded-lg text-center max-w-sm">
-        <p className="text-[10px] text-yellow-800 font-bold uppercase tracking-tight">
-          Aviso: Interface de Jogo Minecraft (RedeWhite). Não somos um banco real.
+      {/* Disclaimer discreto para o Google não bloquear */}
+      <div className="mb-8 px-4 py-1 bg-gray-50 rounded-full border border-gray-100">
+        <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">
+          Minecraft Gaming Dashboard • Simulador Recreativo
         </p>
       </div>
 
       <div className="w-full max-w-sm flex flex-col items-center">
-        <div className="w-20 h-20 md:w-24 md:h-24 rounded-2xl overflow-hidden mb-6">
+        <div className="w-20 h-20 rounded-2xl overflow-hidden mb-8 shadow-sm">
           <img 
             src="https://i.imgur.com/bPt3G5b.jpeg" 
             alt="RedeWhite Logo" 
             className="w-full h-full object-cover"
           />
         </div>
-        <h1 className="text-3xl font-bold tracking-tight text-[#1A1A1A]">
-          Rede<span style={{ color: primaryColor }}>White</span>
+        
+        <h1 className="text-4xl font-bold tracking-tight text-[#1A1A1A]">
+          White<span style={{ color: primaryColor }}>Bank</span>
         </h1>
-        <p className="text-gray-400 font-medium text-sm mt-2 mb-10">Dashboard de Jogador (Minecraft)</p>
+        <p className="text-gray-400 font-medium text-sm mt-2 mb-10 text-center">Acesse sua conta virtual da RedeWhite.</p>
 
         <form onSubmit={handleLogin} className="w-full flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Seu Nick no Jogo</label>
+            <label className="text-xs font-bold text-gray-400 uppercase tracking-widest ml-1">Nickname</label>
             <input 
               type="text" 
               placeholder="Ex: Steve_Miner" 
-              className="w-full p-4 bg-[#F5F6F7] border-none rounded-2xl text-[#1A1A1A] font-medium focus:ring-2 focus:ring-[#72E8F6] transition-all outline-none"
+              className="w-full p-4 bg-[#F5F6F7] border-none rounded-2xl text-[#1A1A1A] font-semibold focus:ring-2 focus:ring-[#72E8F6] outline-none"
               value={nick} 
               onChange={(e) => setNick(e.target.value)}
             />
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Código de Acesso (/banco)</label>
+            <label className="text-xs font-bold text-gray-400 uppercase tracking-widest ml-1">Senha /banco</label>
             <input 
               type="password" 
-              placeholder="Sua senha do servidor" 
-              className="w-full p-4 bg-[#F5F6F7] border-none rounded-2xl text-[#1A1A1A] font-medium focus:ring-2 focus:ring-[#72E8F6] transition-all outline-none"
+              placeholder="Digite sua senha" 
+              className="w-full p-4 bg-[#F5F6F7] border-none rounded-2xl text-[#1A1A1A] font-semibold focus:ring-2 focus:ring-[#72E8F6] outline-none"
               value={password} 
               onChange={(e) => setPassword(e.target.value)}
             />
@@ -112,25 +109,22 @@ const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
           <button 
             type="submit"
             disabled={isLoading}
-            className="w-full py-4 rounded-full font-bold text-white shadow-lg shadow-[#72E8F640] transition-all active:scale-95 mt-4 flex items-center justify-center gap-2"
+            className="w-full py-4 rounded-full font-bold text-white shadow-lg shadow-[#72E8F620] transition-all active:scale-95 mt-4 flex items-center justify-center"
             style={{ backgroundColor: primaryColor }}
           >
             {isLoading ? (
               <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
             ) : (
-              <span>Entrar no Dashboard</span>
+              "Entrar"
             )}
           </button>
         </form>
 
-        <div className="mt-12 text-center border-t border-gray-100 pt-6 w-full">
-          <p className="text-[10px] text-gray-400 leading-tight">
-            ESTE SITE É UMA SIMULAÇÃO PARA FINS DE JOGO (MINECRAFT).<br/>
-            NÃO SOMOS UMA INSTITUIÇÃO FINANCEIRA REAL.<br/>
-            NÃO INSIRA SENHAS DE BANCOS REAIS AQUI.
-          </p>
-          <p className="text-xs mt-4">
-            <span style={{ color: primaryColor }} className="font-bold cursor-pointer hover:underline">Precisa de ajuda? Staff RedeWhite.</span>
+        <div className="mt-16 text-center border-t border-gray-50 pt-8 w-full">
+          <p className="text-[10px] text-gray-300 font-bold uppercase tracking-tighter leading-relaxed">
+            AVISO: ESTE SITE É UMA FERRAMENTA DE JOGO (MINECRAFT).<br/>
+            NÃO SOMOS UM BANCO REAL. NÃO TEM VALOR MONETÁRIO.<br/>
+            NÃO INSIRA SENHAS DE BANCOS REAIS OU DADOS PESSOAIS.
           </p>
         </div>
       </div>
