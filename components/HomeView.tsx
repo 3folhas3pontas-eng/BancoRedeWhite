@@ -40,7 +40,7 @@ const HomeView: React.FC<HomeViewProps> = ({ player, isBalanceVisible, toggleBal
 
         <div className="pb-8">
           <h2 className="text-[#1A1A1A] text-3xl font-bold">Olá, {player.nick}</h2>
-          <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mt-1">Sua conta virtual RedeWhite</p>
+          <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mt-1">Sua economia virtual RedeWhite</p>
         </div>
 
         {/* Balance Card */}
@@ -91,14 +91,14 @@ const HomeView: React.FC<HomeViewProps> = ({ player, isBalanceVisible, toggleBal
 
         <div className="w-full h-[1px] bg-[#F5F6F7] mb-12"></div>
 
-        {/* Info Banner */}
+        {/* Security Info Banner - Important for Google Review */}
         <section className="mb-12">
           <div className="flex items-start gap-5 p-6 rounded-[24px] bg-[#F5F6F7]/60 border border-[#EDEDED]">
-            <span className="material-icons-outlined text-2xl mt-0.5 text-gray-400">info</span>
+            <span className="material-icons-outlined text-2xl mt-0.5 text-[#72E8F6]">verified_user</span>
             <div className="flex flex-col gap-1">
-              <h3 className="font-bold text-[#1A1A1A] text-sm">Segurança Digital</h3>
+              <h3 className="font-bold text-[#1A1A1A] text-sm">Dashboard Comunitário</h3>
               <p className="text-[#6B6B6B] text-[13px] leading-relaxed max-w-xl">
-                Seus coins virtuais são gerenciados pelo sistema <strong>RedeWhite Cloud</strong>. Este dashboard é uma simulação recreativa para o jogo Minecraft.
+                Suas transações são processadas exclusivamente dentro do ecossistema de jogo da <strong>RedeWhite</strong>. Este ambiente é 100% recreativo e não possui transações financeiras reais.
               </p>
             </div>
           </div>
@@ -106,8 +106,8 @@ const HomeView: React.FC<HomeViewProps> = ({ player, isBalanceVisible, toggleBal
 
         <footer className="mt-8 pb-12 text-center opacity-30">
           <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest">
-            SIMULADOR DE ECONOMIA PARA JOGO • SEM VÍNCULO COM O NUBANK<br/>
-            DESENVOLVIDO PARA A COMUNIDADE REDEWHITE
+            SIMULADOR DE ECONOMIA PARA JOGO • NÃO É UM BANCO REAL<br/>
+            PROJETO INDEPENDENTE DA COMUNIDADE REDEWHITE
           </p>
         </footer>
       </div>

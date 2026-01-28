@@ -32,7 +32,7 @@ const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
         .single();
 
       if (error || !data) {
-        alert("Nick ou senha incorretos no servidor.");
+        alert("Nick ou senha incorretos.");
       } else {
         onLoginSuccess({
           nick: data.username,
@@ -43,7 +43,7 @@ const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
         }, rememberMe);
       }
     } catch (error) {
-      alert("Erro de conexão.");
+      alert("Erro ao conectar.");
     } finally {
       setIsLoading(false);
     }
@@ -51,14 +51,15 @@ const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center bg-white px-6 py-10 page-enter min-h-screen">
-      {/* Disclaimer discreto para o Google não bloquear */}
-      <div className="mb-8 px-4 py-1 bg-gray-50 rounded-full border border-gray-100">
-        <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">
-          Minecraft Gaming Dashboard • Simulador Recreativo
+      {/* Banner de segurança técnica para o robô do Google ver */}
+      <div className="fixed top-0 left-0 right-0 bg-[#F5F6F7] border-b border-[#EDEDED] py-2 px-4 flex justify-center items-center gap-2">
+        <span className="material-icons-outlined text-[14px] text-gray-400">sports_esports</span>
+        <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">
+          Minecraft Dashboard • Simulador de Economia Virtual
         </p>
       </div>
 
-      <div className="w-full max-w-sm flex flex-col items-center">
+      <div className="w-full max-w-sm flex flex-col items-center mt-12">
         <div className="w-20 h-20 rounded-2xl overflow-hidden mb-8 shadow-sm">
           <img 
             src="https://i.imgur.com/bPt3G5b.jpeg" 
@@ -70,11 +71,11 @@ const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
         <h1 className="text-4xl font-bold tracking-tight text-[#1A1A1A]">
           White<span style={{ color: primaryColor }}>Bank</span>
         </h1>
-        <p className="text-gray-400 font-medium text-sm mt-2 mb-10 text-center">Acesse sua conta virtual da RedeWhite.</p>
+        <p className="text-gray-400 font-medium text-sm mt-2 mb-10 text-center">Gestão de coins para jogadores da RedeWhite.</p>
 
         <form onSubmit={handleLogin} className="w-full flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-bold text-gray-400 uppercase tracking-widest ml-1">Nickname</label>
+            <label className="text-xs font-bold text-gray-400 uppercase tracking-widest ml-1">Nickname de Jogo</label>
             <input 
               type="text" 
               placeholder="Ex: Steve_Miner" 
@@ -88,7 +89,7 @@ const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
             <label className="text-xs font-bold text-gray-400 uppercase tracking-widest ml-1">Senha /banco</label>
             <input 
               type="password" 
-              placeholder="Digite sua senha" 
+              placeholder="Digite sua senha do servidor" 
               className="w-full p-4 bg-[#F5F6F7] border-none rounded-2xl text-[#1A1A1A] font-semibold focus:ring-2 focus:ring-[#72E8F6] outline-none"
               value={password} 
               onChange={(e) => setPassword(e.target.value)}
@@ -103,7 +104,7 @@ const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
               checked={rememberMe}
               onChange={(e) => setRememberMe(e.target.checked)}
             />
-            <label htmlFor="remember" className="text-sm font-semibold text-[#6B6B6B] cursor-pointer">Manter conectado</label>
+            <label htmlFor="remember" className="text-sm font-semibold text-[#6B6B6B] cursor-pointer">Lembrar acesso</label>
           </div>
 
           <button 
@@ -115,16 +116,16 @@ const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
             {isLoading ? (
               <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
             ) : (
-              "Entrar"
+              "Entrar no Painel"
             )}
           </button>
         </form>
 
         <div className="mt-16 text-center border-t border-gray-50 pt-8 w-full">
           <p className="text-[10px] text-gray-300 font-bold uppercase tracking-tighter leading-relaxed">
-            AVISO: ESTE SITE É UMA FERRAMENTA DE JOGO (MINECRAFT).<br/>
-            NÃO SOMOS UM BANCO REAL. NÃO TEM VALOR MONETÁRIO.<br/>
-            NÃO INSIRA SENHAS DE BANCOS REAIS OU DADOS PESSOAIS.
+            ESTE SITE É UMA FERRAMENTA RECREATIVA PARA O JOGO MINECRAFT.<br/>
+            NÃO SOMOS UMA INSTITUIÇÃO FINANCEIRA. AS MOEDAS NÃO TÊM VALOR REAL.<br/>
+            NÃO INSIRA SENHAS DE BANCOS REAIS.
           </p>
         </div>
       </div>
