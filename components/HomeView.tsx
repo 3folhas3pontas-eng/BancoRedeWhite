@@ -12,11 +12,11 @@ interface HomeViewProps {
 
 const HomeView: React.FC<HomeViewProps> = ({ player, isBalanceVisible, toggleBalance, onAction, onLogout }) => {
   const primaryColor = '#72E8F6';
-  const logoutColor = '#E74C3C';
+  const logoutColor = '#E74C3C'; // Red/Coral color for logout
 
   return (
     <div className="flex-1 overflow-y-auto hide-scrollbar pb-32 bg-white flex flex-col items-center">
-      {/* Header Area - White background as per screenshot */}
+      {/* Header Area - Clean White */}
       <div className="w-full bg-white flex flex-col items-center">
         <div className="w-full max-w-5xl px-6 md:px-12">
           <header className="py-8 flex items-center justify-between">
@@ -51,7 +51,7 @@ const HomeView: React.FC<HomeViewProps> = ({ player, isBalanceVisible, toggleBal
           </header>
 
           {/* Greeting Section */}
-          <div className="pb-10">
+          <div className="pb-8">
             <h2 className="text-[#1A1A1A] text-3xl font-bold">Olá, {player.nick}</h2>
             <p className="text-gray-400 text-sm mt-1">Sua conta está ativa e segura.</p>
           </div>
@@ -59,7 +59,7 @@ const HomeView: React.FC<HomeViewProps> = ({ player, isBalanceVisible, toggleBal
       </div>
 
       <div className="w-full max-w-5xl px-6 md:px-12">
-        {/* Balance Card - Rounded with borders as per screenshot */}
+        {/* Balance Card - Matching Screenshot precisely */}
         <div className="w-full mb-12">
           <section 
             className="w-full max-w-md p-8 rounded-[32px] bg-white border border-[#EDEDED] shadow-sm group cursor-pointer hover:border-[#72E8F6] transition-all"
@@ -81,7 +81,7 @@ const HomeView: React.FC<HomeViewProps> = ({ player, isBalanceVisible, toggleBal
           </section>
         </div>
 
-        {/* Action Area - Circular buttons with Blue Icons */}
+        {/* Action Area - Circular light gray buttons with blue icons */}
         <section className="w-full py-4 mb-12">
           <div className="flex items-start gap-8 overflow-x-auto hide-scrollbar pb-2">
             {[

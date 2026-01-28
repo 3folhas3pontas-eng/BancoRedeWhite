@@ -6,6 +6,7 @@ import HomeView from './components/HomeView';
 import PixArea from './components/PixArea';
 import StatementArea from './components/StatementArea';
 import BottomNav from './components/BottomNav';
+import LojasAbertasView from './components/LojasAbertasView';
 import { createClient } from '@supabase/supabase-js';
 
 const SUPABASE_URL = 'https://mmmazuwqcssymohcdzyj.supabase.co';
@@ -17,7 +18,6 @@ const App: React.FC = () => {
   const [user, setUser] = useState<PlayerData | null>(null);
   const [isBalanceVisible, setIsBalanceVisible] = useState(true);
 
-  // Função para buscar dados atualizados do usuário
   const refreshUserData = useCallback(async (username: string) => {
     try {
       const { data, error } = await supabase
@@ -40,18 +40,16 @@ const App: React.FC = () => {
     }
   }, []);
 
-  // Lógica de "Lembre-me" - Carrega ao montar o app
   useEffect(() => {
     const savedUser = localStorage.getItem('whitebank_saved_user');
     if (savedUser) {
       const parsedUser = JSON.parse(savedUser) as PlayerData;
       setUser(parsedUser);
       setCurrentView(View.HOME);
-      refreshUserData(parsedUser.nick); // Garante que o saldo inicial esteja atualizado
+      refreshUserData(parsedUser.nick);
     }
   }, [refreshUserData]);
 
-  // Lógica de Atualização Automática (a cada 10 segundos)
   useEffect(() => {
     if (user && currentView !== View.LOGIN) {
       const interval = setInterval(() => {
@@ -85,6 +83,8 @@ const App: React.FC = () => {
         return <PixArea onBack={() => setCurrentView(View.HOME)} player={user} />;
       case View.EXTRATO:
         return <StatementArea onBack={() => setCurrentView(View.HOME)} />;
+      case View.LOJAS_ABERTAS:
+        return <LojasAbertasView onBack={() => setCurrentView(View.HOME)} />;
       case View.HOME:
       default:
         return (
