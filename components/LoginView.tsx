@@ -51,15 +51,7 @@ const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center bg-white px-6 py-10 page-enter min-h-screen">
-      {/* Banner de segurança técnica para o robô do Google ver */}
-      <div className="fixed top-0 left-0 right-0 bg-[#F5F6F7] border-b border-[#EDEDED] py-2 px-4 flex justify-center items-center gap-2">
-        <span className="material-icons-outlined text-[14px] text-gray-400">sports_esports</span>
-        <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">
-          Minecraft Dashboard • Simulador de Economia Virtual
-        </p>
-      </div>
-
-      <div className="w-full max-w-sm flex flex-col items-center mt-12">
+      <div className="w-full max-w-sm flex flex-col items-center">
         <div className="w-20 h-20 rounded-2xl overflow-hidden mb-8 shadow-sm">
           <img 
             src="https://i.imgur.com/bPt3G5b.jpeg" 
