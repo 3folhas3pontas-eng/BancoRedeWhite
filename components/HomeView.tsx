@@ -90,26 +90,6 @@ const HomeView: React.FC<HomeViewProps> = ({ player, isBalanceVisible, toggleBal
         </section>
 
         <div className="w-full h-[1px] bg-[#F5F6F7] mb-12"></div>
-
-        {/* Security Info Banner - Important for Google Review */}
-        <section className="mb-12">
-          <div className="flex items-start gap-5 p-6 rounded-[24px] bg-[#F5F6F7]/60 border border-[#EDEDED]">
-            <span className="material-icons-outlined text-2xl mt-0.5 text-[#72E8F6]">verified_user</span>
-            <div className="flex flex-col gap-1">
-              <h3 className="font-bold text-[#1A1A1A] text-sm">Dashboard Comunitário</h3>
-              <p className="text-[#6B6B6B] text-[13px] leading-relaxed max-w-xl">
-                Suas transações são processadas exclusivamente dentro do ecossistema de jogo da <strong>RedeWhite</strong>. Este ambiente é 100% recreativo e não possui transações financeiras reais.
-              </p>
-            </div>
-          </div>
-        </section>
-
-        <footer className="mt-8 pb-12 text-center opacity-30">
-          <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest">
-            SIMULADOR DE ECONOMIA PARA JOGO • NÃO É UM BANCO REAL<br/>
-            PROJETO INDEPENDENTE DA COMUNIDADE REDEWHITE
-          </p>
-        </footer>
       </div>
     </div>
   );

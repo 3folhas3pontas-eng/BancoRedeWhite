@@ -112,14 +112,6 @@ const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
             )}
           </button>
         </form>
-
-        <div className="mt-16 text-center border-t border-gray-50 pt-8 w-full">
-          <p className="text-[10px] text-gray-300 font-bold uppercase tracking-tighter leading-relaxed">
-            ESTE SITE É UMA FERRAMENTA RECREATIVA PARA O JOGO MINECRAFT.<br/>
-            NÃO SOMOS UMA INSTITUIÇÃO FINANCEIRA. AS MOEDAS NÃO TÊM VALOR REAL.<br/>
-            NÃO INSIRA SENHAS DE BANCOS REAIS.
-          </p>
-        </div>
       </div>
     </div>
   );
