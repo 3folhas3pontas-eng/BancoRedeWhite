@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Transaction } from '../types';
 
@@ -10,14 +11,8 @@ const StatementArea: React.FC<StatementAreaProps> = ({ onBack }) => {
   const greenIn = '#2ECC71';
   const redOut = '#E74C3C';
 
-  const transactions: Transaction[] = [
-    { id: '1', type: 'pix_enviado', title: 'Transferência enviada', description: 'Steve_Miner', amount: 1250, date: 'HOJE', time: '14:20', isNegative: true },
-    { id: '2', type: 'pix_recebido', title: 'Transferência recebida', description: 'Alex_Builder', amount: 500, date: 'HOJE', time: '11:05', isNegative: false },
-    { id: '3', type: 'compra', title: 'Compra no débito', description: 'Loja de Itens Raros', amount: 3420.90, date: 'ONTEM', time: '18:45', isNegative: true },
-    { id: '4', type: 'pix_enviado', title: 'Transferência enviada', description: 'Creeper_Hunter99', amount: 50, date: 'ONTEM', time: '15:30', isNegative: true },
-    { id: '5', type: 'recompensa', title: 'Venda de Diamantes', description: 'Leilão Global', amount: 15000, date: '12 JAN', time: '09:15', isNegative: false },
-    { id: '6', type: 'estorno', title: 'Transferência cancelada', description: 'Enderman_CEO', amount: 0, date: '12 JAN', time: '08:00', isNegative: false, cancelled: true },
-  ];
+  // Removendo as transações fictícias conforme solicitado
+  const transactions: Transaction[] = [];
 
   const grouped = transactions.reduce((acc, tx) => {
     if (!acc[tx.date]) acc[tx.date] = [];
@@ -62,46 +57,54 @@ const StatementArea: React.FC<StatementAreaProps> = ({ onBack }) => {
       </header>
 
       <main className="flex-1 overflow-y-auto no-scrollbar p-6">
-        {Object.entries(grouped).map(([date, items]) => (
-          <div key={date} className="mb-10">
-            <h2 className="text-[11px] font-bold text-gray-400 mb-6 uppercase tracking-[0.15em]">{date}</h2>
-            <div className="space-y-8">
-              {items.map((tx) => {
-                const { icon } = getIcon(tx.type);
-                const isNegative = tx.isNegative;
-                const txColor = tx.cancelled ? '#9CA3AF' : (isNegative ? redOut : greenIn);
-
-                return (
-                  <div key={tx.id} className="flex items-start justify-between group active:scale-[0.98] transition-transform cursor-pointer">
-                    <div className="flex space-x-4">
-                      <div className="mt-1 flex items-center justify-center w-11 h-11 rounded-full bg-[#F5F6F7] text-gray-400">
-                        <span className="material-icons-outlined text-[20px]">{icon}</span>
-                      </div>
-                      <div className="flex flex-col">
-                        <p className={`font-bold text-[15px] text-[#1A1A1A] ${tx.cancelled ? 'line-through text-gray-400' : ''}`}>
-                          {tx.title}
-                        </p>
-                        <p className={`text-sm ${tx.cancelled ? 'text-gray-300' : 'text-[#6B6B6B]'} font-medium`}>
-                          {tx.description}
-                        </p>
-                        <p className="text-[11px] text-gray-400 mt-1 font-semibold">{tx.time}</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      {tx.cancelled ? (
-                        <p className="font-bold text-sm text-gray-300 italic">Estornado</p>
-                      ) : (
-                        <p className="font-bold text-[16px]" style={{ color: txColor }}>
-                          {isNegative ? '-' : '+'} $ {tx.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+        {transactions.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 text-center opacity-40">
+            <span className="material-icons-outlined text-6xl mb-4">history</span>
+            <p className="font-bold text-[#1A1A1A]">Nenhuma movimentação</p>
+            <p className="text-xs font-medium">Você ainda não realizou transações no WhiteBank.</p>
           </div>
-        ))}
+        ) : (
+          Object.entries(grouped).map(([date, items]) => (
+            <div key={date} className="mb-10">
+              <h2 className="text-[11px] font-bold text-gray-400 mb-6 uppercase tracking-[0.15em]">{date}</h2>
+              <div className="space-y-8">
+                {items.map((tx) => {
+                  const { icon } = getIcon(tx.type);
+                  const isNegative = tx.isNegative;
+                  const txColor = tx.cancelled ? '#9CA3AF' : (isNegative ? redOut : greenIn);
+
+                  return (
+                    <div key={tx.id} className="flex items-start justify-between group active:scale-[0.98] transition-transform cursor-pointer">
+                      <div className="flex space-x-4">
+                        <div className="mt-1 flex items-center justify-center w-11 h-11 rounded-full bg-[#F5F6F7] text-gray-400">
+                          <span className="material-icons-outlined text-[20px]">{icon}</span>
+                        </div>
+                        <div className="flex flex-col">
+                          <p className={`font-bold text-[15px] text-[#1A1A1A] ${tx.cancelled ? 'line-through text-gray-400' : ''}`}>
+                            {tx.title}
+                          </p>
+                          <p className={`text-sm ${tx.cancelled ? 'text-gray-300' : 'text-[#6B6B6B]'} font-medium`}>
+                            {tx.description}
+                          </p>
+                          <p className="text-[11px] text-gray-400 mt-1 font-semibold">{tx.time}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        {tx.cancelled ? (
+                          <p className="font-bold text-sm text-gray-300 italic">Estornado</p>
+                        ) : (
+                          <p className="font-bold text-[16px]" style={{ color: txColor }}>
+                            {isNegative ? '-' : '+'} $ {tx.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))
+        )}
       </main>
     </div>
   );
