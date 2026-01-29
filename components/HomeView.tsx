@@ -40,7 +40,7 @@ const HomeView: React.FC<HomeViewProps> = ({ player, isBalanceVisible, toggleBal
 
         <div className="pb-8">
           <h2 className="text-[#1A1A1A] text-3xl font-bold">Olá, {player.nick}</h2>
-          <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mt-1">Sua economia virtual RedeWhite</p>
+          <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mt-1">Dashboard de Economia In-Game</p>
         </div>
 
         {/* Balance Card */}
@@ -50,7 +50,7 @@ const HomeView: React.FC<HomeViewProps> = ({ player, isBalanceVisible, toggleBal
             onClick={() => onAction(View.EXTRATO)}
           >
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-sm font-bold text-[#6B6B6B]">Saldo em coins</h2>
+              <h2 className="text-sm font-bold text-[#6B6B6B]">Saldo Virtual (Coins)</h2>
               <span className="material-icons-outlined text-gray-300 group-hover:translate-x-1 transition-transform">chevron_right</span>
             </div>
             <div className="flex flex-col">
@@ -69,11 +69,11 @@ const HomeView: React.FC<HomeViewProps> = ({ player, isBalanceVisible, toggleBal
         <section className="py-4 mb-12">
           <div className="flex items-start gap-8 overflow-x-auto hide-scrollbar pb-2">
             {[
-              { id: View.PIX, label: 'Área Pix', icon: 'pix' },
-              { id: View.EXTRATO, label: 'Pagar', icon: 'payments' },
-              { id: View.EXTRATO, label: 'Transferir', icon: 'sync_alt' },
-              { id: View.LOJAS_ABERTAS, label: 'Shopping', icon: 'shopping_bag' },
-              { id: View.EXTRATO, label: 'Extrato', icon: 'description' }
+              { id: View.PIX, label: 'Enviar Coins', icon: 'pix' },
+              { id: View.EXTRATO, label: 'Registros', icon: 'payments' },
+              { id: View.EXTRATO, label: 'Mover Coins', icon: 'sync_alt' },
+              { id: View.LOJAS_ABERTAS, label: 'Comércio', icon: 'shopping_bag' },
+              { id: View.EXTRATO, label: 'Histórico', icon: 'description' }
             ].map((action) => (
               <div 
                 key={action.label} 
@@ -91,14 +91,15 @@ const HomeView: React.FC<HomeViewProps> = ({ player, isBalanceVisible, toggleBal
 
         <div className="w-full h-[1px] bg-[#F5F6F7] mb-12"></div>
 
-        {/* Security Info Banner - Important for Google Review */}
+        {/* Security Info Banner */}
         <section className="mb-12">
           <div className="flex items-start gap-5 p-6 rounded-[24px] bg-[#F5F6F7]/60 border border-[#EDEDED]">
             <span className="material-icons-outlined text-2xl mt-0.5 text-[#72E8F6]">verified_user</span>
             <div className="flex flex-col gap-1">
-              <h3 className="font-bold text-[#1A1A1A] text-sm">Dashboard Comunitário</h3>
+              <h3 className="font-bold text-[#1A1A1A] text-sm">Proteção Gaming</h3>
               <p className="text-[#6B6B6B] text-[13px] leading-relaxed max-w-xl">
-                Suas transações são processadas exclusivamente dentro do ecossistema de jogo da <strong>RedeWhite</strong>. Este ambiente é 100% recreativo e não possui transações financeiras reais.
+                Suas movimentações de coins ocorrem apenas dentro do servidor Minecraft <strong>RedeWhite</strong>. 
+                Este ambiente é seguro e restrito à comunidade de jogadores, sem qualquer vínculo financeiro real.
               </p>
             </div>
           </div>
@@ -106,8 +107,8 @@ const HomeView: React.FC<HomeViewProps> = ({ player, isBalanceVisible, toggleBal
 
         <footer className="mt-8 pb-12 text-center opacity-30">
           <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest">
-            SIMULADOR DE ECONOMIA PARA JOGO • NÃO É UM BANCO REAL<br/>
-            PROJETO INDEPENDENTE DA COMUNIDADE REDEWHITE
+            SIMULADOR DE ECONOMIA PARA JOGO (MINECRAFT) • NÃO É UM BANCO REAL<br/>
+            PROJETO INDEPENDENTE PARA A COMUNIDADE REDEWHITE
           </p>
         </footer>
       </div>
