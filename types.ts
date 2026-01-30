@@ -7,7 +7,8 @@ export enum View {
   PLANEJAR = 'PLANEJAR',
   SHOPPING = 'SHOPPING',
   CARTAO = 'CARTAO',
-  LOJAS_ABERTAS = 'LOJAS_ABERTAS'
+  LOJAS_ABERTAS = 'LOJAS_ABERTAS',
+  TRANSFERIR = 'TRANSFERIR'
 }
 
 export interface Transaction {
