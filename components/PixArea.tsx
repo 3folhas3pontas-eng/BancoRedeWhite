@@ -20,7 +20,6 @@ interface PixAreaProps {
 
 type PixStep = "HOME" | "INPUT_NICK" | "INPUT_AMOUNT" | "CONFIRM" | "PROCESSING" | "SUCCESS"
 
-// Helper para classes condicionais simples sem necessidade de biblioteca externa
 const cn = (...classes: (string | boolean | undefined)[]) => classes.filter(Boolean).join(' ');
 
 export default function PixArea({ onBack, player }: PixAreaProps) {
@@ -146,122 +145,83 @@ export default function PixArea({ onBack, player }: PixAreaProps) {
 
   const parsedAmount = parseFloat(amount.replace(",", ".")) || 0
 
-  // PROCESSING VIEW
   if (step === "PROCESSING") {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center bg-white px-6 min-h-screen">
+      <div className="flex flex-1 flex-col items-center justify-center bg-white px-6 h-screen">
         <div className="relative mb-8">
           <div className="h-20 w-20 rounded-full border-4 border-cyan-100" />
           <div className="absolute inset-0 h-20 w-20 animate-spin rounded-full border-4 border-transparent border-t-cyan-400" />
         </div>
-        <h2 className="mb-2 text-xl font-bold text-gray-900">Processando transferência</h2>
-        <p className="text-center text-sm text-gray-500">
-          Verificando saldo e segurança da transação...
-        </p>
+        <h2 className="mb-2 text-xl font-bold text-gray-900">Processando...</h2>
+        <p className="text-center text-sm text-gray-500">Verificando transação no servidor RedeWhite.</p>
       </div>
     )
   }
 
-  // SUCCESS VIEW
   if (step === "SUCCESS") {
     return (
-      <div className="flex flex-1 flex-col bg-white min-h-screen">
-        <div className="flex flex-1 flex-col items-center px-6 pt-16 overflow-y-auto">
+      <div className="flex flex-col h-screen bg-white overflow-hidden">
+        <div className="flex-1 overflow-y-auto px-6 pt-12 flex flex-col items-center pb-8">
           <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-emerald-500 shadow-lg shadow-emerald-500/30">
             <Check className="h-10 w-10 text-white" strokeWidth={3} />
           </div>
           <h1 className="mb-2 text-2xl font-bold text-gray-900">Transferência enviada!</h1>
-          <p className="mb-10 text-center text-sm text-gray-500">
-            O valor já está disponível na conta de <span className="font-semibold">{receiverData?.nick}</span>
-          </p>
+          <p className="mb-10 text-center text-sm text-gray-500">O valor já está na conta de {receiverData?.nick}</p>
 
-          {/* Receipt */}
-          <div id="receipt-printable" className="w-full max-w-sm rounded-3xl bg-gray-50 p-6">
-            <div className="mb-6 flex items-center gap-2">
-              <div className="flex h-6 w-6 items-center justify-center rounded bg-cyan-400 text-[10px] font-bold text-white">
-                W
-              </div>
-              <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
-                Comprovante
-              </span>
-            </div>
-
-            <div className="mb-6">
-              <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-gray-400">Valor</p>
-              <p className="text-3xl font-bold text-gray-900">$ {formatCurrency(parsedAmount)}</p>
-            </div>
-
-            <div className="mb-6 h-px bg-gray-200" />
-
-            <div className="space-y-5">
-              <div>
-                <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-gray-400">Para</p>
-                <p className="text-lg font-bold text-gray-900">{receiverData?.nick}</p>
-                <p className="text-[10px] text-gray-400">Banco RedeWhite</p>
-              </div>
-              <div>
-                <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-gray-400">De</p>
-                <p className="font-semibold text-gray-900">{player.nick}</p>
-                <p className="font-mono text-[10px] text-gray-400 uppercase">ID: {transactionId}</p>
-              </div>
-            </div>
-
-            <div className="mt-6 flex items-center justify-between border-t border-dashed border-gray-200 pt-4 text-[10px] text-gray-400">
-              <span>{new Date().toLocaleDateString("pt-BR")}</span>
-              <span>{new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</span>
-            </div>
+          <div id="receipt-printable" className="w-full max-w-sm rounded-3xl bg-gray-50 p-6 border border-gray-100">
+             <div className="mb-6 flex items-center gap-2">
+                <div className="flex h-6 w-6 items-center justify-center rounded bg-cyan-400 text-[10px] font-bold text-white">W</div>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Comprovante</span>
+             </div>
+             <div className="mb-6 text-left">
+                <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-gray-400">Valor</p>
+                <p className="text-3xl font-bold text-gray-900">$ {formatCurrency(parsedAmount)}</p>
+             </div>
+             <div className="mb-6 h-px bg-gray-200" />
+             <div className="space-y-5 text-left">
+                <div>
+                  <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-gray-400">Para</p>
+                  <p className="text-lg font-bold text-gray-900">{receiverData?.nick}</p>
+                  <p className="text-[10px] text-gray-400">Banco RedeWhite</p>
+                </div>
+                <div>
+                  <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-gray-400">ID Transação</p>
+                  <p className="font-mono text-[10px] text-gray-400 uppercase">{transactionId}</p>
+                </div>
+             </div>
           </div>
         </div>
-
-        {/* Footer Buttons */}
-        <div className="p-6 space-y-3 bg-white no-print">
-          <button
-            onClick={() => window.print()}
-            className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl font-bold text-white shadow-lg shadow-cyan-400/20 transition-all active:scale-[0.98]"
-            style={{ backgroundColor: primaryColor }}
-          >
-            <Download className="h-5 w-5" />
-            Baixar Comprovante
+        <div className="p-6 space-y-3 bg-white border-t border-gray-50">
+          <button onClick={() => window.print()} className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl font-bold text-white shadow-lg shadow-cyan-400/20" style={{ backgroundColor: primaryColor }}>
+            <Download className="h-5 w-5" /> Baixar Comprovante
           </button>
-          <button
-            onClick={resetFlow}
-            className="h-12 w-full text-sm font-semibold text-gray-500 transition-colors hover:text-gray-700"
-          >
-            Voltar ao início
-          </button>
+          <button onClick={resetFlow} className="h-12 w-full text-sm font-semibold text-gray-500">Voltar ao início</button>
         </div>
       </div>
     )
   }
 
-  // INPUT NICK VIEW
   if (step === "INPUT_NICK") {
     return (
-      <div className="flex flex-1 flex-col bg-white min-h-screen">
-        <header className="flex-shrink-0 px-6 pb-4 pt-12">
-          <button
-            onClick={() => setStep("HOME")}
-            className="-ml-2 mb-6 flex h-10 w-10 items-center justify-center rounded-full text-gray-600 transition-colors hover:bg-gray-100"
-          >
+      <div className="flex flex-col h-screen bg-white overflow-hidden">
+        <header className="flex-shrink-0 px-6 pt-12 pb-4">
+          <button onClick={() => setStep("HOME")} className="-ml-2 mb-6 flex h-10 w-10 items-center justify-center rounded-full text-gray-600">
             <X className="h-6 w-6" />
           </button>
           <h1 className="text-2xl font-bold text-gray-900 leading-tight">Para quem você quer transferir?</h1>
-          <p className="mt-1 text-sm text-gray-500">Digite o nickname do jogador</p>
+          <p className="mt-1 text-sm text-gray-500">Nickname do jogador no servidor</p>
         </header>
 
-        <main className="flex-1 px-6">
-          <div className="mt-4">
-            <input
-              autoFocus
-              type="text"
-              placeholder="NICKNAME"
-              className="w-full border-b-2 border-gray-200 bg-transparent py-4 text-2xl font-bold uppercase text-gray-900 placeholder:text-gray-200 focus:border-cyan-400 focus:outline-none transition-all"
-              value={receiverNick}
-              onChange={(e) => setReceiverNick(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleNextToAmount()}
-            />
-          </div>
-
+        <main className="flex-1 px-6 overflow-y-auto">
+          <input
+            autoFocus
+            type="text"
+            placeholder="NICKNAME"
+            className="w-full border-b-2 border-gray-200 bg-transparent py-4 text-2xl font-bold uppercase text-gray-900 placeholder:text-gray-200 focus:border-cyan-400 focus:outline-none transition-all"
+            value={receiverNick}
+            onChange={(e) => setReceiverNick(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleNextToAmount()}
+          />
           {errorMessage && (
             <div className="mt-6 flex items-center gap-3 rounded-2xl bg-red-50 p-4">
               <AlertCircle className="h-5 w-5 flex-shrink-0 text-red-500" />
@@ -270,206 +230,133 @@ export default function PixArea({ onBack, player }: PixAreaProps) {
           )}
         </main>
 
-        <div className="p-6 bg-white">
+        <footer className="p-6 bg-white border-t border-gray-50">
           <button
             disabled={!receiverNick.trim() || isLoading}
             onClick={handleNextToAmount}
             className={cn(
               "flex h-14 w-full items-center justify-center rounded-2xl font-bold transition-all active:scale-[0.98]",
-              receiverNick.trim() && !isLoading
-                ? "text-white shadow-lg shadow-cyan-400/20"
-                : "bg-gray-100 text-gray-400"
+              receiverNick.trim() && !isLoading ? "text-white shadow-lg shadow-cyan-400/20" : "bg-gray-100 text-gray-400"
             )}
             style={receiverNick.trim() && !isLoading ? { backgroundColor: primaryColor } : {}}
           >
             {isLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : "Continuar"}
           </button>
-        </div>
+        </footer>
       </div>
     )
   }
 
-  // INPUT AMOUNT VIEW
   if (step === "INPUT_AMOUNT") {
     const isValidAmount = parsedAmount > 0 && parsedAmount <= player.balance
-
     return (
-      <div className="flex flex-1 flex-col bg-white min-h-screen">
-        <header className="flex-shrink-0 px-6 pb-4 pt-12">
-          <button
-            onClick={() => setStep("INPUT_NICK")}
-            className="-ml-2 mb-6 flex h-10 w-10 items-center justify-center rounded-full text-gray-600 transition-colors hover:bg-gray-100"
-          >
+      <div className="flex flex-col h-screen bg-white overflow-hidden">
+        <header className="flex-shrink-0 px-6 pt-12 pb-4">
+          <button onClick={() => setStep("INPUT_NICK")} className="-ml-2 mb-6 flex h-10 w-10 items-center justify-center rounded-full text-gray-600">
             <ArrowLeft className="h-6 w-6" />
           </button>
           <h1 className="text-2xl font-bold text-gray-900">Qual o valor?</h1>
           <div className="mt-3 flex items-center gap-2">
-            <span className="text-sm text-gray-500">Saldo disponível:</span>
+            <span className="text-sm text-gray-500">Saldo:</span>
             <span className="text-sm font-bold text-emerald-600">$ {formatCurrency(player.balance)}</span>
           </div>
         </header>
 
-        <main className="flex-1 px-6">
-          <div className="mt-6 flex items-baseline gap-2 border-b-2 border-gray-200 pb-4 focus-within:border-cyan-400 transition-all">
+        <main className="flex-1 px-6 overflow-y-auto">
+          <div className="mt-6 flex items-baseline gap-2 border-b-2 border-gray-200 pb-4 focus-within:border-cyan-400">
             <span className="text-4xl font-bold text-gray-200">$</span>
             <input
               autoFocus
               type="text"
               inputMode="decimal"
               placeholder="0,00"
-              className="w-full bg-transparent text-4xl font-bold text-gray-900 placeholder:text-gray-100 focus:outline-none"
+              className="w-full bg-transparent text-4xl font-bold text-gray-900 focus:outline-none"
               value={amount}
-              onChange={(e) => {
-                const value = e.target.value.replace(/[^0-9,\.]/g, "")
-                setAmount(value)
-              }}
+              onChange={(e) => setAmount(e.target.value.replace(/[^0-9,\.]/g, ""))}
             />
           </div>
-
-          {/* Quick amount buttons */}
-          <div className="mt-6 flex gap-2">
-            {[100, 500, 1000].map((val) => (
-              <button
-                key={val}
-                onClick={() => setAmount(val.toString())}
-                disabled={val > player.balance}
-                className={cn(
-                  "flex-1 rounded-xl py-3 text-sm font-semibold transition-colors",
-                  val <= player.balance
-                    ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                    : "bg-gray-50 text-gray-300"
-                )}
-              >
-                $ {val}
-              </button>
-            ))}
-          </div>
-
           {errorMessage && (
             <div className="mt-6 flex items-center gap-3 rounded-2xl bg-red-50 p-4">
               <AlertCircle className="h-5 w-5 flex-shrink-0 text-red-500" />
               <p className="text-sm font-medium text-red-600">{errorMessage}</p>
             </div>
           )}
-
-          {/* Receiver info */}
           <div className="mt-8 flex items-center gap-4 rounded-2xl bg-gray-50 p-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-cyan-100 text-cyan-600">
-              <User className="h-6 w-6" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-cyan-100 text-cyan-600">
+              <User className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">Enviando para</p>
-              <p className="text-lg font-bold text-gray-900">{receiverData?.nick}</p>
+              <p className="text-[10px] font-bold text-gray-400 uppercase">Para</p>
+              <p className="text-base font-bold text-gray-900">{receiverData?.nick}</p>
             </div>
           </div>
         </main>
 
-        <div className="p-6 bg-white">
+        <footer className="p-6 bg-white border-t border-gray-50">
           <button
             disabled={!isValidAmount}
             onClick={() => setStep("CONFIRM")}
             className={cn(
               "flex h-14 w-full items-center justify-center rounded-2xl font-bold transition-all active:scale-[0.98]",
-              isValidAmount
-                ? "text-white shadow-lg shadow-cyan-400/20"
-                : "bg-gray-100 text-gray-400"
+              isValidAmount ? "text-white shadow-lg shadow-cyan-400/20" : "bg-gray-100 text-gray-400"
             )}
             style={isValidAmount ? { backgroundColor: primaryColor } : {}}
           >
             Revisar transferência
           </button>
-        </div>
+        </footer>
       </div>
     )
   }
 
-  // CONFIRM VIEW
   if (step === "CONFIRM") {
     return (
-      <div className="flex flex-1 flex-col bg-white min-h-screen">
-        <header className="flex-shrink-0 px-6 pb-4 pt-12">
-          <button
-            onClick={() => setStep("INPUT_AMOUNT")}
-            className="-ml-2 mb-6 flex h-10 w-10 items-center justify-center rounded-full text-gray-600 transition-colors hover:bg-gray-100"
-          >
+      <div className="flex flex-col h-screen bg-white overflow-hidden">
+        <header className="flex-shrink-0 px-6 pt-12 pb-4">
+          <button onClick={() => setStep("INPUT_AMOUNT")} className="-ml-2 mb-6 flex h-10 w-10 items-center justify-center rounded-full text-gray-600">
             <ArrowLeft className="h-6 w-6" />
           </button>
           <h1 className="text-2xl font-bold text-gray-900">Confira os dados</h1>
-          <p className="mt-1 text-sm text-gray-500">Verifique se está tudo certo</p>
+          <p className="mt-1 text-sm text-gray-500">Verifique os detalhes da transferência</p>
         </header>
 
-        <main className="flex-1 px-6 overflow-y-auto">
-          {/* Amount card */}
-          <div className="mt-4 rounded-3xl p-6 text-white shadow-lg shadow-cyan-400/20" style={{ backgroundColor: primaryColor }}>
-            <p className="mb-1 text-xs font-medium text-cyan-50 opacity-80 uppercase tracking-widest">Valor a enviar</p>
-            <p className="text-4xl font-bold">$ {formatCurrency(parsedAmount)}</p>
-          </div>
-
-          {/* Details */}
-          <div className="mt-8 space-y-6">
-            <div className="flex items-center justify-between">
+        <main className="flex-1 px-6 overflow-y-auto space-y-8">
+           <div className="mt-4 rounded-3xl p-6 text-white shadow-lg shadow-cyan-400/20" style={{ backgroundColor: primaryColor }}>
+              <p className="mb-1 text-xs font-medium text-cyan-50 opacity-80 uppercase">Valor a enviar</p>
+              <p className="text-4xl font-bold">$ {formatCurrency(parsedAmount)}</p>
+           </div>
+           <div className="space-y-6">
               <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 text-gray-600">
-                  <User className="h-6 w-6" />
-                </div>
-                <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">Para</p>
-                  <p className="text-lg font-bold text-gray-900">{receiverData?.nick}</p>
-                </div>
+                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 text-gray-400">
+                    <User className="h-6 w-6" />
+                 </div>
+                 <div>
+                    <p className="text-[10px] font-semibold text-gray-400 uppercase">Para</p>
+                    <p className="text-lg font-bold text-gray-900">{receiverData?.nick}</p>
+                 </div>
               </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-2xl bg-gray-50 p-4">
-                <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-gray-400">Banco</p>
-                <p className="font-bold text-gray-900">RedeWhite</p>
+              <div className="rounded-2xl bg-gray-50 p-4 border border-dashed border-gray-200">
+                 <p className="text-[10px] font-semibold text-gray-400 uppercase">De</p>
+                 <p className="font-bold text-gray-900">{player.nick}</p>
+                 <p className="mt-1 text-[10px] text-gray-400">Saldo após envio: $ {formatCurrency(player.balance - parsedAmount)}</p>
               </div>
-              <div className="rounded-2xl bg-gray-50 p-4">
-                <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-gray-400">Tipo</p>
-                <p className="font-bold text-gray-900">Pix Digital</p>
-              </div>
-            </div>
-
-            <div className="rounded-2xl bg-gray-50 p-4 border border-dashed border-gray-200">
-              <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-gray-400">De</p>
-              <p className="font-bold text-gray-900">{player.nick}</p>
-              <p className="mt-2 text-[10px] text-gray-400 font-medium">
-                Saldo após a transferência: $ {formatCurrency(player.balance - parsedAmount)}
-              </p>
-            </div>
-          </div>
-
-          {errorMessage && (
-            <div className="mt-6 flex items-center gap-3 rounded-2xl bg-red-50 p-4">
-              <AlertCircle className="h-5 w-5 flex-shrink-0 text-red-500" />
-              <p className="text-sm font-medium text-red-600">{errorMessage}</p>
-            </div>
-          )}
+           </div>
         </main>
 
-        <div className="p-6 bg-white">
-          <button
-            onClick={startProcessing}
-            className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl font-bold text-white shadow-lg shadow-cyan-400/20 transition-all active:scale-[0.98]"
-            style={{ backgroundColor: primaryColor }}
-          >
-            <Send className="h-5 w-5" />
-            Confirmar e Enviar
+        <footer className="p-6 bg-white border-t border-gray-50">
+          <button onClick={startProcessing} className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl font-bold text-white shadow-lg shadow-cyan-400/20" style={{ backgroundColor: primaryColor }}>
+            <Send className="h-5 w-5" /> Confirmar e Enviar
           </button>
-        </div>
+        </footer>
       </div>
     )
   }
 
-  // HOME VIEW
   return (
-    <div className="flex flex-1 flex-col bg-white min-h-screen">
-      <header className="flex-shrink-0 border-b border-gray-100 bg-white px-6 pb-6 pt-12">
+    <div className="flex flex-col h-screen bg-white overflow-hidden">
+      <header className="flex-shrink-0 border-b border-gray-50 bg-white px-6 pb-6 pt-12">
         <div className="mb-6 flex items-center justify-between">
-          <button
-            onClick={onBack}
-            className="-ml-2 flex h-10 w-10 items-center justify-center rounded-full text-cyan-400 transition-colors hover:bg-gray-100"
-          >
+          <button onClick={onBack} className="-ml-2 flex h-10 w-10 items-center justify-center rounded-full text-cyan-400 transition-colors hover:bg-gray-100">
             <ArrowLeft className="h-6 w-6" />
           </button>
           <div className="flex gap-4 text-gray-400">
@@ -478,31 +365,26 @@ export default function PixArea({ onBack, player }: PixAreaProps) {
           </div>
         </div>
         <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Área Pix</h1>
-        <p className="mt-1 text-sm text-gray-500 font-medium">Transfira coins instantaneamente</p>
+        <p className="mt-1 text-sm text-gray-500 font-medium">Coins em tempo real</p>
       </header>
 
       <main className="flex-1 overflow-y-auto p-6 space-y-8">
-        {/* Transfer section */}
         <section>
           <h2 className="mb-4 text-[10px] font-black uppercase tracking-widest text-gray-300">Enviar</h2>
-          <button
-            onClick={() => setStep("INPUT_NICK")}
-            className="flex w-full items-center gap-4 rounded-3xl bg-gray-50 p-5 transition-all hover:bg-gray-100 active:scale-[0.98] group"
-          >
+          <button onClick={() => setStep("INPUT_NICK")} className="flex w-full items-center gap-4 rounded-3xl bg-gray-50 p-5 transition-all hover:bg-gray-100 active:scale-[0.98] group">
             <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white shadow-sm group-hover:shadow-md transition-all">
               <Send className="h-6 w-6 text-cyan-400" />
             </div>
             <div className="flex-1 text-left">
               <p className="font-bold text-gray-900">Transferir</p>
-              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Envie coins para outro jogador</p>
+              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Envie coins via Nick</p>
             </div>
             <ChevronRight className="h-5 w-5 text-gray-200" />
           </button>
         </section>
 
-        {/* My key section */}
         <section>
-          <h2 className="mb-4 text-[10px] font-black uppercase tracking-widest text-gray-300">Minha chave Pix</h2>
+          <h2 className="mb-4 text-[10px] font-black uppercase tracking-widest text-gray-300">Minha chave</h2>
           <div className="flex items-center justify-between rounded-3xl border border-gray-100 bg-white p-6 shadow-sm">
             <div className="flex items-center gap-4">
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-cyan-50 text-cyan-400">
@@ -513,16 +395,12 @@ export default function PixArea({ onBack, player }: PixAreaProps) {
                 <p className="text-lg font-bold text-gray-900 leading-tight">{player.nick}</p>
               </div>
             </div>
-            <button
-              onClick={() => copyToClipboard(player.nick)}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-50 text-cyan-400 transition-colors hover:bg-cyan-50"
-            >
+            <button onClick={() => copyToClipboard(player.nick)} className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-50 text-cyan-400 transition-colors">
               {copied ? <Check className="h-5 w-5 text-emerald-500" /> : <Copy className="h-5 w-5" />}
             </button>
           </div>
         </section>
 
-        {/* Balance card */}
         <section>
           <div className="rounded-3xl p-6 text-white shadow-xl shadow-cyan-400/20" style={{ backgroundColor: primaryColor }}>
             <p className="mb-1 text-xs font-bold text-cyan-50 uppercase tracking-widest opacity-80">Seu saldo</p>
