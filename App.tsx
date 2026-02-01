@@ -82,7 +82,7 @@ const App: React.FC = () => {
       case View.PIX:
         return <PixArea onBack={() => setCurrentView(View.HOME)} player={user} />;
       case View.EXTRATO:
-        return <StatementArea onBack={() => setCurrentView(View.HOME)} />;
+        return <StatementArea onBack={() => setCurrentView(View.HOME)} player={user} />;
       case View.LOJAS_ABERTAS:
         return <LojasAbertasView onBack={() => setCurrentView(View.HOME)} />;
       case View.HOME:
