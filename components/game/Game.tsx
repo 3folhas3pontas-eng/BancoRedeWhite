@@ -435,7 +435,7 @@ export default function Game({ username, initialSave, bankBalance, onSpend }: Ga
         beaconEvent={beaconEvent}
         onDungeonChestOpen={handleDungeonChestOpen}
       />
-      <GameHUD stats={stats} bankBalance={localBalance} />
+      <GameHUD stats={stats} bankBalance={localBalance} enchantments={enchantments} />
       <EventBanner event={beaconEvent} />
       <LootPopup loot={currentLoot} onClose={closeLoot} />
       <BoostBar

@@ -227,19 +227,12 @@ export default function LootPopup({ loot, onClose }: LootPopupProps) {
                   )}
                 </div>
 
-                {/* Rewards */}
-                {revealed && (
-                  <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 2 }}>
-                    {item.money > 0 && (
-                      <span style={{ fontFamily: "monospace", fontSize: 12, color: "#FFD54F", fontWeight: "bold", textShadow: "1px 1px 0 #000" }}>
-                        +${item.money}
-                      </span>
-                    )}
-                    {item.xp > 0 && (
-                      <span style={{ fontFamily: "monospace", fontSize: 10, color: "#69F0AE" }}>
-                        +{item.xp} XP
-                      </span>
-                    )}
+                {/* Rewards (apenas XP agora) */}
+                {revealed && item.xp > 0 && (
+                  <div style={{ display: "flex", alignItems: "flex-end" }}>
+                    <span style={{ fontFamily: "monospace", fontSize: 10, color: "#69F0AE" }}>
+                      +{item.xp} XP
+                    </span>
                   </div>
                 )}
               </div>
@@ -247,13 +240,13 @@ export default function LootPopup({ loot, onClose }: LootPopupProps) {
           })}
         </div>
 
-        {/* Total rewards */}
+        {/* Total rewards (apenas XP) */}
         {revealIndex >= loot.length - 1 && (
           <div
             style={{
               margin: "8px 14px",
               padding: "8px 12px",
-              background: "rgba(255,215,0,0.08)",
+              background: "rgba(105,240,174,0.08)",
               border: "2px solid #5D4037",
               borderRadius: 3,
               display: "flex",
@@ -262,14 +255,9 @@ export default function LootPopup({ loot, onClose }: LootPopupProps) {
             }}
           >
             <span style={{ fontFamily: "monospace", fontSize: 12, color: "#A1887F" }}>TOTAL</span>
-            <div style={{ display: "flex", gap: 12 }}>
-              <span style={{ fontFamily: "monospace", fontSize: 14, color: "#FFD54F", fontWeight: "bold", textShadow: "1px 1px 0 #000" }}>
-                +${loot.reduce((a, b) => a + b.money, 0)}
-              </span>
-              <span style={{ fontFamily: "monospace", fontSize: 14, color: "#69F0AE", fontWeight: "bold" }}>
-                +{loot.reduce((a, b) => a + b.xp, 0)} XP
-              </span>
-            </div>
+            <span style={{ fontFamily: "monospace", fontSize: 14, color: "#69F0AE", fontWeight: "bold" }}>
+              +{loot.reduce((a, b) => a + b.xp, 0)} XP
+            </span>
           </div>
         )}
 
