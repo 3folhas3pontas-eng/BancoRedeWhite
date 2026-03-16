@@ -65,8 +65,16 @@ export default function Game({ username, initialSave }: GameProps) {
   // Refs para ter sempre os valores mais recentes nas callbacks de save
   const statsRef = useRef(stats);
   const enchantmentsRef = useRef(enchantments);
-  useEffect(() => { statsRef.current = stats; }, [stats]);
   useEffect(() => { enchantmentsRef.current = enchantments; }, [enchantments]);
+
+  // Wrapper que atualiza ref e state ao mesmo tempo
+  const setStatsAndRef = useCallback((updater: PlayerStats | ((prev: PlayerStats) => PlayerStats)) => {
+    setStats((prev) => {
+      const next = typeof updater === 'function' ? updater(prev) : updater;
+      statsRef.current = next;
+      return next;
+    });
+  }, []);
 
   const doSave = useCallback(() => {
     saveMiningSave(username, statsRef.current, enchantmentsRef.current);
@@ -237,7 +245,7 @@ export default function Game({ username, initialSave }: GameProps) {
     // Apply rewards to stats
     const totalMoney = loot.reduce((a, b) => a + b.money, 0);
     const totalXp = loot.reduce((a, b) => a + b.xp, 0);
-    setStats((prev) => {
+    setStatsAndRef((prev) => {
       let newXp = prev.xp + totalXp;
       let newLevel = prev.level;
       const xpToNext = prev.level * 500;
@@ -253,7 +261,7 @@ export default function Game({ username, initialSave }: GameProps) {
         level: newLevel,
       };
     });
-  }, [rollDungeonLoot]);
+  }, [rollDungeonLoot, setStatsAndRef]);
 
   const closeLoot = useCallback(() => setCurrentLoot(null), []);
 
@@ -261,8 +269,8 @@ export default function Game({ username, initialSave }: GameProps) {
   const fortuneMult = useRef(1);
 
   const handleStatsUpdate = useCallback((partial: Partial<PlayerStats>) => {
-    setStats((prev) => ({ ...prev, ...partial }));
-  }, []);
+    setStatsAndRef((prev) => ({ ...prev, ...partial }));
+  }, [setStatsAndRef]);
 
   const handleBlockBreak = useCallback(
     (block: Block) => {
@@ -274,7 +282,7 @@ export default function Game({ username, initialSave }: GameProps) {
         triggerBeaconEvent();
       }
 
-      setStats((prev) => {
+    setStatsAndRef((prev) => {
         const comboMult = 1 + Math.min(prev.combo * 0.1, 3);
         // Apply double_ores event multiplier
         const eventMult =
@@ -310,7 +318,7 @@ export default function Game({ username, initialSave }: GameProps) {
 
   const handleMobKill = useCallback(
     (mobType: MobType, xp: number, money: number) => {
-      setStats((prev) => {
+      setStatsAndRef((prev) => {
         let newXp = prev.xp + xp;
         let newLevel = prev.level;
         const xpToNext = prev.level * 500;
@@ -327,11 +335,11 @@ export default function Game({ username, initialSave }: GameProps) {
         };
       });
     },
-    []
+    [setStatsAndRef]
   );
 
   const handleShopUpgrade = useCallback((type: "tntRadius" | "tntSpawn" | "beaconSpawn" | "dungeonSpawn" | "chestSpawn") => {
-    setStats((prev) => {
+    setStatsAndRef((prev) => {
       const costs: Record<string, (lv: number) => number> = {
         tntRadius:    (lv) => Math.ceil(500 * Math.pow(2.0, lv)),
         tntSpawn:     (lv) => Math.ceil(300 * Math.pow(1.8, lv)),
@@ -353,10 +361,10 @@ export default function Game({ username, initialSave }: GameProps) {
       audioService.playClick();
       return { ...prev, money: prev.money - cost, [type]: currentLv + 1 };
     });
-  }, []);
+  }, [setStatsAndRef]);
 
   const handleUpgrade = useCallback((type: "strength" | "speed") => {
-    setStats((prev) => {
+    setStatsAndRef((prev) => {
       if (type === "strength") {
         const cost = Math.ceil(50 * Math.pow(1.4, prev.pickStrength));
         if (prev.money < cost) return prev;
@@ -375,10 +383,10 @@ export default function Game({ username, initialSave }: GameProps) {
         };
       }
     });
-  }, []);
+  }, [setStatsAndRef]);
 
   const handleUpgradeTier = useCallback(() => {
-    setStats((prev) => {
+    setStatsAndRef((prev) => {
       const currentIdx = TIER_ORDER.indexOf(prev.pickaxeTier);
       if (currentIdx >= TIER_ORDER.length - 1) return prev;
       const nextTier = TIER_ORDER[currentIdx + 1];
@@ -391,10 +399,10 @@ export default function Game({ username, initialSave }: GameProps) {
         pickaxeTier: nextTier,
       };
     });
-  }, []);
+  }, [setStatsAndRef]);
 
   const handleEnchant = useCallback(() => {
-    setStats((prev) => {
+    setStatsAndRef((prev) => {
       if (prev.xp < 1000) return prev;
 
       // Weighted random rarity selection
@@ -434,7 +442,7 @@ export default function Game({ username, initialSave }: GameProps) {
         xp: prev.xp - 1000,
       };
     });
-  }, []);
+  }, [setStatsAndRef]);
 
   return (
     <div className="w-screen h-screen overflow-hidden relative" style={{ background: "#0a0a0f" }}>
