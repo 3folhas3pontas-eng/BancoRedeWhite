@@ -1,5 +1,8 @@
 {
   "name": "WhiteBank - RedeWhite Dashboard",
   "description": "Interface de consulta de economia virtual para jogadores do servidor RedeWhite Minecraft.",
-  "requestFramePermissions": []
+  "requestFramePermissions": [],
+  "devCommand": "pnpm dev",
+  "installCommand": "pnpm install",
+  "framework": "nextjs"
 }
