@@ -8,6 +8,7 @@ import HomeView from '@/components/HomeView';
 import PixArea from '@/components/PixArea';
 import StatementArea from '@/components/StatementArea';
 import BottomNav from '@/components/BottomNav';
+import MinerarView from '@/components/MinerarView';
 import LojasAbertasView from '@/components/LojasAbertasView';
 
 export default function WhiteBankApp() {
@@ -82,6 +83,8 @@ export default function WhiteBankApp() {
         return <StatementArea onBack={() => setCurrentView(View.HOME)} player={user} />;
       case View.LOJAS_ABERTAS:
         return <LojasAbertasView onBack={() => setCurrentView(View.HOME)} />;
+      case View.MINERAR:
+        return <MinerarView onBack={() => setCurrentView(View.HOME)} />;
       case View.HOME:
       default:
         return (

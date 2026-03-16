@@ -8,6 +8,7 @@ export enum View {
   CARTAO = 'CARTAO',
   LOJAS_ABERTAS = 'LOJAS_ABERTAS',
   TRANSFERIR = 'TRANSFERIR',
+  MINERAR = 'MINERAR',
 }
 
 export interface Transaction {

@@ -132,6 +132,20 @@ export default function HomeView({
         </section>
 
         <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-[#F5F6F7] to-transparent mb-12" />
+
+        {/* Botao Minerar */}
+        <section className="w-full mb-16 flex justify-center">
+          <button
+            onClick={() => onAction(View.MINERAR)}
+            className="relative flex items-center justify-center gap-3 w-full max-w-sm px-8 py-5 rounded-[28px] font-extrabold text-[#1A1A1A] text-lg tracking-tight overflow-hidden group transition-all active:scale-95 shadow-[0_8px_40px_0_rgba(114,232,246,0.35)] hover:shadow-[0_12px_50px_0_rgba(114,232,246,0.55)]"
+            style={{ background: 'linear-gradient(135deg, #72E8F6 0%, #3dd6e8 60%, #00c2d4 100%)' }}
+          >
+            {/* brilho interno */}
+            <span className="absolute inset-0 rounded-[28px] opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={{ background: 'radial-gradient(circle at 30% 30%, rgba(255,255,255,0.3) 0%, transparent 60%)' }} />
+            <span className="material-icons-outlined text-2xl relative z-10">diamond</span>
+            <span className="relative z-10 uppercase tracking-widest text-sm font-black">Minerar</span>
+          </button>
+        </section>
       </div>
     </div>
   );
