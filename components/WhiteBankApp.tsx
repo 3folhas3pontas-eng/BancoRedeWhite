@@ -103,7 +103,7 @@ export default function WhiteBankApp() {
     <div className="min-h-screen bg-white flex flex-col items-center">
       <div className="w-full max-w-[1200px] min-h-screen relative flex flex-col bg-white">
         {renderView()}
-        {user && currentView !== View.LOGIN && currentView !== View.PIX && (
+        {user && currentView !== View.LOGIN && currentView !== View.PIX && currentView !== View.MINERAR && (
           <BottomNav currentView={currentView} onNavigate={setCurrentView} />
         )}
       </div>

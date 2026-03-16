@@ -1,15 +1,31 @@
 'use client';
 
-export default function MinerarView({ onBack }: { onBack: () => void }) {
+import Game from '@/components/game/Game';
+
+interface MinerarViewProps {
+  onBack: () => void;
+}
+
+export default function MinerarView({ onBack }: MinerarViewProps) {
   return (
-    <div className="flex-1 flex flex-col items-center justify-center min-h-screen bg-white pb-24">
+    <div className="fixed inset-0 z-50" style={{ background: '#0a0a0f' }}>
+      {/* Botão voltar flutuante */}
       <button
         onClick={onBack}
-        className="absolute top-6 left-6 flex items-center gap-2 text-[#6B6B6B] hover:text-[#1A1A1A] transition-colors z-10"
+        className="absolute top-4 left-4 z-[100] flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all active:scale-95"
+        style={{
+          background: 'rgba(255,255,255,0.12)',
+          color: 'rgba(255,255,255,0.8)',
+          border: '1px solid rgba(255,255,255,0.15)',
+          backdropFilter: 'blur(8px)',
+        }}
       >
-        <span className="material-icons-outlined text-2xl">arrow_back</span>
+        <span className="material-icons-outlined" style={{ fontSize: 16 }}>arrow_back</span>
+        Voltar
       </button>
-      <p className="text-gray-300 text-sm font-semibold tracking-widest uppercase">Em breve</p>
+
+      {/* Jogo de mineração */}
+      <Game />
     </div>
   );
 }

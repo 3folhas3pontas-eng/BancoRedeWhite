@@ -1,0 +1,455 @@
+"use client";
+
+import { useState, useCallback, useRef, useEffect } from "react";
+import {
+  PlayerStats,
+  Block,
+  Enchantment,
+  Rarity,
+  PickaxeTier,
+  MobType,
+  BeaconEvent,
+  BeaconEventType,
+  LootItem,
+} from "@/lib/game/types";
+import {
+  BLOCK_CONFIGS,
+  ENCHANTMENTS,
+  RARITY_WEIGHTS,
+  TIER_ORDER,
+  PICKAXE_TIERS,
+  BOOST_CHARGE_TIME,
+  BOOST_DURATION,
+  BEACON_EVENTS,
+  DUNGEON_LOOT_TABLE,
+} from "@/lib/game/constants";
+import { audioService } from "@/lib/game/audio";
+import GameCanvas from "./GameCanvas";
+import GameHUD from "./GameHUD";
+import ActionButtons from "./ActionButtons";
+import ShopPanel from "./ShopPanel";
+import EnchantPanel from "./EnchantPanel";
+import BoostBar from "./BoostBar";
+import EventBanner from "./EventBanner";
+import LootPopup from "./LootPopup";
+
+export default function Game() {
+  const [stats, setStats] = useState<PlayerStats>({
+    money: 0,
+    xp: 0,
+    level: 1,
+    depth: 0,
+    pickaxeTier: "wood",
+    pickStrength: 1,
+    pickSpeed: 1,
+    combo: 0,
+    maxCombo: 0,
+    blocksMinedTotal: 0,
+    tntRadius: 0,
+    tntSpawn: 0,
+    beaconSpawn: 0,
+    dungeonSpawn: 0,
+    chestSpawn: 0,
+  });
+
+  const [enchantments, setEnchantments] = useState<Enchantment[]>([]);
+  const [showShop, setShowShop] = useState(false);
+  const [showEnchant, setShowEnchant] = useState(false);
+
+  // Boost system
+  const [boostCharge, setBoostCharge] = useState(0); // 0..1
+  const [isBoostActive, setIsBoostActive] = useState(false);
+  const [boostTimeLeft, setBoostTimeLeft] = useState(0);
+  const boostActiveRef = useRef(false);
+
+  // Charge the boost bar over time
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (!boostActiveRef.current) {
+        setBoostCharge((prev) => Math.min(prev + 1 / BOOST_CHARGE_TIME, 1));
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Boost countdown when active
+  useEffect(() => {
+    if (!isBoostActive) return;
+    const interval = setInterval(() => {
+      setBoostTimeLeft((prev) => {
+        if (prev <= 0.5) {
+          // Boost ended
+          setIsBoostActive(false);
+          boostActiveRef.current = false;
+          setBoostCharge(0); // reset charge
+          audioService.stopBoostMusic();
+          return 0;
+        }
+        return prev - 0.5;
+      });
+    }, 500);
+    return () => clearInterval(interval);
+  }, [isBoostActive]);
+
+  const activateBoost = useCallback(() => {
+    if (boostCharge < 1 || isBoostActive) return;
+    setIsBoostActive(true);
+    boostActiveRef.current = true;
+    setBoostTimeLeft(BOOST_DURATION);
+    audioService.startBoostMusic();
+  }, [boostCharge, isBoostActive]);
+
+  // Beacon event system
+  const [beaconEvent, setBeaconEvent] = useState<BeaconEvent | null>(null);
+  const beaconEventRef = useRef<BeaconEvent | null>(null);
+
+  // Beacon event countdown
+  useEffect(() => {
+    if (!beaconEvent || !beaconEvent.active) return;
+    const interval = setInterval(() => {
+      setBeaconEvent((prev) => {
+        if (!prev || !prev.active) return null;
+        const newTime = prev.timeLeft - 0.5;
+        if (newTime <= 0) {
+          beaconEventRef.current = null;
+          // If it was a boost event, deactivate boost
+          if (prev.type === "boost_30s") {
+            setIsBoostActive(false);
+            boostActiveRef.current = false;
+            setBoostCharge(0);
+            audioService.stopBoostMusic();
+          }
+          return null;
+        }
+        const updated = { ...prev, timeLeft: newTime };
+        beaconEventRef.current = updated;
+        return updated;
+      });
+    }, 500);
+    return () => clearInterval(interval);
+  }, [beaconEvent]);
+
+  const triggerBeaconEvent = useCallback(() => {
+    // Weighted random selection
+    const totalWeight = BEACON_EVENTS.reduce((a, b) => a + b.weight, 0);
+    let roll = Math.random() * totalWeight;
+    let selected = BEACON_EVENTS[0];
+    for (const ev of BEACON_EVENTS) {
+      roll -= ev.weight;
+      if (roll <= 0) {
+        selected = ev;
+        break;
+      }
+    }
+
+    const event: BeaconEvent = {
+      type: selected.type,
+      name: selected.name,
+      color: selected.color,
+      duration: selected.duration,
+      timeLeft: selected.duration,
+      active: true,
+    };
+
+    setBeaconEvent(event);
+    beaconEventRef.current = event;
+
+    // Handle specific event triggers
+    if (selected.type === "boost_30s") {
+      setIsBoostActive(true);
+      boostActiveRef.current = true;
+      setBoostTimeLeft(30);
+      setBoostCharge(0);
+      audioService.startBoostMusic();
+    }
+  }, []);
+
+  // Dungeon chest loot system
+  const [currentLoot, setCurrentLoot] = useState<LootItem[] | null>(null);
+
+  const rollDungeonLoot = useCallback((): LootItem[] => {
+    // Roll 3-5 items from the loot table (weighted)
+    const numItems = 3 + Math.floor(Math.random() * 3);
+    const totalWeight = DUNGEON_LOOT_TABLE.reduce((a, b) => a + b.weight, 0);
+    const items: LootItem[] = [];
+
+    for (let i = 0; i < numItems; i++) {
+      let roll = Math.random() * totalWeight;
+      let picked = DUNGEON_LOOT_TABLE[0];
+      for (const entry of DUNGEON_LOOT_TABLE) {
+        roll -= entry.weight;
+        if (roll <= 0) {
+          picked = entry;
+          break;
+        }
+      }
+      // Depth bonus: deeper dungeons get better multipliers
+      const depthMult = 1 + Math.floor(stats.depth / 200) * 0.2;
+      items.push({
+        name: picked.name,
+        icon: picked.icon,
+        color: picked.color,
+        rarity: picked.rarity,
+        money: Math.ceil(picked.money * depthMult),
+        xp: Math.ceil(picked.xp * depthMult),
+        description: picked.description,
+      });
+    }
+
+    // Sort by rarity: legendary last (most exciting)
+    const rarityOrder = { common: 0, uncommon: 1, rare: 2, epic: 3, legendary: 4 };
+    items.sort((a, b) => rarityOrder[a.rarity] - rarityOrder[b.rarity]);
+    return items;
+  }, [stats.depth]);
+
+  const handleDungeonChestOpen = useCallback(() => {
+    const loot = rollDungeonLoot();
+    setCurrentLoot(loot);
+    audioService.playChestOpen();
+
+    // Apply rewards to stats
+    const totalMoney = loot.reduce((a, b) => a + b.money, 0);
+    const totalXp = loot.reduce((a, b) => a + b.xp, 0);
+    setStats((prev) => {
+      let newXp = prev.xp + totalXp;
+      let newLevel = prev.level;
+      const xpToNext = prev.level * 500;
+      if (newXp >= xpToNext) {
+        newXp -= xpToNext;
+        newLevel++;
+        audioService.playLevelUp();
+      }
+      return {
+        ...prev,
+        money: prev.money + totalMoney,
+        xp: newXp,
+        level: newLevel,
+      };
+    });
+  }, [rollDungeonLoot]);
+
+  const closeLoot = useCallback(() => setCurrentLoot(null), []);
+
+  // Fortune multiplier from enchantments
+  const fortuneMult = useRef(1);
+
+  const handleStatsUpdate = useCallback((partial: Partial<PlayerStats>) => {
+    setStats((prev) => ({ ...prev, ...partial }));
+  }, []);
+
+  const handleBlockBreak = useCallback(
+    (block: Block) => {
+      const config = BLOCK_CONFIGS[block.type];
+      if (!config) return;
+
+      // If it's a beacon, trigger a random event
+      if (block.type === "beacon") {
+        triggerBeaconEvent();
+      }
+
+      setStats((prev) => {
+        const comboMult = 1 + Math.min(prev.combo * 0.1, 3);
+        // Apply double_ores event multiplier
+        const eventMult =
+          beaconEventRef.current?.active && beaconEventRef.current.type === "double_ores" ? 2 : 1;
+        const moneyGain = Math.ceil(
+          config.money * comboMult * fortuneMult.current * eventMult
+        );
+        const xpGain = Math.ceil(config.xp * eventMult);
+
+        let newXp = prev.xp + xpGain;
+        let newLevel = prev.level;
+        let newMoney = prev.money + moneyGain;
+        const xpToNext = prev.level * 500;
+
+        // Level up check
+        if (newXp >= xpToNext) {
+          newXp -= xpToNext;
+          newLevel++;
+          audioService.playLevelUp();
+        }
+
+        return {
+          ...prev,
+          money: newMoney,
+          xp: newXp,
+          level: newLevel,
+          blocksMinedTotal: prev.blocksMinedTotal + 1,
+        };
+      });
+    },
+    [triggerBeaconEvent]
+  );
+
+  const handleMobKill = useCallback(
+    (mobType: MobType, xp: number, money: number) => {
+      setStats((prev) => {
+        let newXp = prev.xp + xp;
+        let newLevel = prev.level;
+        const xpToNext = prev.level * 500;
+        if (newXp >= xpToNext) {
+          newXp -= xpToNext;
+          newLevel++;
+          audioService.playLevelUp();
+        }
+        return {
+          ...prev,
+          money: prev.money + money,
+          xp: newXp,
+          level: newLevel,
+        };
+      });
+    },
+    []
+  );
+
+  const handleShopUpgrade = useCallback((type: "tntRadius" | "tntSpawn" | "beaconSpawn" | "dungeonSpawn" | "chestSpawn") => {
+    setStats((prev) => {
+      const costs: Record<string, (lv: number) => number> = {
+        tntRadius:    (lv) => Math.ceil(500 * Math.pow(2.0, lv)),
+        tntSpawn:     (lv) => Math.ceil(300 * Math.pow(1.8, lv)),
+        beaconSpawn:  (lv) => Math.ceil(1000 * Math.pow(2.2, lv)),
+        dungeonSpawn: (lv) => Math.ceil(800 * Math.pow(2.0, lv)),
+        chestSpawn:   (lv) => Math.ceil(200 * Math.pow(1.6, lv)),
+      };
+      const maxLevels: Record<string, number> = {
+        tntRadius: 5,
+        tntSpawn: 10,
+        beaconSpawn: 8,
+        dungeonSpawn: 8,
+        chestSpawn: 10,
+      };
+      const currentLv = prev[type];
+      if (currentLv >= maxLevels[type]) return prev;
+      const cost = costs[type](currentLv);
+      if (prev.money < cost) return prev;
+      audioService.playClick();
+      return { ...prev, money: prev.money - cost, [type]: currentLv + 1 };
+    });
+  }, []);
+
+  const handleUpgrade = useCallback((type: "strength" | "speed") => {
+    setStats((prev) => {
+      if (type === "strength") {
+        const cost = Math.ceil(50 * Math.pow(1.4, prev.pickStrength));
+        if (prev.money < cost) return prev;
+        return {
+          ...prev,
+          money: prev.money - cost,
+          pickStrength: +(prev.pickStrength + 0.3).toFixed(1),
+        };
+      } else {
+        const cost = Math.ceil(80 * Math.pow(1.5, prev.pickSpeed));
+        if (prev.money < cost) return prev;
+        return {
+          ...prev,
+          money: prev.money - cost,
+          pickSpeed: +(prev.pickSpeed + 0.2).toFixed(1),
+        };
+      }
+    });
+  }, []);
+
+  const handleUpgradeTier = useCallback(() => {
+    setStats((prev) => {
+      const currentIdx = TIER_ORDER.indexOf(prev.pickaxeTier);
+      if (currentIdx >= TIER_ORDER.length - 1) return prev;
+      const nextTier = TIER_ORDER[currentIdx + 1];
+      const nextData = PICKAXE_TIERS[nextTier];
+      if (prev.money < nextData.cost) return prev;
+      audioService.playLevelUp();
+      return {
+        ...prev,
+        money: prev.money - nextData.cost,
+        pickaxeTier: nextTier,
+      };
+    });
+  }, []);
+
+  const handleEnchant = useCallback(() => {
+    setStats((prev) => {
+      if (prev.xp < 1000) return prev;
+
+      // Weighted random rarity selection
+      const totalWeight = Object.values(RARITY_WEIGHTS).reduce(
+        (a, b) => a + b,
+        0
+      );
+      let roll = Math.random() * totalWeight;
+      let selectedRarity: Rarity = Rarity.COMMON;
+      for (const [rarity, weight] of Object.entries(RARITY_WEIGHTS)) {
+        roll -= weight;
+        if (roll <= 0) {
+          selectedRarity = rarity as Rarity;
+          break;
+        }
+      }
+
+      // Pick an enchantment of that rarity
+      const pool = ENCHANTMENTS.filter(
+        (e) => e.rarity === selectedRarity
+      );
+      if (pool.length === 0) return prev;
+      const enchant = pool[Math.floor(Math.random() * pool.length)];
+
+      // Apply enchantment
+      setEnchantments((prevEnc) => [...prevEnc, enchant]);
+
+      // Update fortune multiplier
+      if (enchant.id.startsWith("fort")) {
+        fortuneMult.current *= enchant.value;
+      }
+
+      audioService.playOrb();
+
+      return {
+        ...prev,
+        xp: prev.xp - 1000,
+      };
+    });
+  }, []);
+
+  return (
+    <div className="w-screen h-screen overflow-hidden relative" style={{ background: "#0a0a0f" }}>
+      <GameCanvas
+        stats={stats}
+        onStatsUpdate={handleStatsUpdate}
+        onBlockBreak={handleBlockBreak}
+        onMobKill={handleMobKill}
+        isBoostActive={isBoostActive}
+        beaconEvent={beaconEvent}
+        onDungeonChestOpen={handleDungeonChestOpen}
+      />
+      <GameHUD stats={stats} />
+      <EventBanner event={beaconEvent} />
+      <LootPopup loot={currentLoot} onClose={closeLoot} />
+      <BoostBar
+        chargeProgress={boostCharge}
+        isBoostActive={isBoostActive}
+        boostTimeLeft={boostTimeLeft}
+        onActivateBoost={activateBoost}
+      />
+      <ActionButtons
+        onShop={() => setShowShop(true)}
+        onEnchant={() => setShowEnchant(true)}
+      />
+      {showShop && (
+        <ShopPanel
+          stats={stats}
+          onUpgrade={handleUpgrade}
+          onUpgradeTier={handleUpgradeTier}
+          onShopUpgrade={handleShopUpgrade}
+          onClose={() => setShowShop(false)}
+        />
+      )}
+      {showEnchant && (
+        <EnchantPanel
+          stats={stats}
+          enchantments={enchantments}
+          onEnchant={handleEnchant}
+          onClose={() => setShowEnchant(false)}
+        />
+      )}
+    </div>
+  );
+}
