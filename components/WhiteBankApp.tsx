@@ -1,19 +1,16 @@
+'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { View, PlayerData } from './types';
-import LoginView from './components/LoginView';
-import HomeView from './components/HomeView';
-import PixArea from './components/PixArea';
-import StatementArea from './components/StatementArea';
-import BottomNav from './components/BottomNav';
-import LojasAbertasView from './components/LojasAbertasView';
-import { createClient } from '@supabase/supabase-js';
+import { useState, useEffect, useCallback } from 'react';
+import { View, PlayerData } from '@/lib/types';
+import { supabase } from '@/lib/supabase';
+import LoginView from '@/components/LoginView';
+import HomeView from '@/components/HomeView';
+import PixArea from '@/components/PixArea';
+import StatementArea from '@/components/StatementArea';
+import BottomNav from '@/components/BottomNav';
+import LojasAbertasView from '@/components/LojasAbertasView';
 
-const SUPABASE_URL = 'https://mmmazuwqcssymohcdzyj.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_bf0YEm9kQ92T5U9WFbKeeg_clS4zyLc';
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-
-const App: React.FC = () => {
+export default function WhiteBankApp() {
   const [currentView, setCurrentView] = useState<View>(View.LOGIN);
   const [user, setUser] = useState<PlayerData | null>(null);
   const [isBalanceVisible, setIsBalanceVisible] = useState(true);
@@ -32,11 +29,11 @@ const App: React.FC = () => {
           uuid: data.uuid,
           balance: parseFloat(data.balance || '0'),
           creditLimit: 0,
-          currentInvoice: 0
+          currentInvoice: 0,
         });
       }
     } catch (e) {
-      console.error("Erro ao atualizar dados:", e);
+      console.error('Erro ao atualizar dados:', e);
     }
   }, []);
 
@@ -88,9 +85,9 @@ const App: React.FC = () => {
       case View.HOME:
       default:
         return (
-          <HomeView 
-            player={user} 
-            isBalanceVisible={isBalanceVisible} 
+          <HomeView
+            player={user}
+            isBalanceVisible={isBalanceVisible}
             toggleBalance={() => setIsBalanceVisible(!isBalanceVisible)}
             onAction={(view) => setCurrentView(view)}
             onLogout={handleLogout}
@@ -109,6 +106,4 @@ const App: React.FC = () => {
       </div>
     </div>
   );
-};
-
-export default App;
+}
