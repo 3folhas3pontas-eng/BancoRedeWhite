@@ -37,11 +37,21 @@ import LootPopup from "./LootPopup";
 interface GameProps {
   username: string;
   initialSave: MiningSave | null;
+  bankBalance: number;
+  onSpend: (amount: number) => Promise<void>;
 }
 
-export default function Game({ username, initialSave }: GameProps) {
+export default function Game({ username, initialSave, bankBalance, onSpend }: GameProps) {
+  // bankBalance prop é a fonte da verdade para exibição e gastos
+  const [localBalance, setLocalBalance] = useState(bankBalance);
+
+  // Sincroniza se o bankBalance mudar por fora (ex: ao abrir o jogo)
+  useEffect(() => {
+    setLocalBalance(bankBalance);
+  }, [bankBalance]);
+
   const [stats, setStats] = useState<PlayerStats>(() => ({
-    money:           initialSave?.money        ?? 0,
+    money:           0, // não usado para saldo — usamos localBalance
     xp:              initialSave?.xp           ?? 0,
     level:           initialSave?.level        ?? 1,
     depth:           initialSave?.depth        ?? 0,
@@ -242,8 +252,7 @@ export default function Game({ username, initialSave }: GameProps) {
     setCurrentLoot(loot);
     audioService.playChestOpen();
 
-    // Apply rewards to stats
-    const totalMoney = loot.reduce((a, b) => a + b.money, 0);
+    // Dungeon chest: apenas XP, sem money
     const totalXp = loot.reduce((a, b) => a + b.xp, 0);
     setStatsAndRef((prev) => {
       let newXp = prev.xp + totalXp;
@@ -254,12 +263,7 @@ export default function Game({ username, initialSave }: GameProps) {
         newLevel++;
         audioService.playLevelUp();
       }
-      return {
-        ...prev,
-        money: prev.money + totalMoney,
-        xp: newXp,
-        level: newLevel,
-      };
+      return { ...prev, xp: newXp, level: newLevel };
     });
   }, [rollDungeonLoot, setStatsAndRef]);
 
@@ -284,20 +288,15 @@ export default function Game({ username, initialSave }: GameProps) {
 
     setStatsAndRef((prev) => {
         const comboMult = 1 + Math.min(prev.combo * 0.1, 3);
-        // Apply double_ores event multiplier
         const eventMult =
           beaconEventRef.current?.active && beaconEventRef.current.type === "double_ores" ? 2 : 1;
-        const moneyGain = Math.ceil(
-          config.money * comboMult * fortuneMult.current * eventMult
-        );
+        // Não ganha money — só XP
         const xpGain = Math.ceil(config.xp * eventMult);
 
         let newXp = prev.xp + xpGain;
         let newLevel = prev.level;
-        let newMoney = prev.money + moneyGain;
         const xpToNext = prev.level * 500;
 
-        // Level up check
         if (newXp >= xpToNext) {
           newXp -= xpToNext;
           newLevel++;
@@ -306,7 +305,6 @@ export default function Game({ username, initialSave }: GameProps) {
 
         return {
           ...prev,
-          money: newMoney,
           xp: newXp,
           level: newLevel,
           blocksMinedTotal: prev.blocksMinedTotal + 1,
@@ -318,6 +316,7 @@ export default function Game({ username, initialSave }: GameProps) {
 
   const handleMobKill = useCallback(
     (mobType: MobType, xp: number, money: number) => {
+      // Não ganha money ao matar mobs — só XP
       setStatsAndRef((prev) => {
         let newXp = prev.xp + xp;
         let newLevel = prev.level;
@@ -327,79 +326,60 @@ export default function Game({ username, initialSave }: GameProps) {
           newLevel++;
           audioService.playLevelUp();
         }
-        return {
-          ...prev,
-          money: prev.money + money,
-          xp: newXp,
-          level: newLevel,
-        };
+        return { ...prev, xp: newXp, level: newLevel };
       });
     },
     [setStatsAndRef]
   );
 
   const handleShopUpgrade = useCallback((type: "tntRadius" | "tntSpawn" | "beaconSpawn" | "dungeonSpawn" | "chestSpawn") => {
-    setStatsAndRef((prev) => {
-      const costs: Record<string, (lv: number) => number> = {
-        tntRadius:    (lv) => Math.ceil(500 * Math.pow(2.0, lv)),
-        tntSpawn:     (lv) => Math.ceil(300 * Math.pow(1.8, lv)),
-        beaconSpawn:  (lv) => Math.ceil(1000 * Math.pow(2.2, lv)),
-        dungeonSpawn: (lv) => Math.ceil(800 * Math.pow(2.0, lv)),
-        chestSpawn:   (lv) => Math.ceil(200 * Math.pow(1.6, lv)),
-      };
-      const maxLevels: Record<string, number> = {
-        tntRadius: 5,
-        tntSpawn: 10,
-        beaconSpawn: 8,
-        dungeonSpawn: 8,
-        chestSpawn: 10,
-      };
-      const currentLv = prev[type];
-      if (currentLv >= maxLevels[type]) return prev;
-      const cost = costs[type](currentLv);
-      if (prev.money < cost) return prev;
-      audioService.playClick();
-      return { ...prev, money: prev.money - cost, [type]: currentLv + 1 };
-    });
-  }, [setStatsAndRef]);
+    const costs: Record<string, (lv: number) => number> = {
+      tntRadius:    (lv) => Math.ceil(500 * Math.pow(2.0, lv)),
+      tntSpawn:     (lv) => Math.ceil(300 * Math.pow(1.8, lv)),
+      beaconSpawn:  (lv) => Math.ceil(1000 * Math.pow(2.2, lv)),
+      dungeonSpawn: (lv) => Math.ceil(800 * Math.pow(2.0, lv)),
+      chestSpawn:   (lv) => Math.ceil(200 * Math.pow(1.6, lv)),
+    };
+    const maxLevels: Record<string, number> = {
+      tntRadius: 5, tntSpawn: 10, beaconSpawn: 8, dungeonSpawn: 8, chestSpawn: 10,
+    };
+    const currentLv = statsRef.current[type];
+    if (currentLv >= maxLevels[type]) return;
+    const cost = costs[type](currentLv);
+    if (localBalance < cost) return;
+    audioService.playClick();
+    setLocalBalance((prev) => prev - cost);
+    onSpend(cost);
+    setStatsAndRef((prev) => ({ ...prev, [type]: currentLv + 1 }));
+  }, [localBalance, onSpend, setStatsAndRef]);
 
   const handleUpgrade = useCallback((type: "strength" | "speed") => {
-    setStatsAndRef((prev) => {
-      if (type === "strength") {
-        const cost = Math.ceil(50 * Math.pow(1.4, prev.pickStrength));
-        if (prev.money < cost) return prev;
-        return {
-          ...prev,
-          money: prev.money - cost,
-          pickStrength: +(prev.pickStrength + 0.3).toFixed(1),
-        };
-      } else {
-        const cost = Math.ceil(80 * Math.pow(1.5, prev.pickSpeed));
-        if (prev.money < cost) return prev;
-        return {
-          ...prev,
-          money: prev.money - cost,
-          pickSpeed: +(prev.pickSpeed + 0.2).toFixed(1),
-        };
-      }
-    });
-  }, [setStatsAndRef]);
+    if (type === "strength") {
+      const cost = Math.ceil(50 * Math.pow(1.4, statsRef.current.pickStrength));
+      if (localBalance < cost) return;
+      setLocalBalance((prev) => prev - cost);
+      onSpend(cost);
+      setStatsAndRef((prev) => ({ ...prev, pickStrength: +(prev.pickStrength + 0.3).toFixed(1) }));
+    } else {
+      const cost = Math.ceil(80 * Math.pow(1.5, statsRef.current.pickSpeed));
+      if (localBalance < cost) return;
+      setLocalBalance((prev) => prev - cost);
+      onSpend(cost);
+      setStatsAndRef((prev) => ({ ...prev, pickSpeed: +(prev.pickSpeed + 0.2).toFixed(1) }));
+    }
+  }, [localBalance, onSpend, setStatsAndRef]);
 
   const handleUpgradeTier = useCallback(() => {
-    setStatsAndRef((prev) => {
-      const currentIdx = TIER_ORDER.indexOf(prev.pickaxeTier);
-      if (currentIdx >= TIER_ORDER.length - 1) return prev;
-      const nextTier = TIER_ORDER[currentIdx + 1];
-      const nextData = PICKAXE_TIERS[nextTier];
-      if (prev.money < nextData.cost) return prev;
-      audioService.playLevelUp();
-      return {
-        ...prev,
-        money: prev.money - nextData.cost,
-        pickaxeTier: nextTier,
-      };
-    });
-  }, [setStatsAndRef]);
+    const currentIdx = TIER_ORDER.indexOf(statsRef.current.pickaxeTier);
+    if (currentIdx >= TIER_ORDER.length - 1) return;
+    const nextTier = TIER_ORDER[currentIdx + 1];
+    const nextData = PICKAXE_TIERS[nextTier];
+    if (localBalance < nextData.cost) return;
+    audioService.playLevelUp();
+    setLocalBalance((prev) => prev - nextData.cost);
+    onSpend(nextData.cost);
+    setStatsAndRef((prev) => ({ ...prev, pickaxeTier: nextTier }));
+  }, [localBalance, onSpend, setStatsAndRef]);
 
   const handleEnchant = useCallback(() => {
     setStatsAndRef((prev) => {
@@ -455,7 +435,7 @@ export default function Game({ username, initialSave }: GameProps) {
         beaconEvent={beaconEvent}
         onDungeonChestOpen={handleDungeonChestOpen}
       />
-      <GameHUD stats={stats} />
+      <GameHUD stats={stats} bankBalance={localBalance} />
       <EventBanner event={beaconEvent} />
       <LootPopup loot={currentLoot} onClose={closeLoot} />
       <BoostBar
@@ -471,6 +451,7 @@ export default function Game({ username, initialSave }: GameProps) {
       {showShop && (
         <ShopPanel
           stats={stats}
+          bankBalance={localBalance}
           onUpgrade={handleUpgrade}
           onUpgradeTier={handleUpgradeTier}
           onShopUpgrade={handleShopUpgrade}

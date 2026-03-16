@@ -7,10 +7,12 @@ import { loadMiningSave, MiningSave } from '@/lib/game/save';
 interface MinerarViewProps {
   onBack: () => void;
   username: string;
+  bankBalance: number;
+  onSpend: (amount: number) => Promise<void>;
 }
 
-export default function MinerarView({ onBack, username }: MinerarViewProps) {
-  const [save, setSave] = useState<MiningSave | null | undefined>(undefined); // undefined = carregando
+export default function MinerarView({ onBack, username, bankBalance, onSpend }: MinerarViewProps) {
+  const [save, setSave] = useState<MiningSave | null | undefined>(undefined);
 
   useEffect(() => {
     loadMiningSave(username).then((data) => setSave(data ?? null));
@@ -29,7 +31,6 @@ export default function MinerarView({ onBack, username }: MinerarViewProps) {
 
   return (
     <div className="fixed inset-0 z-50" style={{ background: '#0a0a0f' }}>
-      {/* Botao voltar flutuante */}
       <button
         onClick={onBack}
         className="absolute top-4 left-4 z-[100] flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all active:scale-95"
@@ -44,7 +45,12 @@ export default function MinerarView({ onBack, username }: MinerarViewProps) {
         Voltar
       </button>
 
-      <Game username={username} initialSave={save} />
+      <Game
+        username={username}
+        initialSave={save}
+        bankBalance={bankBalance}
+        onSpend={onSpend}
+      />
     </div>
   );
 }

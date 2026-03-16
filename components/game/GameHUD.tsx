@@ -5,6 +5,7 @@ import { PICKAXE_TIERS, TIER_ORDER } from "@/lib/game/constants";
 
 interface GameHUDProps {
   stats: PlayerStats;
+  bankBalance: number;
 }
 
 function getTierLabel(tier: PickaxeTier): string {
@@ -23,7 +24,7 @@ function getTierColor(tier: PickaxeTier): string {
   return colors[tier];
 }
 
-export default function GameHUD({ stats }: GameHUDProps) {
+export default function GameHUD({ stats, bankBalance }: GameHUDProps) {
   const xpToNext = stats.level * 500;
   const progress = Math.min((stats.xp / xpToNext) * 100, 100);
 
@@ -62,13 +63,19 @@ export default function GameHUD({ stats }: GameHUDProps) {
             </div>
           </div>
 
-          {/* Money */}
+          {/* Saldo do banco */}
           <div className="flex flex-col items-center">
             <span
-              className="text-lg font-bold tabular-nums"
-              style={{ color: "#FFEB3B" }}
+              className="text-[9px] font-bold tracking-widest"
+              style={{ color: "rgba(255,255,255,0.45)" }}
             >
-              {"$" + stats.money.toLocaleString()}
+              SALDO
+            </span>
+            <span
+              className="text-base font-bold tabular-nums"
+              style={{ color: "#72E8F6" }}
+            >
+              {"R$ " + bankBalance.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
             </span>
           </div>
 

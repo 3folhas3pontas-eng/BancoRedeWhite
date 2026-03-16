@@ -84,7 +84,25 @@ export default function WhiteBankApp() {
       case View.LOJAS_ABERTAS:
         return <LojasAbertasView onBack={() => setCurrentView(View.HOME)} />;
       case View.MINERAR:
-        return <MinerarView onBack={() => setCurrentView(View.HOME)} username={user.nick} />;
+        return (
+          <MinerarView
+            onBack={() => {
+              refreshUserData(user.nick);
+              setCurrentView(View.HOME);
+            }}
+            username={user.nick}
+            bankBalance={user.balance}
+            onSpend={async (amount: number) => {
+              // Debita no Supabase e atualiza estado local imediatamente
+              const newBalance = user.balance - amount;
+              setUser((prev) => prev ? { ...prev, balance: newBalance } : prev);
+              await supabase
+                .from('rede_white_accounts')
+                .update({ balance: newBalance })
+                .eq('username', user.nick);
+            }}
+          />
+        );
       case View.HOME:
       default:
         return (

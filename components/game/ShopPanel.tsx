@@ -6,6 +6,7 @@ import { audioService } from "@/lib/game/audio";
 
 interface ShopPanelProps {
   stats: PlayerStats;
+  bankBalance: number;
   onUpgrade: (type: "strength" | "speed") => void;
   onUpgradeTier: () => void;
   onShopUpgrade: (type: "tntRadius" | "tntSpawn" | "beaconSpawn" | "dungeonSpawn" | "chestSpawn") => void;
@@ -60,6 +61,7 @@ const SHOP_UPGRADES: {
 
 export default function ShopPanel({
   stats,
+  bankBalance,
   onUpgrade,
   onUpgradeTier,
   onShopUpgrade,
@@ -144,7 +146,7 @@ export default function ShopPanel({
               {"Current: "}<span style={{ color: tierColors[stats.pickaxeTier] }}>{currentTierData.name}</span>
             </p>
             <p className="font-mono text-[10px] mt-1" style={{ color: "#666" }}>
-              {"Gold: "}<span style={{ color: "#FFEB3B" }}>{"$" + stats.money.toLocaleString()}</span>
+              {"Saldo: "}<span style={{ color: "#72E8F6" }}>{"R$ " + bankBalance.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
             </p>
           </div>
         </div>
@@ -164,7 +166,7 @@ export default function ShopPanel({
               iconContent={<span style={{ color: tierColors[nextTier], fontSize: 14, textShadow: "1px 1px 0 #000" }}>{"\u26CF"}</span>}
               iconColor={tierColors[nextTier]}
               cost={nextTierData.cost}
-              canAfford={stats.money >= nextTierData.cost}
+              canAfford={bankBalance >= nextTierData.cost}
               onClick={onUpgradeTier}
             />
           )}
@@ -174,8 +176,8 @@ export default function ShopPanel({
             sublabel="Breaks blocks faster"
             iconContent={<span style={{ color: "#EF5350", fontSize: 14, textShadow: "1px 1px 0 #000" }}>{"\u2694"}</span>}
             iconColor="#EF5350"
-            cost={strengthCost}
-            canAfford={stats.money >= strengthCost}
+          cost={strengthCost}
+          canAfford={bankBalance >= strengthCost}
             onClick={() => onUpgrade("strength")}
           />
 
@@ -184,8 +186,8 @@ export default function ShopPanel({
             sublabel="Fall and dig faster"
             iconContent={<span style={{ color: "#42A5F5", fontSize: 14, textShadow: "1px 1px 0 #000" }}>{"\u26A1"}</span>}
             iconColor="#42A5F5"
-            cost={speedCost}
-            canAfford={stats.money >= speedCost}
+          cost={speedCost}
+          canAfford={bankBalance >= speedCost}
             onClick={() => onUpgrade("speed")}
           />
 
@@ -206,7 +208,7 @@ export default function ShopPanel({
                 iconContent={<span style={{ fontSize: 14 }}>{upg.icon}</span>}
                 iconColor={upg.color}
                 cost={cost}
-                canAfford={stats.money >= cost}
+                canAfford={bankBalance >= cost}
                 onClick={() => onShopUpgrade(upg.type)}
                 disabled={isMaxed}
               />

@@ -2,7 +2,6 @@ import { supabase } from '@/lib/supabase';
 import { PlayerStats, Enchantment } from '@/lib/game/types';
 
 export interface MiningSave {
-  money: number;
   xp: number;
   level: number;
   depth: number;
@@ -29,7 +28,6 @@ export async function loadMiningSave(username: string): Promise<MiningSave | nul
   if (error || !data) return null;
 
   return {
-    money:        data.money,
     xp:           data.xp,
     level:        data.level,
     depth:        data.depth,
@@ -54,7 +52,6 @@ export async function saveMiningSave(
 ): Promise<void> {
   const payload = {
     username,
-    money:        stats.money,
     xp:           stats.xp,
     level:        stats.level,
     depth:        stats.depth,
