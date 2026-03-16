@@ -84,7 +84,7 @@ export default function WhiteBankApp() {
       case View.LOJAS_ABERTAS:
         return <LojasAbertasView onBack={() => setCurrentView(View.HOME)} />;
       case View.MINERAR:
-        return <MinerarView onBack={() => setCurrentView(View.HOME)} />;
+        return <MinerarView onBack={() => setCurrentView(View.HOME)} username={user.nick} />;
       case View.HOME:
       default:
         return (

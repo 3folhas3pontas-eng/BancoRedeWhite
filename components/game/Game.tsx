@@ -24,6 +24,7 @@ import {
   DUNGEON_LOOT_TABLE,
 } from "@/lib/game/constants";
 import { audioService } from "@/lib/game/audio";
+import { saveMiningSave, MiningSave } from "@/lib/game/save";
 import GameCanvas from "./GameCanvas";
 import GameHUD from "./GameHUD";
 import ActionButtons from "./ActionButtons";
@@ -33,26 +34,52 @@ import BoostBar from "./BoostBar";
 import EventBanner from "./EventBanner";
 import LootPopup from "./LootPopup";
 
-export default function Game() {
-  const [stats, setStats] = useState<PlayerStats>({
-    money: 0,
-    xp: 0,
-    level: 1,
-    depth: 0,
-    pickaxeTier: "wood",
-    pickStrength: 1,
-    pickSpeed: 1,
-    combo: 0,
-    maxCombo: 0,
-    blocksMinedTotal: 0,
-    tntRadius: 0,
-    tntSpawn: 0,
-    beaconSpawn: 0,
-    dungeonSpawn: 0,
-    chestSpawn: 0,
-  });
+interface GameProps {
+  username: string;
+  initialSave: MiningSave | null;
+}
 
-  const [enchantments, setEnchantments] = useState<Enchantment[]>([]);
+export default function Game({ username, initialSave }: GameProps) {
+  const [stats, setStats] = useState<PlayerStats>(() => ({
+    money:           initialSave?.money        ?? 0,
+    xp:              initialSave?.xp           ?? 0,
+    level:           initialSave?.level        ?? 1,
+    depth:           initialSave?.depth        ?? 0,
+    pickaxeTier:     (initialSave?.pickaxe_tier as PickaxeTier) ?? "wood",
+    pickStrength:    initialSave?.pick_strength ?? 1,
+    pickSpeed:       initialSave?.pick_speed    ?? 1,
+    combo:           0,
+    maxCombo:        initialSave?.max_combo     ?? 0,
+    blocksMinedTotal:initialSave?.blocks_mined  ?? 0,
+    tntRadius:       initialSave?.tnt_radius    ?? 0,
+    tntSpawn:        initialSave?.tnt_spawn     ?? 0,
+    beaconSpawn:     initialSave?.beacon_spawn  ?? 0,
+    dungeonSpawn:    initialSave?.dungeon_spawn ?? 0,
+    chestSpawn:      initialSave?.chest_spawn   ?? 0,
+  }));
+
+  const [enchantments, setEnchantments] = useState<Enchantment[]>(
+    () => initialSave?.enchantments ?? []
+  );
+
+  // Refs para ter sempre os valores mais recentes nas callbacks de save
+  const statsRef = useRef(stats);
+  const enchantmentsRef = useRef(enchantments);
+  useEffect(() => { statsRef.current = stats; }, [stats]);
+  useEffect(() => { enchantmentsRef.current = enchantments; }, [enchantments]);
+
+  const doSave = useCallback(() => {
+    saveMiningSave(username, statsRef.current, enchantmentsRef.current);
+  }, [username]);
+
+  // Auto-save a cada 30 segundos
+  useEffect(() => {
+    const interval = setInterval(doSave, 30_000);
+    return () => {
+      clearInterval(interval);
+      doSave(); // salva ao desmontar (sair do jogo)
+    };
+  }, [doSave]);
   const [showShop, setShowShop] = useState(false);
   const [showEnchant, setShowEnchant] = useState(false);
 

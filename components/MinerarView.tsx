@@ -1,15 +1,35 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Game from '@/components/game/Game';
+import { loadMiningSave, MiningSave } from '@/lib/game/save';
 
 interface MinerarViewProps {
   onBack: () => void;
+  username: string;
 }
 
-export default function MinerarView({ onBack }: MinerarViewProps) {
+export default function MinerarView({ onBack, username }: MinerarViewProps) {
+  const [save, setSave] = useState<MiningSave | null | undefined>(undefined); // undefined = carregando
+
+  useEffect(() => {
+    loadMiningSave(username).then((data) => setSave(data ?? null));
+  }, [username]);
+
+  if (save === undefined) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: '#0a0a0f' }}>
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 border-4 border-[#72E8F6] border-t-transparent rounded-full animate-spin" />
+          <span className="text-white/60 text-sm font-medium">Carregando progresso...</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="fixed inset-0 z-50" style={{ background: '#0a0a0f' }}>
-      {/* Botão voltar flutuante */}
+      {/* Botao voltar flutuante */}
       <button
         onClick={onBack}
         className="absolute top-4 left-4 z-[100] flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all active:scale-95"
@@ -24,8 +44,8 @@ export default function MinerarView({ onBack }: MinerarViewProps) {
         Voltar
       </button>
 
-      {/* Jogo de mineração */}
-      <Game />
+      <Game username={username} initialSave={save} />
     </div>
   );
 }
+
