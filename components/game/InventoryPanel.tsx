@@ -122,8 +122,8 @@ export default function InventoryPanel({ inventory, onClose }: InventoryPanelPro
   }, [onClose]);
 
   // Conta total de minerios e itens
-  const totalOres = ORE_ORDER.reduce((sum, ore) => sum + inventory[ore], 0);
-  const totalDungeonItems = DUNGEON_ITEM_ORDER.reduce((sum, item) => sum + inventory[item], 0);
+  const totalOres = ORE_ORDER.reduce((sum, ore) => sum + (inventory[ore] ?? 0), 0);
+  const totalDungeonItems = DUNGEON_ITEM_ORDER.reduce((sum, item) => sum + (inventory[item] ?? 0), 0);
 
   return (
     <div
