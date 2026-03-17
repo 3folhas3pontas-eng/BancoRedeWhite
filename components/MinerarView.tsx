@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Game from '@/components/game/Game';
 import { loadMiningSave, MiningSave } from '@/lib/game/save';
+import { loadInventory, MiningInventory, DEFAULT_INVENTORY } from '@/lib/game/inventory';
 
 interface MinerarViewProps {
   onBack: () => void;
@@ -13,12 +14,19 @@ interface MinerarViewProps {
 
 export default function MinerarView({ onBack, username, bankBalance, onSpend }: MinerarViewProps) {
   const [save, setSave] = useState<MiningSave | null | undefined>(undefined);
+  const [inventory, setInventory] = useState<MiningInventory | undefined>(undefined);
 
   useEffect(() => {
-    loadMiningSave(username).then((data) => setSave(data ?? null));
+    Promise.all([
+      loadMiningSave(username),
+      loadInventory(username),
+    ]).then(([saveData, invData]) => {
+      setSave(saveData ?? null);
+      setInventory(invData ?? DEFAULT_INVENTORY);
+    });
   }, [username]);
 
-  if (save === undefined) {
+  if (save === undefined || inventory === undefined) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: '#0a0a0f' }}>
         <div className="flex flex-col items-center gap-3">
@@ -48,6 +56,7 @@ export default function MinerarView({ onBack, username, bankBalance, onSpend }: 
       <Game
         username={username}
         initialSave={save}
+        initialInventory={inventory}
         bankBalance={bankBalance}
         onSpend={onSpend}
       />

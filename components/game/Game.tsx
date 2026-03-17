@@ -25,6 +25,7 @@ import {
 } from "@/lib/game/constants";
 import { audioService } from "@/lib/game/audio";
 import { saveMiningSave, MiningSave } from "@/lib/game/save";
+import { MiningInventory, DEFAULT_INVENTORY, saveInventory, blockToOre, getDropAmount, OreType } from "@/lib/game/inventory";
 import GameCanvas from "./GameCanvas";
 import GameHUD from "./GameHUD";
 import ActionButtons from "./ActionButtons";
@@ -38,11 +39,12 @@ import InventoryPanel from "./InventoryPanel";
 interface GameProps {
   username: string;
   initialSave: MiningSave | null;
+  initialInventory: MiningInventory;
   bankBalance: number;
   onSpend: (amount: number) => Promise<void>;
 }
 
-export default function Game({ username, initialSave, bankBalance, onSpend }: GameProps) {
+export default function Game({ username, initialSave, initialInventory, bankBalance, onSpend }: GameProps) {
   // bankBalance prop é a fonte da verdade para exibição e gastos
   const [localBalance, setLocalBalance] = useState(bankBalance);
 
@@ -73,6 +75,10 @@ export default function Game({ username, initialSave, bankBalance, onSpend }: Ga
     () => initialSave?.enchantments ?? []
   );
 
+  // Inventario de minerios
+  const [inventory, setInventory] = useState<MiningInventory>(() => initialInventory ?? DEFAULT_INVENTORY);
+  const inventoryRef = useRef(inventory);
+
   // Refs para ter sempre os valores mais recentes nas callbacks de save
   const statsRef = useRef(stats);
   const enchantmentsRef = useRef(enchantments);
@@ -89,7 +95,17 @@ export default function Game({ username, initialSave, bankBalance, onSpend }: Ga
 
   const doSave = useCallback(() => {
     saveMiningSave(username, statsRef.current, enchantmentsRef.current);
+    saveInventory(username, inventoryRef.current);
   }, [username]);
+
+  // Adiciona minerio ao inventario
+  const addOre = useCallback((oreType: OreType, amount: number) => {
+    setInventory((prev) => {
+      const next = { ...prev, [oreType]: prev[oreType] + amount };
+      inventoryRef.current = next;
+      return next;
+    });
+  }, []);
 
   // Auto-save a cada 30 segundos
   useEffect(() => {
@@ -288,11 +304,17 @@ export default function Game({ username, initialSave, bankBalance, onSpend }: Ga
         triggerBeaconEvent();
       }
 
-    setStatsAndRef((prev) => {
-        const comboMult = 1 + Math.min(prev.combo * 0.1, 3);
+      // Verifica se o bloco dropa minerio
+      const oreType = blockToOre(block.type);
+      if (oreType) {
+        const eventMult = beaconEventRef.current?.active && beaconEventRef.current.type === "double_ores" ? 2 : 1;
+        const dropAmount = getDropAmount(block.type) * eventMult;
+        addOre(oreType, dropAmount);
+      }
+
+      setStatsAndRef((prev) => {
         const eventMult =
           beaconEventRef.current?.active && beaconEventRef.current.type === "double_ores" ? 2 : 1;
-        // Não ganha money — só XP
         const xpGain = Math.ceil(config.xp * eventMult);
 
         let newXp = prev.xp + xpGain;
@@ -313,7 +335,7 @@ export default function Game({ username, initialSave, bankBalance, onSpend }: Ga
         };
       });
     },
-    [triggerBeaconEvent]
+    [triggerBeaconEvent, addOre, setStatsAndRef]
   );
 
   const handleMobKill = useCallback(
@@ -471,8 +493,7 @@ export default function Game({ username, initialSave, bankBalance, onSpend }: Ga
       )}
       {showInventory && (
         <InventoryPanel
-          stats={stats}
-          enchantments={enchantments}
+          inventory={inventory}
           onClose={() => setShowInventory(false)}
         />
       )}
