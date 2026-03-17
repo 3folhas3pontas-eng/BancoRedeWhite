@@ -1007,7 +1007,7 @@ export default function GameCanvas({
         if (!block || block.type === "air") continue;
 
         // During transform event: render mineable blocks as the transformed ore
-        const isMineable = block.type !== "air" && block.type !== "spawner" &&
+        const isMineable = block.type !== "spawner" &&
           block.type !== "beacon" && block.type !== "chest" && block.type !== "dungeon_chest" && block.type !== "explosive";
         const renderType = (isTransform && transformType && isMineable) ? transformType : block.type;
         const config = BLOCK_CONFIGS[renderType];
