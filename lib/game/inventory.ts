@@ -225,6 +225,7 @@ export async function loadInventory(username: string): Promise<MiningInventory> 
 }
 
 export async function saveInventory(username: string, inventory: MiningInventory): Promise<void> {
+  // Tenta salvar todos os campos
   const { error } = await supabase
     .from('mining_inventory')
     .upsert({
@@ -233,7 +234,27 @@ export async function saveInventory(username: string, inventory: MiningInventory
       updated_at: new Date().toISOString(),
     }, { onConflict: 'username' });
 
-  if (error) {
+  // Se falhar por coluna faltando, salva apenas os minerios basicos
+  if (error && error.code === 'PGRST204') {
+    const { error: fallbackError } = await supabase
+      .from('mining_inventory')
+      .upsert({
+        username,
+        coal: inventory.coal,
+        raw_iron: inventory.raw_iron,
+        raw_copper: inventory.raw_copper,
+        lapis_lazuli: inventory.lapis_lazuli,
+        raw_gold: inventory.raw_gold,
+        redstone: inventory.redstone,
+        diamond: inventory.diamond,
+        emerald: inventory.emerald,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'username' });
+
+    if (fallbackError) {
+      console.error('[v0] Erro ao salvar inventario (fallback):', fallbackError);
+    }
+  } else if (error) {
     console.error('[v0] Erro ao salvar inventario:', error);
   }
 }
