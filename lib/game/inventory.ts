@@ -224,37 +224,51 @@ export async function loadInventory(username: string): Promise<MiningInventory> 
   };
 }
 
+// Colunas base que sempre existem na tabela mining_inventory
+const BASE_ORE_KEYS: (keyof MiningInventory)[] = [
+  'coal', 'raw_iron', 'raw_copper', 'lapis_lazuli',
+  'raw_gold', 'redstone', 'diamond', 'emerald',
+];
+
+// Colunas adicionais de dungeon (adicionadas via ALTER TABLE)
+const DUNGEON_KEYS: (keyof MiningInventory)[] = [
+  'string', 'rotten_flesh', 'bone', 'wheat', 'gunpowder',
+  'iron_ingot', 'gold_ingot', 'slimeball', 'bucket',
+  'name_tag', 'saddle', 'music_disc', 'golden_apple',
+  'enchanted_golden_apple', 'iron_horse_armor', 'gold_horse_armor',
+  'diamond_horse_armor', 'enchantment_book', 'experience_bottle',
+];
+
 export async function saveInventory(username: string, inventory: MiningInventory): Promise<void> {
-  // Tenta salvar todos os campos
+  // Monta payload apenas com as colunas base (sempre existem)
+  const basePayload: Record<string, unknown> = { username, updated_at: new Date().toISOString() };
+  for (const key of BASE_ORE_KEYS) {
+    basePayload[key] = inventory[key] ?? 0;
+  }
+
+  // Tenta incluir colunas de dungeon no mesmo upsert
+  const fullPayload = { ...basePayload };
+  for (const key of DUNGEON_KEYS) {
+    fullPayload[key] = inventory[key] ?? 0;
+  }
+
   const { error } = await supabase
     .from('mining_inventory')
-    .upsert({
-      username,
-      ...inventory,
-      updated_at: new Date().toISOString(),
-    }, { onConflict: 'username' });
+    .upsert(fullPayload, { onConflict: 'username' });
 
-  // Se falhar por coluna faltando, salva apenas os minerios basicos
-  if (error && error.code === 'PGRST204') {
+  if (!error) return;
+
+  // Qualquer erro de coluna não encontrada → faz fallback sem as colunas de dungeon
+  if (error.code === 'PGRST204' || error.message?.includes('column')) {
     const { error: fallbackError } = await supabase
       .from('mining_inventory')
-      .upsert({
-        username,
-        coal: inventory.coal,
-        raw_iron: inventory.raw_iron,
-        raw_copper: inventory.raw_copper,
-        lapis_lazuli: inventory.lapis_lazuli,
-        raw_gold: inventory.raw_gold,
-        redstone: inventory.redstone,
-        diamond: inventory.diamond,
-        emerald: inventory.emerald,
-        updated_at: new Date().toISOString(),
-      }, { onConflict: 'username' });
+      .upsert(basePayload, { onConflict: 'username' });
 
     if (fallbackError) {
-      console.error('[v0] Erro ao salvar inventario (fallback):', fallbackError);
+      console.error('[v0] Erro ao salvar inventario (base):', fallbackError);
     }
-  } else if (error) {
-    console.error('[v0] Erro ao salvar inventario:', error);
+    return;
   }
+
+  console.error('[v0] Erro ao salvar inventario:', error);
 }
