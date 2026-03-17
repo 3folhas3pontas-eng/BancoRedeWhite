@@ -258,17 +258,23 @@ export async function saveInventory(username: string, inventory: MiningInventory
 
   if (!error) return;
 
-  // Qualquer erro de coluna não encontrada → faz fallback sem as colunas de dungeon
-  if (error.code === 'PGRST204' || error.message?.includes('column')) {
+  // Se falhar por coluna não encontrada ou tabela não existe → faz fallback com apenas minerios base
+  if (error.code === 'PGRST204' || error.code === 'PGRST205' || error.message?.includes('column') || error.message?.includes('table')) {
     const { error: fallbackError } = await supabase
       .from('mining_inventory')
       .upsert(basePayload, { onConflict: 'username' });
 
-    if (fallbackError) {
-      console.error('[v0] Erro ao salvar inventario (base):', fallbackError);
+    if (fallbackError?.code !== 'PGRST205') {
+      // Se o erro de tabela ainda existir, é normal — a tabela será criada depois
+      if (fallbackError && !fallbackError.message?.includes('mining_inventory')) {
+        console.error('[v0] Erro ao salvar inventario (base):', fallbackError);
+      }
     }
     return;
   }
 
-  console.error('[v0] Erro ao salvar inventario:', error);
+  // Log apenas de erros inesperados
+  if (error.code !== 'PGRST205') {
+    console.error('[v0] Erro ao salvar inventario:', error);
+  }
 }
