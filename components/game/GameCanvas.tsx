@@ -255,13 +255,6 @@ export default function GameCanvas({
               4
             );
             const config = BLOCK_CONFIGS[b.type];
-            if (config.money > 0)
-              spawnFloatingText(
-                b.x + BLOCK_SIZE / 2,
-                b.y,
-                `+$${config.money}`,
-                "#FFEB3B"
-              );
             onBlockBreak(b);
             b.type = "air";
             b.hp = 0;
@@ -502,7 +495,7 @@ export default function GameCanvas({
             spawnFloatingText(
               hitBlock.x + BLOCK_SIZE / 2,
               hitBlock.y - 10,
-              `CHEST! +$${config.money}`,
+              "CHEST!",
               "#FFD54F"
             );
           } else if (hitBlock.type === "dungeon_chest") {
@@ -559,15 +552,6 @@ export default function GameCanvas({
             12
           );
 
-          if (config.money > 0) {
-            const moneyGain = Math.ceil(config.money * comboMult);
-            spawnFloatingText(
-              hitBlock.x + BLOCK_SIZE / 2,
-              hitBlock.y,
-              `+$${moneyGain}`,
-              "#FFEB3B"
-            );
-          }
           if (config.xp > 0) {
             spawnFloatingText(
               hitBlock.x + BLOCK_SIZE / 2,
@@ -641,8 +625,7 @@ export default function GameCanvas({
           hitMob.dead = true;
           audioService.playMobDeath(hitMob.type);
           spawnParticles(hitMob.x, hitMob.y - hitMob.height / 2, mobConfig.hitParticles, 15);
-          spawnFloatingText(hitMob.x, hitMob.y - hitMob.height - 10, `+$${mobConfig.money}`, "#FFEB3B");
-          spawnFloatingText(hitMob.x, hitMob.y - hitMob.height - 26, `+${mobConfig.xp} XP`, "#4CAF50");
+          spawnFloatingText(hitMob.x, hitMob.y - hitMob.height - 10, `+${mobConfig.xp} XP`, "#4CAF50");
           screenShakeRef.current = Math.min(screenShakeRef.current + 5, 12);
           if (onMobKill) onMobKill(hitMob.type, mobConfig.xp, mobConfig.money);
         }

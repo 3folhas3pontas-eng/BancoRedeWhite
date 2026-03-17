@@ -1,14 +1,11 @@
 "use client";
 
-import { useState } from 'react';
-import { PlayerStats, PickaxeTier, Enchantment } from "@/lib/game/types";
-import { PICKAXE_TIERS, TIER_ORDER } from "@/lib/game/constants";
-import InventoryPanel from "./InventoryPanel";
+import { PlayerStats, PickaxeTier } from "@/lib/game/types";
+import { PICKAXE_TIERS } from "@/lib/game/constants";
 
 interface GameHUDProps {
   stats: PlayerStats;
   bankBalance: number;
-  enchantments: Enchantment[];
 }
 
 function getTierLabel(tier: PickaxeTier): string {
@@ -27,24 +24,22 @@ function getTierColor(tier: PickaxeTier): string {
   return colors[tier];
 }
 
-export default function GameHUD({ stats, bankBalance, enchantments }: GameHUDProps) {
-  const [showInventory, setShowInventory] = useState(false);
+export default function GameHUD({ stats, bankBalance }: GameHUDProps) {
   const xpToNext = stats.level * 500;
   const progress = Math.min((stats.xp / xpToNext) * 100, 100);
 
   return (
-    <>
-      <div className="fixed top-0 left-0 right-0 z-50 pointer-events-none">
-        <div className="flex flex-col items-center gap-2 p-3 w-full max-w-lg mx-auto">
-          {/* Main HUD bar */}
-          <div
-            className="flex items-center justify-between w-full px-4 py-2.5 rounded-2xl border pointer-events-auto"
-            style={{
-              background: "rgba(10, 10, 15, 0.85)",
-              backdropFilter: "blur(12px)",
-              borderColor: "rgba(255,255,255,0.08)",
-            }}
-          >
+    <div className="fixed top-0 left-0 right-0 z-50 pointer-events-none">
+      <div className="flex flex-col items-center gap-2 p-3 w-full max-w-lg mx-auto">
+        {/* Main HUD bar */}
+        <div
+          className="flex items-center justify-between w-full px-4 py-2.5 rounded-2xl border pointer-events-auto"
+          style={{
+            background: "rgba(10, 10, 15, 0.85)",
+            backdropFilter: "blur(12px)",
+            borderColor: "rgba(255,255,255,0.08)",
+          }}
+        >
           {/* Level + XP */}
           <div className="flex flex-col items-start min-w-0">
             <span
@@ -101,7 +96,7 @@ export default function GameHUD({ stats, bankBalance, enchantments }: GameHUDPro
           </div>
         </div>
 
-        {/* Pickaxe tier + Combo + Inventory */}
+        {/* Pickaxe tier + Combo */}
         <div className="flex items-center justify-between w-full px-1">
           <span
             className="text-[10px] font-bold px-2 py-0.5 rounded-full"
@@ -126,32 +121,8 @@ export default function GameHUD({ stats, bankBalance, enchantments }: GameHUDPro
               {stats.combo + "x COMBO"}
             </span>
           )}
-
-          {/* Botão Inventário */}
-          <button
-            onClick={() => setShowInventory(true)}
-            className="text-[10px] font-bold px-2.5 py-1.5 rounded-lg transition-all active:scale-95 pointer-events-auto"
-            style={{
-              background: "rgba(114, 232, 246, 0.15)",
-              color: "#72E8F6",
-              border: "1px solid rgba(114, 232, 246, 0.3)",
-              cursor: "pointer",
-            }}
-          >
-            INV
-          </button>
         </div>
       </div>
     </div>
-
-    {/* Inventory Panel */}
-    {showInventory && (
-      <InventoryPanel
-        stats={stats}
-        enchantments={enchantments}
-        onClose={() => setShowInventory(false)}
-      />
-    )}
-    </>
   );
 }

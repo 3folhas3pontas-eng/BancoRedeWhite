@@ -33,6 +33,7 @@ import EnchantPanel from "./EnchantPanel";
 import BoostBar from "./BoostBar";
 import EventBanner from "./EventBanner";
 import LootPopup from "./LootPopup";
+import InventoryPanel from "./InventoryPanel";
 
 interface GameProps {
   username: string;
@@ -100,6 +101,7 @@ export default function Game({ username, initialSave, bankBalance, onSpend }: Ga
   }, [doSave]);
   const [showShop, setShowShop] = useState(false);
   const [showEnchant, setShowEnchant] = useState(false);
+  const [showInventory, setShowInventory] = useState(false);
 
   // Boost system
   const [boostCharge, setBoostCharge] = useState(0); // 0..1
@@ -435,7 +437,7 @@ export default function Game({ username, initialSave, bankBalance, onSpend }: Ga
         beaconEvent={beaconEvent}
         onDungeonChestOpen={handleDungeonChestOpen}
       />
-      <GameHUD stats={stats} bankBalance={localBalance} enchantments={enchantments} />
+      <GameHUD stats={stats} bankBalance={localBalance} />
       <EventBanner event={beaconEvent} />
       <LootPopup loot={currentLoot} onClose={closeLoot} />
       <BoostBar
@@ -447,6 +449,7 @@ export default function Game({ username, initialSave, bankBalance, onSpend }: Ga
       <ActionButtons
         onShop={() => setShowShop(true)}
         onEnchant={() => setShowEnchant(true)}
+        onInventory={() => setShowInventory(true)}
       />
       {showShop && (
         <ShopPanel
@@ -464,6 +467,13 @@ export default function Game({ username, initialSave, bankBalance, onSpend }: Ga
           enchantments={enchantments}
           onEnchant={handleEnchant}
           onClose={() => setShowEnchant(false)}
+        />
+      )}
+      {showInventory && (
+        <InventoryPanel
+          stats={stats}
+          enchantments={enchantments}
+          onClose={() => setShowInventory(false)}
         />
       )}
     </div>
