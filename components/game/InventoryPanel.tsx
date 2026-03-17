@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { MiningInventory, ORE_CONFIG, OreType } from "@/lib/game/inventory";
+import { MiningInventory, ORE_CONFIG, DUNGEON_ITEM_CONFIG, OreType, DungeonItemType } from "@/lib/game/inventory";
 import { audioService } from "@/lib/game/audio";
 
 interface InventoryPanelProps {
@@ -9,10 +9,26 @@ interface InventoryPanelProps {
   onClose: () => void;
 }
 
-const SLOT_ORDER: OreType[] = [
+const ORE_ORDER: OreType[] = [
   'coal', 'raw_iron', 'raw_copper', 'lapis_lazuli',
   'raw_gold', 'redstone', 'diamond', 'emerald'
 ];
+
+const DUNGEON_ITEM_ORDER: DungeonItemType[] = [
+  'string', 'rotten_flesh', 'bone', 'wheat', 'gunpowder',
+  'iron_ingot', 'gold_ingot', 'slimeball', 'bucket',
+  'name_tag', 'saddle', 'music_disc', 'golden_apple',
+  'enchantment_book', 'iron_horse_armor', 'enchanted_golden_apple',
+  'gold_horse_armor', 'diamond_horse_armor', 'experience_bottle'
+];
+
+const RARITY_BORDER: Record<string, string> = {
+  common: "#373737",
+  uncommon: "#4CAF50",
+  rare: "#2196F3",
+  epic: "#9C27B0",
+  legendary: "#FFD700",
+};
 
 // Minecraft slot component
 function Slot({
@@ -20,42 +36,46 @@ function Slot({
   count,
   name,
   empty,
+  rarity,
 }: {
   texture?: string;
   count?: number;
   name?: string;
   empty?: boolean;
+  rarity?: string;
 }) {
   const hasItems = count !== undefined && count > 0;
+  const borderColor = rarity && hasItems ? RARITY_BORDER[rarity] : "#373737";
 
   return (
     <div
       className="relative flex items-center justify-center"
       style={{
-        width: 48,
-        height: 48,
+        width: 40,
+        height: 40,
         background: "#8B8B8B",
         border: "2px solid",
-        borderTopColor: "#373737",
-        borderLeftColor: "#373737",
+        borderTopColor: borderColor,
+        borderLeftColor: borderColor,
         borderBottomColor: "#FFFFFF",
         borderRightColor: "#FFFFFF",
         imageRendering: "pixelated",
+        boxShadow: hasItems && rarity && rarity !== 'common' ? `inset 0 0 8px ${RARITY_BORDER[rarity]}44` : "none",
       }}
       title={name ? `${name}: ${count || 0}` : undefined}
     >
       {!empty && texture && (
         <div
           style={{
-            width: 32,
-            height: 32,
+            width: 28,
+            height: 28,
             backgroundImage: `url(${texture})`,
             backgroundSize: "contain",
             backgroundRepeat: "no-repeat",
             backgroundPosition: "center",
             imageRendering: "pixelated",
-            opacity: hasItems ? 1 : 0.2,
-            filter: hasItems ? "none" : "grayscale(80%)",
+            opacity: hasItems ? 1 : 0.15,
+            filter: hasItems ? "none" : "grayscale(100%)",
           }}
         />
       )}
@@ -63,13 +83,13 @@ function Slot({
         <span
           style={{
             position: "absolute",
-            bottom: 2,
-            right: 4,
+            bottom: 1,
+            right: 2,
             color: "#FFFFFF",
-            fontSize: 14,
+            fontSize: 11,
             fontWeight: "bold",
             fontFamily: "monospace",
-            textShadow: "2px 2px 0 #3F3F3F, -1px -1px 0 #3F3F3F, 1px -1px 0 #3F3F3F, -1px 1px 0 #3F3F3F",
+            textShadow: "1px 1px 0 #3F3F3F, -1px -1px 0 #3F3F3F, 1px -1px 0 #3F3F3F, -1px 1px 0 #3F3F3F",
           }}
         >
           {count > 999 ? "999+" : count}
@@ -101,12 +121,14 @@ export default function InventoryPanel({ inventory, onClose }: InventoryPanelPro
     };
   }, [onClose]);
 
-  const totalItems = Object.values(inventory).reduce((a, b) => a + b, 0);
+  // Conta total de minerios e itens
+  const totalOres = ORE_ORDER.reduce((sum, ore) => sum + inventory[ore], 0);
+  const totalDungeonItems = DUNGEON_ITEM_ORDER.reduce((sum, item) => sum + inventory[item], 0);
 
   return (
     <div
       className="fixed inset-0 z-[200] flex items-center justify-center"
-      style={{ background: "rgba(0, 0, 0, 0.7)" }}
+      style={{ background: "rgba(0, 0, 0, 0.75)" }}
     >
       <div
         ref={panelRef}
@@ -118,8 +140,11 @@ export default function InventoryPanel({ inventory, onClose }: InventoryPanelPro
           borderBottomColor: "#555555",
           borderRightColor: "#555555",
           boxShadow: "8px 8px 32px rgba(0,0,0,0.6)",
-          padding: 8,
+          padding: 10,
           imageRendering: "pixelated",
+          maxWidth: "95vw",
+          maxHeight: "90vh",
+          overflowY: "auto",
         }}
       >
         {/* Title */}
@@ -127,84 +152,111 @@ export default function InventoryPanel({ inventory, onClose }: InventoryPanelPro
           className="text-center font-mono font-bold"
           style={{
             color: "#404040",
-            fontSize: 14,
+            fontSize: 13,
             textShadow: "1px 1px 0 #FFFFFF",
             marginBottom: 8,
             letterSpacing: 1,
           }}
         >
-          Minerios Coletados
+          INVENTARIO
         </div>
 
-        {/* Main ore grid - 4x2 */}
-        <div
-          style={{
-            background: "#8B8B8B",
-            border: "2px solid",
-            borderTopColor: "#373737",
-            borderLeftColor: "#373737",
-            borderBottomColor: "#FFFFFF",
-            borderRightColor: "#FFFFFF",
-            padding: 6,
-          }}
-        >
+        {/* Minerios section */}
+        <div style={{ marginBottom: 10 }}>
           <div
+            className="font-mono font-bold"
             style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(4, 48px)",
-              gap: 4,
+              color: "#555",
+              fontSize: 10,
+              marginBottom: 4,
+              textTransform: "uppercase",
+              letterSpacing: 1,
             }}
           >
-            {SLOT_ORDER.map((oreType) => {
-              const config = ORE_CONFIG[oreType];
-              const count = inventory[oreType];
-              return (
-                <Slot
-                  key={oreType}
-                  texture={config.texture}
-                  count={count}
-                  name={config.name}
-                />
-              );
-            })}
+            Minerios ({totalOres})
+          </div>
+          <div
+            style={{
+              background: "#8B8B8B",
+              border: "2px solid",
+              borderTopColor: "#373737",
+              borderLeftColor: "#373737",
+              borderBottomColor: "#FFFFFF",
+              borderRightColor: "#FFFFFF",
+              padding: 4,
+            }}
+          >
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(4, 40px)",
+                gap: 2,
+              }}
+            >
+              {ORE_ORDER.map((oreType) => {
+                const config = ORE_CONFIG[oreType];
+                const count = inventory[oreType];
+                return (
+                  <Slot
+                    key={oreType}
+                    texture={config.texture}
+                    count={count}
+                    name={config.name}
+                  />
+                );
+              })}
+            </div>
           </div>
         </div>
 
-        {/* Hotbar section - 9 empty slots */}
-        <div
-          style={{
-            marginTop: 12,
-            background: "#8B8B8B",
-            border: "2px solid",
-            borderTopColor: "#373737",
-            borderLeftColor: "#373737",
-            borderBottomColor: "#FFFFFF",
-            borderRightColor: "#FFFFFF",
-            padding: 6,
-          }}
-        >
+        {/* Dungeon items section */}
+        <div>
           <div
+            className="font-mono font-bold"
             style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(9, 36px)",
-              gap: 2,
+              color: "#555",
+              fontSize: 10,
+              marginBottom: 4,
+              textTransform: "uppercase",
+              letterSpacing: 1,
             }}
           >
-            {Array.from({ length: 9 }).map((_, i) => (
-              <div
-                key={`hotbar-${i}`}
-                style={{
-                  width: 36,
-                  height: 36,
-                  background: "#8B8B8B",
-                  border: "2px solid",
-                  borderTopColor: "#373737",
-                  borderLeftColor: "#373737",
-                  borderBottomColor: "#FFFFFF",
-                  borderRightColor: "#FFFFFF",
-                }}
-              />
-            ))}
+            Itens de Dungeon ({totalDungeonItems})
+          </div>
+          <div
+            style={{
+              background: "#8B8B8B",
+              border: "2px solid",
+              borderTopColor: "#373737",
+              borderLeftColor: "#373737",
+              borderBottomColor: "#FFFFFF",
+              borderRightColor: "#FFFFFF",
+              padding: 4,
+            }}
+          >
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(5, 40px)",
+                gap: 2,
+              }}
+            >
+              {DUNGEON_ITEM_ORDER.map((itemType) => {
+                const config = DUNGEON_ITEM_CONFIG[itemType];
+                const count = inventory[itemType];
+                return (
+                  <Slot
+                    key={itemType}
+                    texture={config.texture}
+                    count={count}
+                    name={config.name}
+                    rarity={config.rarity}
+                  />
+                );
+              })}
+              {/* Empty slots to fill row */}
+              <Slot empty />
+            </div>
           </div>
         </div>
 
@@ -213,10 +265,10 @@ export default function InventoryPanel({ inventory, onClose }: InventoryPanelPro
           className="flex justify-between items-center font-mono"
           style={{ marginTop: 8, padding: "0 4px" }}
         >
-          <span style={{ color: "#404040", fontSize: 11 }}>
-            Total: <strong style={{ color: "#2E7D32" }}>{totalItems}</strong> itens
+          <span style={{ color: "#404040", fontSize: 10 }}>
+            Total: <strong style={{ color: "#2E7D32" }}>{totalOres + totalDungeonItems}</strong> itens
           </span>
-          <span style={{ color: "#6D6D6D", fontSize: 10 }}>
+          <span style={{ color: "#6D6D6D", fontSize: 9 }}>
             [E] ou [ESC] para fechar
           </span>
         </div>

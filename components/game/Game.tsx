@@ -25,7 +25,7 @@ import {
 } from "@/lib/game/constants";
 import { audioService } from "@/lib/game/audio";
 import { saveMiningSave, MiningSave } from "@/lib/game/save";
-import { MiningInventory, DEFAULT_INVENTORY, saveInventory, blockToOre, getDropAmount, OreType } from "@/lib/game/inventory";
+import { MiningInventory, DEFAULT_INVENTORY, saveInventory, blockToOre, getDropAmount, OreType, lootNameToItemType, getLootAmount, DungeonItemType } from "@/lib/game/inventory";
 import GameCanvas from "./GameCanvas";
 import GameHUD from "./GameHUD";
 import ActionButtons from "./ActionButtons";
@@ -102,6 +102,16 @@ export default function Game({ username, initialSave, initialInventory, bankBala
   const addOre = useCallback((oreType: OreType, amount: number) => {
     setInventory((prev) => {
       const next = { ...prev, [oreType]: prev[oreType] + amount };
+      inventoryRef.current = next;
+      return next;
+    });
+  }, []);
+
+  // Adiciona item (minerio ou dungeon) ao inventario
+  const addItem = useCallback((itemType: OreType | DungeonItemType, amount: number) => {
+    setInventory((prev) => {
+      const currentAmount = prev[itemType as keyof MiningInventory] ?? 0;
+      const next = { ...prev, [itemType]: currentAmount + amount };
       inventoryRef.current = next;
       return next;
     });
@@ -270,6 +280,15 @@ export default function Game({ username, initialSave, initialInventory, bankBala
     setCurrentLoot(loot);
     audioService.playChestOpen();
 
+    // Adiciona itens ao inventario
+    for (const item of loot) {
+      const itemType = lootNameToItemType(item.name);
+      if (itemType) {
+        const amount = getLootAmount(item.name);
+        addItem(itemType, amount);
+      }
+    }
+
     // Dungeon chest: apenas XP, sem money
     const totalXp = loot.reduce((a, b) => a + b.xp, 0);
     setStatsAndRef((prev) => {
@@ -283,7 +302,7 @@ export default function Game({ username, initialSave, initialInventory, bankBala
       }
       return { ...prev, xp: newXp, level: newLevel };
     });
-  }, [rollDungeonLoot, setStatsAndRef]);
+  }, [rollDungeonLoot, setStatsAndRef, addItem]);
 
   const closeLoot = useCallback(() => setCurrentLoot(null), []);
 
