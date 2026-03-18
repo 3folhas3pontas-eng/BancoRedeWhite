@@ -1,9 +1,12 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
   title: 'WhiteBank | RedeWhite',
   description: 'Gestão de coins para jogadores da RedeWhite.',
+};
+
+export const viewport: Viewport = {
   themeColor: '#ffffff',
 };
 

@@ -7,7 +7,7 @@ import { audioService } from "@/lib/game/audio";
 interface ShopPanelProps {
   stats: PlayerStats;
   bankBalance: number;
-  onUpgrade: (type: "strength" | "speed") => void;
+  onUpgrade: (type: "speed") => void;
   onUpgradeTier: () => void;
   onShopUpgrade: (type: "tntRadius" | "tntSpawn" | "beaconSpawn" | "dungeonSpawn" | "chestSpawn") => void;
   onClose: () => void;
@@ -72,7 +72,6 @@ export default function ShopPanel({
   const nextTierData = nextTier ? PICKAXE_TIERS[nextTier] : null;
   const currentTierData = PICKAXE_TIERS[stats.pickaxeTier];
 
-  const strengthCost = Math.ceil(50 * Math.pow(1.4, stats.pickStrength));
   const speedCost = Math.ceil(80 * Math.pow(1.5, stats.pickSpeed));
 
   const tierColors: Record<PickaxeTier, string> = {
@@ -170,16 +169,6 @@ export default function ShopPanel({
               onClick={onUpgradeTier}
             />
           )}
-
-          <ShopButton
-            label={"Strength (Lv." + stats.pickStrength.toFixed(1) + ")"}
-            sublabel="Breaks blocks faster"
-            iconContent={<span style={{ color: "#EF5350", fontSize: 14, textShadow: "1px 1px 0 #000" }}>{"\u2694"}</span>}
-            iconColor="#EF5350"
-          cost={strengthCost}
-          canAfford={bankBalance >= strengthCost}
-            onClick={() => onUpgrade("strength")}
-          />
 
           <ShopButton
             label={"Speed (Lv." + stats.pickSpeed.toFixed(1) + ")"}

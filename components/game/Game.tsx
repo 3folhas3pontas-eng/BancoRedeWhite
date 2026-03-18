@@ -396,20 +396,12 @@ export default function Game({ username, initialSave, initialInventory, bankBala
     setStatsAndRef((prev) => ({ ...prev, [type]: currentLv + 1 }));
   }, [localBalance, onSpend, setStatsAndRef]);
 
-  const handleUpgrade = useCallback((type: "strength" | "speed") => {
-    if (type === "strength") {
-      const cost = Math.ceil(50 * Math.pow(1.4, statsRef.current.pickStrength));
-      if (localBalance < cost) return;
-      setLocalBalance((prev) => prev - cost);
-      onSpend(cost);
-      setStatsAndRef((prev) => ({ ...prev, pickStrength: +(prev.pickStrength + 0.3).toFixed(1) }));
-    } else {
-      const cost = Math.ceil(80 * Math.pow(1.5, statsRef.current.pickSpeed));
-      if (localBalance < cost) return;
-      setLocalBalance((prev) => prev - cost);
-      onSpend(cost);
-      setStatsAndRef((prev) => ({ ...prev, pickSpeed: +(prev.pickSpeed + 0.2).toFixed(1) }));
-    }
+  const handleUpgrade = useCallback((type: "speed") => {
+    const cost = Math.ceil(80 * Math.pow(1.5, statsRef.current.pickSpeed));
+    if (localBalance < cost) return;
+    setLocalBalance((prev) => prev - cost);
+    onSpend(cost);
+    setStatsAndRef((prev) => ({ ...prev, pickSpeed: +(prev.pickSpeed + 0.2).toFixed(1) }));
   }, [localBalance, onSpend, setStatsAndRef]);
 
   const handleUpgradeTier = useCallback(() => {
