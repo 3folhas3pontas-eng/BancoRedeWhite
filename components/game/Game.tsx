@@ -25,7 +25,7 @@ import {
 } from "@/lib/game/constants";
 import { audioService } from "@/lib/game/audio";
 import { saveMiningSave, MiningSave } from "@/lib/game/save";
-import { MiningInventory, DEFAULT_INVENTORY, saveInventory, blockToOre, getDropAmount, OreType, lootNameToItemType, getLootAmount, DungeonItemType } from "@/lib/game/inventory";
+import { MiningInventory, DEFAULT_INVENTORY, saveInventoryWithSync, fetchInventoryFromDB, blockToOre, getDropAmount, OreType, lootNameToItemType, getLootAmount, DungeonItemType } from "@/lib/game/inventory";
 import GameCanvas from "./GameCanvas";
 import GameHUD from "./GameHUD";
 import ActionButtons from "./ActionButtons";
@@ -78,6 +78,8 @@ export default function Game({ username, initialSave, initialInventory, bankBala
   // Inventario de minerios
   const [inventory, setInventory] = useState<MiningInventory>(() => initialInventory ?? DEFAULT_INVENTORY);
   const inventoryRef = useRef(inventory);
+  // Referencia para o ultimo inventario salvo (usado para calcular delta)
+  const lastSavedInventoryRef = useRef<MiningInventory>({ ...initialInventory } ?? { ...DEFAULT_INVENTORY });
 
   // Refs para ter sempre os valores mais recentes nas callbacks de save
   const statsRef = useRef(stats);
@@ -93,9 +95,18 @@ export default function Game({ username, initialSave, initialInventory, bankBala
     });
   }, []);
 
-  const doSave = useCallback(() => {
+  const doSave = useCallback(async () => {
     saveMiningSave(username, statsRef.current, enchantmentsRef.current);
-    saveInventory(username, inventoryRef.current);
+    // Usa sync inteligente: busca banco, calcula delta, faz merge
+    const syncedInventory = await saveInventoryWithSync(
+      username,
+      inventoryRef.current,
+      lastSavedInventoryRef.current
+    );
+    // Atualiza o state local com o inventario sincronizado
+    setInventory(syncedInventory);
+    inventoryRef.current = syncedInventory;
+    lastSavedInventoryRef.current = { ...syncedInventory };
   }, [username]);
 
   // Adiciona minerio ao inventario
@@ -125,6 +136,32 @@ export default function Game({ username, initialSave, initialInventory, bankBala
       doSave(); // salva ao desmontar (sair do jogo)
     };
   }, [doSave]);
+
+  // Refresh do inventario do banco a cada 10 segundos (detecta coletas do plugin Minecraft)
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      const dbInventory = await fetchInventoryFromDB(username);
+      if (dbInventory) {
+        // Calcula os novos itens minerados desde o ultimo save
+        const currentLocal = inventoryRef.current;
+        const lastSaved = lastSavedInventoryRef.current;
+        
+        // Para cada item: valor final = banco + (local - ultimo_salvo)
+        const merged: MiningInventory = { ...DEFAULT_INVENTORY };
+        const keys = Object.keys(DEFAULT_INVENTORY) as (keyof MiningInventory)[];
+        for (const key of keys) {
+          const delta = Math.max(0, currentLocal[key] - lastSaved[key]);
+          merged[key] = dbInventory[key] + delta;
+        }
+        
+        setInventory(merged);
+        inventoryRef.current = merged;
+        // Atualiza a referencia do ultimo salvo para o banco atual
+        lastSavedInventoryRef.current = { ...dbInventory };
+      }
+    }, 10_000);
+    return () => clearInterval(interval);
+  }, [username]);
   const [showShop, setShowShop] = useState(false);
   const [showEnchant, setShowEnchant] = useState(false);
   const [showInventory, setShowInventory] = useState(false);

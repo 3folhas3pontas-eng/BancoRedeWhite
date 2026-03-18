@@ -180,6 +180,23 @@ export const DEFAULT_INVENTORY: MiningInventory = {
   experience_bottle: 0,
 };
 
+// Todas as chaves do inventario
+const ALL_INVENTORY_KEYS: (keyof MiningInventory)[] = [
+  'coal', 'raw_iron', 'raw_copper', 'lapis_lazuli', 'raw_gold', 'redstone', 'diamond', 'emerald',
+  'string', 'rotten_flesh', 'bone', 'wheat', 'gunpowder', 'iron_ingot', 'gold_ingot', 'slimeball',
+  'bucket', 'name_tag', 'saddle', 'music_disc', 'golden_apple', 'enchanted_golden_apple',
+  'iron_horse_armor', 'gold_horse_armor', 'diamond_horse_armor', 'enchantment_book', 'experience_bottle',
+];
+
+// Converte data do banco para MiningInventory
+function dataToInventory(data: Record<string, unknown>): MiningInventory {
+  const inv = { ...DEFAULT_INVENTORY };
+  for (const key of ALL_INVENTORY_KEYS) {
+    inv[key] = typeof data[key] === 'number' ? data[key] : 0;
+  }
+  return inv;
+}
+
 export async function loadInventory(username: string): Promise<MiningInventory> {
   const { data, error } = await supabase
     .from('mining_inventory')
@@ -191,37 +208,44 @@ export async function loadInventory(username: string): Promise<MiningInventory> 
     return { ...DEFAULT_INVENTORY };
   }
 
-  return {
-    // Minerios
-    coal: data.coal ?? 0,
-    raw_iron: data.raw_iron ?? 0,
-    raw_copper: data.raw_copper ?? 0,
-    lapis_lazuli: data.lapis_lazuli ?? 0,
-    raw_gold: data.raw_gold ?? 0,
-    redstone: data.redstone ?? 0,
-    diamond: data.diamond ?? 0,
-    emerald: data.emerald ?? 0,
-    // Itens de dungeon
-    string: data.string ?? 0,
-    rotten_flesh: data.rotten_flesh ?? 0,
-    bone: data.bone ?? 0,
-    wheat: data.wheat ?? 0,
-    gunpowder: data.gunpowder ?? 0,
-    iron_ingot: data.iron_ingot ?? 0,
-    gold_ingot: data.gold_ingot ?? 0,
-    slimeball: data.slimeball ?? 0,
-    bucket: data.bucket ?? 0,
-    name_tag: data.name_tag ?? 0,
-    saddle: data.saddle ?? 0,
-    music_disc: data.music_disc ?? 0,
-    golden_apple: data.golden_apple ?? 0,
-    enchanted_golden_apple: data.enchanted_golden_apple ?? 0,
-    iron_horse_armor: data.iron_horse_armor ?? 0,
-    gold_horse_armor: data.gold_horse_armor ?? 0,
-    diamond_horse_armor: data.diamond_horse_armor ?? 0,
-    enchantment_book: data.enchantment_book ?? 0,
-    experience_bottle: data.experience_bottle ?? 0,
-  };
+  return dataToInventory(data as Record<string, unknown>);
+}
+
+// Busca inventario atual do banco (para sync)
+export async function fetchInventoryFromDB(username: string): Promise<MiningInventory | null> {
+  const { data, error } = await supabase
+    .from('mining_inventory')
+    .select('*')
+    .eq('username', username)
+    .single();
+
+  if (error || !data) return null;
+  return dataToInventory(data as Record<string, unknown>);
+}
+
+// Calcula o delta (itens novos minerados na sessao)
+export function calculateDelta(
+  lastSaved: MiningInventory,
+  current: MiningInventory
+): MiningInventory {
+  const delta = { ...DEFAULT_INVENTORY };
+  for (const key of ALL_INVENTORY_KEYS) {
+    // Delta = quanto o jogador minerou desde o ultimo save
+    delta[key] = Math.max(0, current[key] - lastSaved[key]);
+  }
+  return delta;
+}
+
+// Faz merge do inventario do banco com os novos itens minerados
+export function mergeInventory(
+  dbInventory: MiningInventory,
+  delta: MiningInventory
+): MiningInventory {
+  const merged = { ...DEFAULT_INVENTORY };
+  for (const key of ALL_INVENTORY_KEYS) {
+    merged[key] = dbInventory[key] + delta[key];
+  }
+  return merged;
 }
 
 // Colunas base que sempre existem na tabela mining_inventory
@@ -239,42 +263,71 @@ const DUNGEON_KEYS: (keyof MiningInventory)[] = [
   'diamond_horse_armor', 'enchantment_book', 'experience_bottle',
 ];
 
-export async function saveInventory(username: string, inventory: MiningInventory): Promise<void> {
-  // Monta payload apenas com as colunas base (sempre existem)
-  const basePayload: Record<string, unknown> = { username, updated_at: new Date().toISOString() };
-  for (const key of BASE_ORE_KEYS) {
-    basePayload[key] = inventory[key] ?? 0;
-  }
-
-  // Tenta incluir colunas de dungeon no mesmo upsert
-  const fullPayload = { ...basePayload };
-  for (const key of DUNGEON_KEYS) {
-    fullPayload[key] = inventory[key] ?? 0;
+// Salva o inventario diretamente (sem sync - usado internamente)
+async function saveInventoryDirect(username: string, inventory: MiningInventory): Promise<boolean> {
+  const payload: Record<string, unknown> = { username, updated_at: new Date().toISOString() };
+  for (const key of ALL_INVENTORY_KEYS) {
+    payload[key] = inventory[key] ?? 0;
   }
 
   const { error } = await supabase
     .from('mining_inventory')
-    .upsert(fullPayload, { onConflict: 'username' });
+    .upsert(payload, { onConflict: 'username' });
 
-  if (!error) return;
+  if (!error) return true;
 
-  // Se falhar por coluna não encontrada ou tabela não existe → faz fallback com apenas minerios base
-  if (error.code === 'PGRST204' || error.code === 'PGRST205' || error.message?.includes('column') || error.message?.includes('table')) {
+  // Fallback: tenta salvar apenas colunas base
+  if (error.code === 'PGRST204' || error.message?.includes('column')) {
+    const basePayload: Record<string, unknown> = { username, updated_at: new Date().toISOString() };
+    for (const key of BASE_ORE_KEYS) {
+      basePayload[key] = inventory[key] ?? 0;
+    }
     const { error: fallbackError } = await supabase
       .from('mining_inventory')
       .upsert(basePayload, { onConflict: 'username' });
-
-    if (fallbackError?.code !== 'PGRST205') {
-      // Se o erro de tabela ainda existir, é normal — a tabela será criada depois
-      if (fallbackError && !fallbackError.message?.includes('mining_inventory')) {
-        console.error('[v0] Erro ao salvar inventario (base):', fallbackError);
-      }
-    }
-    return;
+    return !fallbackError;
   }
 
-  // Log apenas de erros inesperados
-  if (error.code !== 'PGRST205') {
-    console.error('[v0] Erro ao salvar inventario:', error);
+  return false;
+}
+
+// Salva inventario COM sincronizacao inteligente
+// Busca o estado atual do banco, calcula o delta, e faz merge
+export async function saveInventoryWithSync(
+  username: string,
+  currentInventory: MiningInventory,
+  lastSavedInventory: MiningInventory
+): Promise<MiningInventory> {
+  // 1. Busca o inventario atual do banco
+  const dbInventory = await fetchInventoryFromDB(username);
+  
+  if (!dbInventory) {
+    // Primeira vez - salva direto
+    await saveInventoryDirect(username, currentInventory);
+    return currentInventory;
   }
+
+  // 2. Calcula o delta (novos itens minerados desde o ultimo save)
+  const delta = calculateDelta(lastSavedInventory, currentInventory);
+  
+  // 3. Verifica se tem algo novo para salvar
+  const hasNewItems = ALL_INVENTORY_KEYS.some(key => delta[key] > 0);
+  
+  if (!hasNewItems) {
+    // Nada novo minerado - retorna o que tem no banco
+    return dbInventory;
+  }
+
+  // 4. Faz merge: banco + novos itens minerados
+  const mergedInventory = mergeInventory(dbInventory, delta);
+  
+  // 5. Salva o resultado
+  await saveInventoryDirect(username, mergedInventory);
+  
+  return mergedInventory;
+}
+
+// Funcao legada para compatibilidade (salva direto sem sync)
+export async function saveInventory(username: string, inventory: MiningInventory): Promise<void> {
+  await saveInventoryDirect(username, inventory);
 }
