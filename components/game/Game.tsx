@@ -79,12 +79,14 @@ export default function Game({ username, initialSave, initialInventory, bankBala
   const [inventory, setInventory] = useState<MiningInventory>(() => initialInventory ?? DEFAULT_INVENTORY);
   const inventoryRef = useRef(inventory);
   // Referencia para o ultimo inventario salvo (usado para calcular delta)
-  const lastSavedInventoryRef = useRef<MiningInventory>({ ...initialInventory } ?? { ...DEFAULT_INVENTORY });
+  // Inicializa com o inventario carregado do banco
+  const lastSavedInventoryRef = useRef<MiningInventory>(initialInventory ? { ...initialInventory } : { ...DEFAULT_INVENTORY });
 
   // Refs para ter sempre os valores mais recentes nas callbacks de save
   const statsRef = useRef(stats);
   const enchantmentsRef = useRef(enchantments);
   useEffect(() => { enchantmentsRef.current = enchantments; }, [enchantments]);
+  useEffect(() => { inventoryRef.current = inventory; }, [inventory]);
 
   // Wrapper que atualiza ref e state ao mesmo tempo
   const setStatsAndRef = useCallback((updater: PlayerStats | ((prev: PlayerStats) => PlayerStats)) => {
@@ -137,29 +139,35 @@ export default function Game({ username, initialSave, initialInventory, bankBala
     };
   }, [doSave]);
 
-  // Refresh do inventario do banco a cada 10 segundos (detecta coletas do plugin Minecraft)
+  // Refresh do inventario do banco a cada 5 segundos (detecta coletas do plugin Minecraft)
   useEffect(() => {
     const interval = setInterval(async () => {
       const dbInventory = await fetchInventoryFromDB(username);
       if (dbInventory) {
-        // Calcula os novos itens minerados desde o ultimo save
         const currentLocal = inventoryRef.current;
         const lastSaved = lastSavedInventoryRef.current;
         
-        // Para cada item: valor final = banco + (local - ultimo_salvo)
+        // Para cada item: calcula o delta (novos itens minerados na sessao)
+        // e adiciona ao valor do banco
         const merged: MiningInventory = { ...DEFAULT_INVENTORY };
         const keys = Object.keys(DEFAULT_INVENTORY) as (keyof MiningInventory)[];
+        
         for (const key of keys) {
+          // Delta = itens minerados desde o ultimo sync (nunca negativo)
           const delta = Math.max(0, currentLocal[key] - lastSaved[key]);
+          // Valor final = banco atual + novos itens minerados
           merged[key] = dbInventory[key] + delta;
         }
         
+        console.log('[v0] Sync inventario - DB:', dbInventory.raw_iron, 'Local:', currentLocal.raw_iron, 'LastSaved:', lastSaved.raw_iron, 'Merged:', merged.raw_iron);
+        
         setInventory(merged);
         inventoryRef.current = merged;
-        // Atualiza a referencia do ultimo salvo para o banco atual
-        lastSavedInventoryRef.current = { ...dbInventory };
+        // IMPORTANTE: atualiza lastSaved para o estado merged (nao o dbInventory)
+        // para que o proximo delta seja calculado corretamente
+        lastSavedInventoryRef.current = { ...merged };
       }
-    }, 10_000);
+    }, 5_000);
     return () => clearInterval(interval);
   }, [username]);
   const [showShop, setShowShop] = useState(false);
