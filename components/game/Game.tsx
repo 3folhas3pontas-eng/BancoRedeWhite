@@ -25,7 +25,7 @@ import {
 } from "@/lib/game/constants";
 import { audioService } from "@/lib/game/audio";
 import { saveMiningSave, MiningSave } from "@/lib/game/save";
-import { MiningInventory, DEFAULT_INVENTORY, saveInventoryWithSync, fetchInventoryFromDB, blockToOre, getDropAmount, OreType, lootNameToItemType, getLootAmount, DungeonItemType } from "@/lib/game/inventory";
+import { MiningInventory, DEFAULT_INVENTORY, saveSessionDelta, fetchInventoryFromDB, blockToOre, getDropAmount, OreType, lootNameToItemType, getLootAmount, DungeonItemType } from "@/lib/game/inventory";
 import GameCanvas from "./GameCanvas";
 import GameHUD from "./GameHUD";
 import ActionButtons from "./ActionButtons";
@@ -115,25 +115,23 @@ export default function Game({ username, initialSave, initialInventory, bankBala
   const doSave = useCallback(async () => {
     saveMiningSave(username, statsRef.current, enchantmentsRef.current);
     
-    // Busca o valor atual do banco
-    const currentDb = await fetchInventoryFromDB(username);
-    if (!currentDb) return;
+    // Salva APENAS o delta da sessao de forma incremental
+    // NUNCA sobrescreve valores - apenas adiciona ao banco
+    const deltaToSave = { ...sessionDeltaRef.current };
+    const success = await saveSessionDelta(username, deltaToSave);
     
-    // Calcula o novo valor = banco + delta da sessao
-    const newInventory: MiningInventory = { ...DEFAULT_INVENTORY };
-    const keys = Object.keys(DEFAULT_INVENTORY) as (keyof MiningInventory)[];
-    for (const key of keys) {
-      newInventory[key] = currentDb[key] + sessionDeltaRef.current[key];
+    if (success) {
+      // Zera o sessionDelta apos salvar
+      setSessionDelta({ ...DEFAULT_INVENTORY });
+      sessionDeltaRef.current = { ...DEFAULT_INVENTORY };
+      
+      // Atualiza dbInventory com valor fresco do banco
+      const freshDb = await fetchInventoryFromDB(username);
+      if (freshDb) {
+        setDbInventory(freshDb);
+        dbInventoryRef.current = freshDb;
+      }
     }
-    
-    // Salva no banco
-    await saveInventoryWithSync(username, newInventory, currentDb);
-    
-    // Atualiza o dbInventory e zera o sessionDelta
-    setDbInventory(newInventory);
-    dbInventoryRef.current = newInventory;
-    setSessionDelta({ ...DEFAULT_INVENTORY });
-    sessionDeltaRef.current = { ...DEFAULT_INVENTORY };
   }, [username]);
 
   // Adiciona minerio ao inventario (incrementa sessionDelta)

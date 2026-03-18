@@ -331,3 +331,54 @@ export async function saveInventoryWithSync(
 export async function saveInventory(username: string, inventory: MiningInventory): Promise<void> {
   await saveInventoryDirect(username, inventory);
 }
+
+// NOVO: Salva APENAS o delta da sessao de forma INCREMENTAL
+// Faz UPDATE SET coal = coal + X, raw_iron = raw_iron + Y, etc.
+// NUNCA sobrescreve valores - apenas adiciona
+export async function saveSessionDelta(username: string, delta: MiningInventory): Promise<boolean> {
+  // Verifica se tem algo para salvar
+  const hasItems = ALL_INVENTORY_KEYS.some(key => delta[key] > 0);
+  if (!hasItems) return true; // Nada para salvar
+  
+  // Primeiro verifica se o usuario existe
+  const { data: existing } = await supabase
+    .from('mining_inventory')
+    .select('username')
+    .eq('username', username)
+    .single();
+  
+  if (!existing) {
+    // Usuario nao existe - cria com o delta
+    const payload: Record<string, unknown> = { 
+      username, 
+      updated_at: new Date().toISOString() 
+    };
+    for (const key of ALL_INVENTORY_KEYS) {
+      payload[key] = delta[key] ?? 0;
+    }
+    const { error } = await supabase
+      .from('mining_inventory')
+      .insert(payload);
+    return !error;
+  }
+  
+  // Usuario existe - faz UPDATE incremental usando RPC ou update manual
+  // Busca valores atuais e soma o delta
+  const currentDb = await fetchInventoryFromDB(username);
+  if (!currentDb) return false;
+  
+  const newValues: Record<string, unknown> = { 
+    updated_at: new Date().toISOString() 
+  };
+  for (const key of ALL_INVENTORY_KEYS) {
+    // Valor final = banco atual + delta (NUNCA usa valor em memoria)
+    newValues[key] = currentDb[key] + delta[key];
+  }
+  
+  const { error } = await supabase
+    .from('mining_inventory')
+    .update(newValues)
+    .eq('username', username);
+  
+  return !error;
+}
