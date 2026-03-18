@@ -1,0 +1,21 @@
+-- Adiciona colunas de itens de dungeon na tabela mining_inventory (caso ainda nao existam)
+ALTER TABLE mining_inventory
+  ADD COLUMN IF NOT EXISTS string               integer NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS rotten_flesh         integer NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS bone                 integer NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS wheat                integer NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS gunpowder            integer NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS iron_ingot           integer NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS gold_ingot           integer NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS slimeball            integer NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS bucket               integer NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS name_tag             integer NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS saddle               integer NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS music_disc           integer NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS golden_apple         integer NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS enchanted_golden_apple integer NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS iron_horse_armor     integer NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS gold_horse_armor     integer NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS diamond_horse_armor  integer NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS enchantment_book     integer NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS experience_bottle    integer NOT NULL DEFAULT 0;
