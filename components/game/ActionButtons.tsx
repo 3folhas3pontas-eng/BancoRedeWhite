@@ -71,7 +71,7 @@ export default function ActionButtons({ onShop, onEnchant, onInventory }: Action
           }}
         >
           <span style={{ fontSize: 14 }}>{"\uD83C\uDF92"}</span>
-          INV
+          INVENTARIO
         </button>
       </div>
     </div>
