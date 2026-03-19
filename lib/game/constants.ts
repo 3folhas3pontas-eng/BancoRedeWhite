@@ -15,14 +15,12 @@ export const PICKAXE_TIERS: Record<
   PickaxeTier,
   { strength: number; speed: number; cost: number; color: string; name: string }
 > = {
-  // Tempos para quebrar stone: wood=3.2s, stone=2.4s, iron=2s, gold=1.2s, diamond=1s, netherite=1s
-  // Formula: strength = HP / (segundos * 60fps) com pickStrength=1
-  wood:      { strength: 0.13, speed: 1,   cost: 0,      color: "#8B5E3C", name: "Wood Pickaxe" },
-  stone:     { strength: 0.17, speed: 1,   cost: 200,    color: "#9E9E9E", name: "Stone Pickaxe" },
-  iron:      { strength: 0.21, speed: 1,   cost: 1500,   color: "#D7CCC8", name: "Iron Pickaxe" },
-  gold:      { strength: 0.35, speed: 1,   cost: 8000,   color: "#FBC02D", name: "Gold Pickaxe" },
-  diamond:   { strength: 0.42, speed: 1,   cost: 50000,  color: "#00E5FF", name: "Diamond Pickaxe" },
-  netherite: { strength: 0.42, speed: 1,   cost: 250000, color: "#4A3B4A", name: "Netherite Pickaxe" },
+  wood:      { strength: 1,   speed: 1,   cost: 0,      color: "#8B5E3C", name: "Wood Pickaxe" },
+  stone:     { strength: 1.5, speed: 1.2, cost: 200,    color: "#9E9E9E", name: "Stone Pickaxe" },
+  iron:      { strength: 2.5, speed: 1.5, cost: 1500,   color: "#D7CCC8", name: "Iron Pickaxe" },
+  gold:      { strength: 3.5, speed: 2.0, cost: 8000,   color: "#FBC02D", name: "Gold Pickaxe" },
+  diamond:   { strength: 6,   speed: 2.5, cost: 50000,  color: "#00E5FF", name: "Diamond Pickaxe" },
+  netherite: { strength: 10,  speed: 3.2, cost: 250000, color: "#4A3B4A", name: "Netherite Pickaxe" },
 };
 
 export const TIER_ORDER: PickaxeTier[] = ["wood", "stone", "iron", "gold", "diamond", "netherite"];

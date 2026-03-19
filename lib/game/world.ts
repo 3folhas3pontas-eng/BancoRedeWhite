@@ -47,69 +47,62 @@ export function generateBlock(gridX: number, gridY: number, playerLevel: number,
     return mapping[normal] ?? normal;
   }
 
-  // Layer-based generation - Balanceado similar ao Minecraft 1.21
-  // Coal: comum (5-8%), Iron: comum (2-3%), Copper: comum (1.5-2%)
-  // Lapis: raro (0.3-0.5%), Gold: raro (0.2-0.4%), Redstone: raro (0.3-0.5%)
-  // Diamond: muito raro (0.05-0.15%), Emerald: muito raro (0.03-0.1%)
-  
+  // Layer-based generation
   if (depth < 3) {
     type = depth === 0 ? "grass" : Math.random() > 0.7 ? "stone" : "dirt";
   } else if (depth < 20) {
-    // Shallow: dirt, stone, coal apenas
-    if (rand < 0.8 + levelBonus * 0.05) type = oreType("copper");
-    else if (rand < 4 + levelBonus * 0.1) type = oreType("coal");
-    else if (rand < 35) type = baseStone();
+    // Shallow: dirt, stone, coal, copper
+    if (rand < 1 + levelBonus * 0.1) type = oreType("copper");
+    else if (rand < 3 + levelBonus * 0.2) type = oreType("coal");
+    else if (rand < 30) type = baseStone();
     else type = "dirt";
   } else if (depth < 80) {
-    // Mid-shallow: + iron (peak Y16 no MC)
-    if (rand < 0.15 + levelBonus * 0.02) type = oreType("lapis");
-    else if (rand < 1.5 + levelBonus * 0.08) type = oreType("iron");
-    else if (rand < 2.5 + levelBonus * 0.05) type = oreType("copper");
-    else if (rand < 6 + levelBonus * 0.1) type = oreType("coal");
-    else if (rand < 60) type = baseStone();
+    // Mid-shallow: + iron, lapis
+    if (rand < 0.3 + levelBonus * 0.05) type = oreType("lapis");
+    else if (rand < 1 + levelBonus * 0.1) type = oreType("iron");
+    else if (rand < 3 + levelBonus * 0.15) type = oreType("copper");
+    else if (rand < 8 + levelBonus * 0.3) type = oreType("coal");
+    else if (rand < 55) type = baseStone();
     else type = "dirt";
   } else if (depth < 200) {
-    // Mid: + gold (peak Y-16 no MC)
-    if (rand < 0.12 + levelBonus * 0.02) type = oreType("gold");
-    else if (rand < 0.35 + levelBonus * 0.03) type = oreType("lapis");
-    else if (rand < 1.8 + levelBonus * 0.06) type = oreType("iron");
-    else if (rand < 2.8 + levelBonus * 0.05) type = oreType("copper");
-    else if (rand < 6.5 + levelBonus * 0.1) type = oreType("coal");
-    else if (rand < 75) type = baseStone();
+    // Mid: + gold
+    if (rand < 0.3 + levelBonus * 0.05) type = oreType("gold");
+    else if (rand < 1 + levelBonus * 0.08) type = oreType("lapis");
+    else if (rand < 3 + levelBonus * 0.15) type = oreType("iron");
+    else if (rand < 5 + levelBonus * 0.2) type = oreType("copper");
+    else if (rand < 14 + levelBonus * 0.3) type = oreType("coal");
+    else if (rand < 70) type = baseStone();
     else type = "dirt";
   } else if (depth < 500) {
-    // Deep: + redstone, diamond, emerald (peak Y-59 no MC)
-    if (rand < 0.04 + levelBonus * 0.008) type = oreType("diamond");
-    else if (rand < 0.1 + levelBonus * 0.015) type = oreType("emerald");
-    else if (rand < 0.35 + levelBonus * 0.03) type = oreType("gold");
-    else if (rand < 0.7 + levelBonus * 0.04) type = oreType("lapis");
-    else if (rand < 1.3 + levelBonus * 0.05) type = oreType("redstone");
-    else if (rand < 3.5 + levelBonus * 0.08) type = oreType("iron");
-    else if (rand < 5 + levelBonus * 0.05) type = oreType("copper");
-    else if (rand < 8 + levelBonus * 0.1) type = oreType("coal");
+    // Deep: + redstone, diamond, emerald (deepslate starts mixing in at 300)
+    if (rand < 0.1 + levelBonus * 0.02) type = oreType("diamond");
+    else if (rand < 0.5 + levelBonus * 0.05) type = oreType("emerald");
+    else if (rand < 2 + levelBonus * 0.1) type = oreType("gold");
+    else if (rand < 4 + levelBonus * 0.15) type = oreType("lapis");
+    else if (rand < 8 + levelBonus * 0.2) type = oreType("redstone");
+    else if (rand < 14) type = oreType("iron");
+    else if (rand < 18) type = oreType("copper");
     else type = baseStone();
   } else if (depth < 1000) {
-    // Very deep: mostly deepslate with slightly better ore rates
-    if (rand < 0.08 + levelBonus * 0.012) type = oreType("diamond");
-    else if (rand < 0.2 + levelBonus * 0.02) type = oreType("emerald");
-    else if (rand < 0.6 + levelBonus * 0.04) type = oreType("gold");
-    else if (rand < 1.1 + levelBonus * 0.05) type = oreType("lapis");
-    else if (rand < 2 + levelBonus * 0.06) type = oreType("redstone");
-    else if (rand < 4.5 + levelBonus * 0.08) type = oreType("iron");
-    else if (rand < 6 + levelBonus * 0.05) type = oreType("copper");
-    else if (rand < 9 + levelBonus * 0.1) type = oreType("coal");
+    // Very deep: mostly deepslate with rich ores
+    if (rand < 0.15 + levelBonus * 0.03) type = oreType("diamond");
+    else if (rand < 0.7 + levelBonus * 0.05) type = oreType("emerald");
+    else if (rand < 3 + levelBonus * 0.12) type = oreType("gold");
+    else if (rand < 6 + levelBonus * 0.15) type = oreType("lapis");
+    else if (rand < 12 + levelBonus * 0.2) type = oreType("redstone");
+    else if (rand < 18) type = oreType("iron");
+    else if (rand < 22) type = oreType("copper");
     else type = baseStone();
   } else {
-    // Abyss (1000+): pure deepslate, melhores taxas mas ainda desafiador
-    if (rand < 0.02 + levelBonus * 0.005) type = "legendary";
-    else if (rand < 0.15 + levelBonus * 0.02) type = "deepslate_diamond";
-    else if (rand < 0.4 + levelBonus * 0.03) type = "deepslate_emerald";
-    else if (rand < 1 + levelBonus * 0.05) type = "deepslate_gold";
-    else if (rand < 1.8 + levelBonus * 0.06) type = "deepslate_lapis";
-    else if (rand < 3 + levelBonus * 0.08) type = "deepslate_redstone";
-    else if (rand < 6 + levelBonus * 0.1) type = "deepslate_iron";
-    else if (rand < 8 + levelBonus * 0.08) type = "deepslate_copper";
-    else if (rand < 11 + levelBonus * 0.1) type = "deepslate_coal";
+    // Abyss (1000+): pure deepslate, all deepslate ore variants, legendary
+    if (rand < 0.05 + levelBonus * 0.01) type = "legendary";
+    else if (rand < 0.5 + levelBonus * 0.05) type = "deepslate_diamond";
+    else if (rand < 1.5 + levelBonus * 0.08) type = "deepslate_emerald";
+    else if (rand < 4 + levelBonus * 0.12) type = "deepslate_gold";
+    else if (rand < 7 + levelBonus * 0.15) type = "deepslate_lapis";
+    else if (rand < 14 + levelBonus * 0.2) type = "deepslate_redstone";
+    else if (rand < 20) type = "deepslate_iron";
+    else if (rand < 24) type = "deepslate_copper";
     else type = "deepslate";
   }
 
