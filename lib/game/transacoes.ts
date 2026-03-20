@@ -22,8 +22,8 @@ export interface TransacaoMineracao {
   detalhes: Record<string, unknown>;
   valor: number;
   status: StatusTransacao;
-  criado_em: string;
-  processado_em: string | null;
+  created_at: string;
+  processed_at: string | null;
 }
 
 // Registra uma nova transacao
@@ -33,6 +33,8 @@ export async function registrarTransacao(
   valor: number,
   detalhes: Record<string, unknown> = {}
 ): Promise<{ success: boolean; transacao?: TransacaoMineracao; error?: string }> {
+  console.log('[v0] Registrando transacao:', { username, tipo, valor, detalhes });
+  
   try {
     const { data, error } = await supabase
       .from('transacoes_mineracao')
@@ -51,6 +53,7 @@ export async function registrarTransacao(
       return { success: false, error: error.message };
     }
 
+    console.log('[v0] Transacao registrada com sucesso:', data);
     return { success: true, transacao: data as TransacaoMineracao };
   } catch (err) {
     console.error('[v0] Erro inesperado ao registrar transacao:', err);
@@ -67,7 +70,7 @@ export async function buscarTransacoesPendentes(
     .select('*')
     .eq('username', username)
     .eq('status', 'pendente')
-    .order('criado_em', { ascending: true });
+    .order('created_at', { ascending: true });
 
   if (error) {
     console.error('[v0] Erro ao buscar transacoes:', error);
@@ -86,7 +89,7 @@ export async function atualizarStatusTransacao(
     .from('transacoes_mineracao')
     .update({
       status,
-      processado_em: status === 'concluido' || status === 'erro' ? new Date().toISOString() : null,
+      processed_at: status === 'concluido' || status === 'erro' ? new Date().toISOString() : null,
     })
     .eq('id', id);
 
@@ -107,7 +110,7 @@ export async function buscarHistoricoTransacoes(
     .from('transacoes_mineracao')
     .select('*')
     .eq('username', username)
-    .order('criado_em', { ascending: false })
+    .order('created_at', { ascending: false })
     .limit(limite);
 
   if (error) {
