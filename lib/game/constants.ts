@@ -20,7 +20,7 @@ export const PICKAXE_TIERS: Record<
   iron: { strength: 1.5, speed: 1.2, cost: 1500, color: "#D7CCC8", name: "Iron Pickaxe" },
   gold: { strength: 1.6, speed: 1.5, cost: 8000, color: "#FBC02D", name: "Gold Pickaxe" },
   diamond: { strength: 1.7, speed: 1.8, cost: 50000, color: "#00E5FF", name: "Diamond Pickaxe" },
-  netherite: { strength: 1.9, speed: 2, cost: 250000, color: "#4A3B4A", name: "Netherite Pickaxe" },
+  netherite: { strength: 1.9, speed: 2, cost: 1000, color: "#4A3B4A", name: "Netherite Pickaxe" },
 };
 
 export const TIER_ORDER: PickaxeTier[] = ["wood", "stone", "iron", "gold", "diamond", "netherite"];
