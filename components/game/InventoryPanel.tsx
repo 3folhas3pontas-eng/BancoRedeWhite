@@ -3,9 +3,13 @@
 import { useEffect, useRef } from "react";
 import { MiningInventory, ORE_CONFIG, DUNGEON_ITEM_CONFIG, OreType, DungeonItemType } from "@/lib/game/inventory";
 import { audioService } from "@/lib/game/audio";
+import { Enchantment, PickaxeTier } from "@/lib/game/types";
+import { PICKAXE_TIERS, RARITY_COLORS } from "@/lib/game/constants";
 
 interface InventoryPanelProps {
   inventory: MiningInventory;
+  pickaxeTier: PickaxeTier;
+  enchantments: Enchantment[];
   onClose: () => void;
 }
 
@@ -99,7 +103,17 @@ function Slot({
   );
 }
 
-export default function InventoryPanel({ inventory, onClose }: InventoryPanelProps) {
+// Textura da picareta baseada no tier
+const PICKAXE_TEXTURES: Record<PickaxeTier, string> = {
+  wood: "https://minecraft.wiki/images/Wooden_Pickaxe_JE2_BE2.png",
+  stone: "https://minecraft.wiki/images/Stone_Pickaxe_JE2_BE2.png",
+  iron: "https://minecraft.wiki/images/Iron_Pickaxe_JE2_BE2.png",
+  gold: "https://minecraft.wiki/images/Golden_Pickaxe_JE2_BE2.png",
+  diamond: "https://minecraft.wiki/images/Diamond_Pickaxe_JE2_BE2.png",
+  netherite: "https://minecraft.wiki/images/Netherite_Pickaxe_JE2_BE1.png",
+};
+
+export default function InventoryPanel({ inventory, pickaxeTier, enchantments, onClose }: InventoryPanelProps) {
   const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -165,6 +179,111 @@ export default function InventoryPanel({ inventory, onClose }: InventoryPanelPro
           }}
         >
           INVENTARIO
+        </div>
+
+        {/* Picareta section */}
+        <div style={{ marginBottom: 10 }}>
+          <div
+            className="font-mono font-bold"
+            style={{
+              color: "#555",
+              fontSize: 10,
+              marginBottom: 4,
+              textTransform: "uppercase",
+              letterSpacing: 1,
+            }}
+          >
+            Picareta Equipada
+          </div>
+          <div
+            style={{
+              background: "#8B8B8B",
+              border: "2px solid",
+              borderTopColor: "#373737",
+              borderLeftColor: "#373737",
+              borderBottomColor: "#FFFFFF",
+              borderRightColor: "#FFFFFF",
+              padding: 8,
+              display: "flex",
+              gap: 12,
+              alignItems: "flex-start",
+            }}
+          >
+            {/* Picareta icon */}
+            <div
+              style={{
+                width: 48,
+                height: 48,
+                background: "#6B6B6B",
+                border: "2px solid",
+                borderTopColor: "#373737",
+                borderLeftColor: "#373737",
+                borderBottomColor: "#FFFFFF",
+                borderRightColor: "#FFFFFF",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+              }}
+            >
+              <div
+                style={{
+                  width: 36,
+                  height: 36,
+                  backgroundImage: `url(${PICKAXE_TEXTURES[pickaxeTier]})`,
+                  backgroundSize: "contain",
+                  backgroundRepeat: "no-repeat",
+                  backgroundPosition: "center",
+                  imageRendering: "pixelated",
+                }}
+              />
+            </div>
+            
+            {/* Picareta info */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div
+                className="font-mono font-bold"
+                style={{
+                  color: PICKAXE_TIERS[pickaxeTier].color,
+                  fontSize: 12,
+                  textShadow: "1px 1px 0 #000",
+                  marginBottom: 4,
+                }}
+              >
+                {PICKAXE_TIERS[pickaxeTier].name}
+              </div>
+              
+              {/* Encantamentos */}
+              {enchantments.length > 0 ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                  {enchantments.map((enc, i) => (
+                    <div
+                      key={enc.id + "-" + i}
+                      className="font-mono"
+                      style={{
+                        fontSize: 10,
+                        color: RARITY_COLORS[enc.rarity],
+                        textShadow: "1px 1px 0 #000",
+                      }}
+                    >
+                      {enc.name}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div
+                  className="font-mono"
+                  style={{
+                    fontSize: 10,
+                    color: "#666",
+                    fontStyle: "italic",
+                  }}
+                >
+                  Sem encantamentos
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Minerios section */}

@@ -79,8 +79,12 @@ export enum Rarity {
   MYTHIC = "mythic",
 }
 
+export type EnchantmentType = "efficiency" | "fortune" | "mending";
+
 export interface Enchantment {
   id: string;
+  type: EnchantmentType;
+  level: number;
   name: string;
   rarity: Rarity;
   description: string;

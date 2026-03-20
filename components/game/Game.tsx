@@ -5,7 +5,6 @@ import {
   PlayerStats,
   Block,
   Enchantment,
-  Rarity,
   PickaxeTier,
   MobType,
   BeaconEvent,
@@ -15,7 +14,7 @@ import {
 import {
   BLOCK_CONFIGS,
   ENCHANTMENTS,
-  RARITY_WEIGHTS,
+  ENCHANT_COST,
   TIER_ORDER,
   PICKAXE_TIERS,
   BOOST_CHARGE_TIME,
@@ -355,8 +354,20 @@ export default function Game({ username, initialSave, initialInventory, bankBala
 
   const closeLoot = useCallback(() => setCurrentLoot(null), []);
 
-  // Fortune multiplier from enchantments
-  const fortuneMult = useRef(1);
+  // Multipliers from enchantments
+  const fortuneMult = useRef(1);  // Mais minerios
+  const efficiencyMult = useRef(1);  // Mais velocidade
+  const mendingMult = useRef(1);  // Mais XP
+  
+  // Inicializa multiplicadores baseado nos encantamentos carregados
+  useEffect(() => {
+    const fortune = enchantments.find(e => e.type === 'fortune');
+    const efficiency = enchantments.find(e => e.type === 'efficiency');
+    const mending = enchantments.find(e => e.type === 'mending');
+    fortuneMult.current = fortune ? fortune.value : 1;
+    efficiencyMult.current = efficiency ? efficiency.value : 1;
+    mendingMult.current = mending ? mending.value : 1;
+  }, [enchantments]);
 
   const handleStatsUpdate = useCallback((partial: Partial<PlayerStats>) => {
     setStatsAndRef((prev) => ({ ...prev, ...partial }));
@@ -376,14 +387,16 @@ export default function Game({ username, initialSave, initialInventory, bankBala
       const oreType = blockToOre(block.type);
       if (oreType) {
         const eventMult = beaconEventRef.current?.active && beaconEventRef.current.type === "double_ores" ? 2 : 1;
-        const dropAmount = getDropAmount(block.type) * eventMult;
+        // Aplica fortuneMult para mais minerios
+        const dropAmount = Math.ceil(getDropAmount(block.type) * eventMult * fortuneMult.current);
         addOre(oreType, dropAmount);
       }
 
       setStatsAndRef((prev) => {
         const eventMult =
           beaconEventRef.current?.active && beaconEventRef.current.type === "double_ores" ? 2 : 1;
-        const xpGain = Math.ceil(config.xp * eventMult);
+        // Aplica mendingMult para mais XP
+        const xpGain = Math.ceil(config.xp * eventMult * mendingMult.current);
 
         let newXp = prev.xp + xpGain;
         let newLevel = prev.level;
@@ -466,47 +479,64 @@ export default function Game({ username, initialSave, initialInventory, bankBala
   }, [localBalance, onSpend, setStatsAndRef]);
 
   const handleEnchant = useCallback(() => {
-    setStatsAndRef((prev) => {
-      if (prev.xp < 1000) return prev;
+    // Verifica se tem XP e coins suficientes
+    if (stats.xp < ENCHANT_COST.xp || localBalance < ENCHANT_COST.coins) return;
 
-      // Weighted random rarity selection
-      const totalWeight = Object.values(RARITY_WEIGHTS).reduce(
-        (a, b) => a + b,
-        0
-      );
-      let roll = Math.random() * totalWeight;
-      let selectedRarity: Rarity = Rarity.COMMON;
-      for (const [rarity, weight] of Object.entries(RARITY_WEIGHTS)) {
-        roll -= weight;
-        if (roll <= 0) {
-          selectedRarity = rarity as Rarity;
-          break;
-        }
+    // Selecao de encantamento baseado no peso individual de cada um
+    const totalWeight = ENCHANTMENTS.reduce((sum, e) => sum + e.weight, 0);
+    let roll = Math.random() * totalWeight;
+    let selectedEnchant = ENCHANTMENTS[0];
+    
+    for (const enchant of ENCHANTMENTS) {
+      roll -= enchant.weight;
+      if (roll <= 0) {
+        selectedEnchant = enchant;
+        break;
       }
+    }
 
-      // Pick an enchantment of that rarity
-      const pool = ENCHANTMENTS.filter(
-        (e) => e.rarity === selectedRarity
-      );
-      if (pool.length === 0) return prev;
-      const enchant = pool[Math.floor(Math.random() * pool.length)];
-
-      // Apply enchantment
-      setEnchantments((prevEnc) => [...prevEnc, enchant]);
-
-      // Update fortune multiplier
-      if (enchant.id.startsWith("fort")) {
-        fortuneMult.current *= enchant.value;
+    // Verifica se ja tem esse tipo de encantamento
+    const existingOfType = enchantments.find(e => e.type === selectedEnchant.type);
+    
+    if (existingOfType) {
+      // Se ja tem encantamento desse tipo, so substitui se for nivel maior
+      if (selectedEnchant.level > existingOfType.level) {
+        setEnchantments(prevEnc => 
+          prevEnc.map(e => e.type === selectedEnchant.type ? selectedEnchant : e)
+        );
       }
+      // Se for igual ou menor, nao faz nada (perde o encantamento)
+    } else {
+      // Nao tem esse tipo ainda, adiciona
+      setEnchantments(prevEnc => [...prevEnc, selectedEnchant]);
+    }
 
-      audioService.playOrb();
+    // Atualiza multiplicadores baseado nos novos encantamentos
+    const newEnchants = existingOfType && selectedEnchant.level > existingOfType.level
+      ? enchantments.map(e => e.type === selectedEnchant.type ? selectedEnchant : e)
+      : existingOfType
+        ? enchantments
+        : [...enchantments, selectedEnchant];
+    
+    const fortuneEnchant = newEnchants.find(e => e.type === 'fortune');
+    const efficiencyEnchant = newEnchants.find(e => e.type === 'efficiency');
+    const mendingEnchant = newEnchants.find(e => e.type === 'mending');
+    fortuneMult.current = fortuneEnchant ? fortuneEnchant.value : 1;
+    efficiencyMult.current = efficiencyEnchant ? efficiencyEnchant.value : 1;
+    mendingMult.current = mendingEnchant ? mendingEnchant.value : 1;
 
-      return {
-        ...prev,
-        xp: prev.xp - 1000,
-      };
-    });
-  }, [setStatsAndRef]);
+    audioService.playOrb();
+
+    // Cobra XP
+    setStatsAndRef(prev => ({
+      ...prev,
+      xp: prev.xp - ENCHANT_COST.xp,
+    }));
+
+    // Cobra coins
+    setLocalBalance(prev => prev - ENCHANT_COST.coins);
+    onSpend(ENCHANT_COST.coins);
+  }, [stats.xp, localBalance, enchantments, setStatsAndRef, onSpend]);
 
   return (
     <div className="w-screen h-screen overflow-hidden relative" style={{ background: "#0a0a0f" }}>
@@ -518,6 +548,8 @@ export default function Game({ username, initialSave, initialInventory, bankBala
         isBoostActive={isBoostActive}
         beaconEvent={beaconEvent}
         onDungeonChestOpen={handleDungeonChestOpen}
+        efficiencyMult={efficiencyMult.current}
+        mendingMult={mendingMult.current}
       />
       <GameHUD stats={stats} bankBalance={localBalance} />
       <EventBanner event={beaconEvent} />
@@ -547,6 +579,7 @@ export default function Game({ username, initialSave, initialInventory, bankBala
         <EnchantPanel
           stats={stats}
           enchantments={enchantments}
+          bankBalance={localBalance}
           onEnchant={handleEnchant}
           onClose={() => setShowEnchant(false)}
         />
@@ -554,6 +587,8 @@ export default function Game({ username, initialSave, initialInventory, bankBala
       {showInventory && (
         <InventoryPanel
           inventory={inventory}
+          pickaxeTier={stats.pickaxeTier}
+          enchantments={enchantments}
           onClose={() => setShowInventory(false)}
         />
       )}

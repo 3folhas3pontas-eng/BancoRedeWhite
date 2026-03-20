@@ -5,13 +5,14 @@ import { PlayerStats, Enchantment, Rarity } from "@/lib/game/types";
 import {
   ENCHANTMENTS,
   RARITY_COLORS,
-  RARITY_WEIGHTS,
+  ENCHANT_COST,
 } from "@/lib/game/constants";
 import { audioService } from "@/lib/game/audio";
 
 interface EnchantPanelProps {
   stats: PlayerStats;
   enchantments: Enchantment[];
+  bankBalance: number;
   onEnchant: () => void;
   onClose: () => void;
 }
@@ -123,13 +124,16 @@ function FloatingGlyphs() {
 export default function EnchantPanel({
   stats,
   enchantments,
+  bankBalance,
   onEnchant,
   onClose,
 }: EnchantPanelProps) {
   const [spinning, setSpinning] = useState(false);
   const [lastResult, setLastResult] = useState<Enchantment | null>(null);
   const [showResult, setShowResult] = useState(false);
-  const canAfford = stats.xp >= 1000;
+  const canAffordXP = stats.xp >= ENCHANT_COST.xp;
+  const canAffordCoins = bankBalance >= ENCHANT_COST.coins;
+  const canAfford = canAffordXP && canAffordCoins;
 
   const handleSpin = () => {
     if (!canAfford || spinning) return;
@@ -224,16 +228,24 @@ export default function EnchantPanel({
               background: "radial-gradient(ellipse, rgba(156, 39, 176, 0.3) 0%, transparent 70%)",
             }}
           />
-          {/* XP counter */}
-          <div className="relative z-10 mt-2">
-            <span
-              className="font-mono text-xs font-bold"
-              style={{ color: "#8BC34A", textShadow: "1px 1px 0 #000" }}
-            >
-              {stats.xp + " XP"}
-            </span>
-            <span className="font-mono text-[10px] ml-2" style={{ color: "#666" }}>
-              {"(need 1000)"}
+          {/* XP e Coins counter */}
+          <div className="relative z-10 mt-2 flex flex-col items-center gap-1">
+            <div className="flex items-center gap-3">
+              <span
+                className="font-mono text-xs font-bold"
+                style={{ color: canAffordXP ? "#8BC34A" : "#EF5350", textShadow: "1px 1px 0 #000" }}
+              >
+                {stats.xp + " XP"}
+              </span>
+              <span
+                className="font-mono text-xs font-bold"
+                style={{ color: canAffordCoins ? "#FFD700" : "#EF5350", textShadow: "1px 1px 0 #000" }}
+              >
+                {bankBalance.toLocaleString()} Coins
+              </span>
+            </div>
+            <span className="font-mono text-[10px]" style={{ color: "#666" }}>
+              Custo: {ENCHANT_COST.xp} XP + {ENCHANT_COST.coins.toLocaleString()} Coins
             </span>
           </div>
         </div>
@@ -284,11 +296,10 @@ export default function EnchantPanel({
                     style={{
                       color: canAfford ? "#CE93D8" : "#666",
                       textShadow: "1px 1px 0 #000",
-                      // Enchanting text random glyphs effect
                       fontStyle: canAfford ? "normal" : "italic",
                     }}
                   >
-                    {canAfford ? "Enchant Item" : "Not enough XP"}
+                    {canAfford ? "Encantar Picareta" : (!canAffordXP ? "XP insuficiente" : "Coins insuficientes")}
                   </div>
                   <div className="font-mono text-[9px]" style={{ color: "#888" }}>
                     Random enchantment for your pickaxe
@@ -297,7 +308,7 @@ export default function EnchantPanel({
               )}
             </div>
             <div
-              className="px-2 py-1 font-mono font-bold text-xs flex-shrink-0"
+              className="px-2 py-1 font-mono font-bold text-[10px] flex-shrink-0 text-center"
               style={{
                 background: canAfford && !spinning ? "#2E7D32" : "#333",
                 border: "2px solid",
@@ -306,7 +317,7 @@ export default function EnchantPanel({
                 textShadow: "1px 1px 0 #000",
               }}
             >
-              1000 XP
+              {ENCHANT_COST.xp} XP<br/>+ {ENCHANT_COST.coins.toLocaleString()}
             </div>
           </button>
 

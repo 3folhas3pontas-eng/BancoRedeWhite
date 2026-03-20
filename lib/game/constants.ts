@@ -210,17 +210,44 @@ export const BEACON_EVENTS: {
     { type: "transform_emerald", name: "EMERALD MADNESS", color: "#00C853", duration: 10, weight: 10 },
   ];
 
-export const ENCHANTMENTS: Enchantment[] = [
-  { id: "eff_1", name: "Efficiency I", rarity: Rarity.COMMON, description: "+20% Speed", value: 1.2 },
-  { id: "eff_2", name: "Efficiency II", rarity: Rarity.RARE, description: "+50% Speed", value: 1.5 },
-  { id: "eff_3", name: "Efficiency III", rarity: Rarity.EPIC, description: "+100% Speed", value: 2.0 },
-  { id: "fort_1", name: "Fortune I", rarity: Rarity.COMMON, description: "+20% Money", value: 1.2 },
-  { id: "fort_2", name: "Fortune II", rarity: Rarity.RARE, description: "+50% Money", value: 1.5 },
-  { id: "fort_3", name: "Fortune III", rarity: Rarity.EPIC, description: "+100% Money", value: 2.0 },
-  { id: "aoe_1", name: "Shockwave I", rarity: Rarity.RARE, description: "Small Area Damage", value: 0.2 },
-  { id: "aoe_2", name: "Shockwave II", rarity: Rarity.EPIC, description: "Medium Area Damage", value: 0.4 },
-  { id: "mythic_power", name: "Core Driller", rarity: Rarity.MYTHIC, description: "Drill everything instantly", value: 10.0 },
+// Tipos de encantamento
+export type EnchantmentType = "efficiency" | "fortune" | "mending";
+
+// Encantamentos disponiveis com suas chances individuais (peso)
+// Eficiencia: 1-3 raro, 4-5 muito dificil
+// Fortuna: muito raro, nivel 3 quase impossivel
+// Remendo: meio termo, nivel 3 mais dificil
+export const ENCHANTMENTS: (Enchantment & { type: EnchantmentType; level: number; weight: number })[] = [
+  // Eficiencia (melhora velocidade de mineracao)
+  { id: "eff_1", type: "efficiency", level: 1, name: "Eficiencia I", rarity: Rarity.RARE, description: "+15% Velocidade", value: 1.15, weight: 25 },
+  { id: "eff_2", type: "efficiency", level: 2, name: "Eficiencia II", rarity: Rarity.RARE, description: "+30% Velocidade", value: 1.30, weight: 15 },
+  { id: "eff_3", type: "efficiency", level: 3, name: "Eficiencia III", rarity: Rarity.EPIC, description: "+50% Velocidade", value: 1.50, weight: 8 },
+  { id: "eff_4", type: "efficiency", level: 4, name: "Eficiencia IV", rarity: Rarity.LEGENDARY, description: "+75% Velocidade", value: 1.75, weight: 2 },
+  { id: "eff_5", type: "efficiency", level: 5, name: "Eficiencia V", rarity: Rarity.MYTHIC, description: "+100% Velocidade", value: 2.00, weight: 0.5 },
+  
+  // Fortuna (da mais minerios) - MUITO RARO
+  { id: "fort_1", type: "fortune", level: 1, name: "Fortuna I", rarity: Rarity.EPIC, description: "+25% Minerios", value: 1.25, weight: 5 },
+  { id: "fort_2", type: "fortune", level: 2, name: "Fortuna II", rarity: Rarity.LEGENDARY, description: "+50% Minerios", value: 1.50, weight: 1.5 },
+  { id: "fort_3", type: "fortune", level: 3, name: "Fortuna III", rarity: Rarity.MYTHIC, description: "+100% Minerios", value: 2.00, weight: 0.2 },
+  
+  // Remendo (da mais XP) - Meio termo
+  { id: "mend_1", type: "mending", level: 1, name: "Remendo I", rarity: Rarity.RARE, description: "+20% XP", value: 1.20, weight: 20 },
+  { id: "mend_2", type: "mending", level: 2, name: "Remendo II", rarity: Rarity.EPIC, description: "+40% XP", value: 1.40, weight: 8 },
+  { id: "mend_3", type: "mending", level: 3, name: "Remendo III", rarity: Rarity.LEGENDARY, description: "+70% XP", value: 1.70, weight: 2 },
 ];
+
+// Custo do encantamento
+export const ENCHANT_COST = {
+  xp: 1000,
+  coins: 5000,
+};
+
+// Nivel maximo de cada encantamento
+export const MAX_ENCHANT_LEVELS: Record<EnchantmentType, number> = {
+  efficiency: 5,
+  fortune: 3,
+  mending: 3,
+};
 
 export const RARITY_COLORS: Record<Rarity, string> = {
   [Rarity.COMMON]: "#9E9E9E",
@@ -230,6 +257,7 @@ export const RARITY_COLORS: Record<Rarity, string> = {
   [Rarity.MYTHIC]: "#F44336",
 };
 
+// Pesos nao usados mais - cada encantamento tem seu proprio peso
 export const RARITY_WEIGHTS: Record<Rarity, number> = {
   [Rarity.COMMON]: 50,
   [Rarity.RARE]: 30,

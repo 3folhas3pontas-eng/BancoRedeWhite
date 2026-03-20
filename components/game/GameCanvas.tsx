@@ -42,6 +42,9 @@ interface GameCanvasProps {
   isBoostActive?: boolean;
   beaconEvent?: BeaconEvent | null;
   onDungeonChestOpen?: () => void;
+  // Multiplicadores de encantamentos
+  efficiencyMult?: number;
+  mendingMult?: number;
 }
 
 export default function GameCanvas({
@@ -52,6 +55,8 @@ export default function GameCanvas({
   isBoostActive = false,
   beaconEvent = null,
   onDungeonChestOpen,
+  efficiencyMult = 1,
+  mendingMult = 1,
 }: GameCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -441,10 +446,10 @@ export default function GameCanvas({
         p.isSwinging = true;
         p.swingAngle = 0.5;
 
-        const isManual = isPointerDown.current && targetRef.current;
-        const baseDmg = tierData.strength * s.pickStrength;
-        const boostMult = boostActiveRef.current ? BOOST_MINING_MULT : 1;
-        const damage = (isManual ? baseDmg * MANUAL_MINING_MULT : baseDmg) * boostMult;
+  const isManual = isPointerDown.current && targetRef.current;
+  const baseDmg = tierData.strength * s.pickStrength * efficiencyMult;
+  const boostMult = boostActiveRef.current ? BOOST_MINING_MULT : 1;
+  const damage = (isManual ? baseDmg * MANUAL_MINING_MULT : baseDmg) * boostMult;
 
         hitBlock.hp -= damage;
         // During boost, almost no cooldown (super fast mining)
@@ -599,10 +604,10 @@ export default function GameCanvas({
         p.isSwinging = true;
         p.swingAngle = 0.6;
 
-        const baseDmg = tierData.strength * s.pickStrength;
-        const damage = (isPointerDown.current && targetRef.current)
-          ? baseDmg * MANUAL_MINING_MULT
-          : baseDmg;
+  const baseDmg = tierData.strength * s.pickStrength * efficiencyMult;
+  const damage = (isPointerDown.current && targetRef.current)
+  ? baseDmg * MANUAL_MINING_MULT
+  : baseDmg;
 
         hitMob.hp -= damage;
         hitMob.hitFlash = 6;
