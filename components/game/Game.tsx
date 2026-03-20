@@ -24,6 +24,7 @@ import {
 } from "@/lib/game/constants";
 import { audioService } from "@/lib/game/audio";
 import { saveMiningSave, MiningSave } from "@/lib/game/save";
+import { registrarTransacao, TipoTransacao } from "@/lib/game/transacoes";
 import { MiningInventory, DEFAULT_INVENTORY, saveSessionDelta, fetchInventoryFromDB, blockToOre, getDropAmount, OreType, lootNameToItemType, getLootAmount, DungeonItemType } from "@/lib/game/inventory";
 import GameCanvas from "./GameCanvas";
 import GameHUD from "./GameHUD";
@@ -445,29 +446,47 @@ export default function Game({ username, initialSave, initialInventory, bankBala
       dungeonSpawn: (lv) => Math.ceil(800 * Math.pow(2.0, lv)),
       chestSpawn:   (lv) => Math.ceil(200 * Math.pow(1.6, lv)),
     };
-    const maxLevels: Record<string, number> = {
-      tntRadius: 5, tntSpawn: 10, beaconSpawn: 8, dungeonSpawn: 8, chestSpawn: 10,
+    const tipoMap: Record<string, TipoTransacao> = {
+      tntRadius: 'upgrade_tnt_radius',
+      tntSpawn: 'upgrade_tnt_spawn',
+      beaconSpawn: 'upgrade_beacon_spawn',
+      dungeonSpawn: 'upgrade_dungeon_spawn',
+      chestSpawn: 'upgrade_chest_spawn',
     };
     const currentLv = statsRef.current[type];
-    if (currentLv >= maxLevels[type]) return;
     const cost = costs[type](currentLv);
     if (localBalance < cost) return;
-    audioService.playClick();
+    audioService.playLevelUp();
     setLocalBalance((prev) => prev - cost);
     onSpend(cost);
     setStatsAndRef((prev) => ({ ...prev, [type]: currentLv + 1 }));
-  }, [localBalance, onSpend, setStatsAndRef]);
+    // Registra transacao para o plugin Minecraft processar
+    registrarTransacao(username, tipoMap[type], cost, {
+      upgrade_type: type,
+      from_level: currentLv,
+      to_level: currentLv + 1,
+    });
+  }, [username, localBalance, onSpend, setStatsAndRef]);
 
   const handleUpgrade = useCallback((type: "speed") => {
-    const cost = Math.ceil(80 * Math.pow(1.5, statsRef.current.pickSpeed));
+    const currentSpeed = statsRef.current.pickSpeed;
+    const cost = Math.ceil(80 * Math.pow(1.5, currentSpeed));
     if (localBalance < cost) return;
+    audioService.playLevelUp();
     setLocalBalance((prev) => prev - cost);
     onSpend(cost);
-    setStatsAndRef((prev) => ({ ...prev, pickSpeed: +(prev.pickSpeed + 0.2).toFixed(1) }));
-  }, [localBalance, onSpend, setStatsAndRef]);
+    const newSpeed = +(currentSpeed + 0.2).toFixed(1);
+    setStatsAndRef((prev) => ({ ...prev, pickSpeed: newSpeed }));
+    // Registra transacao para o plugin Minecraft processar
+    registrarTransacao(username, 'upgrade_speed', cost, {
+      from_speed: currentSpeed,
+      to_speed: newSpeed,
+    });
+  }, [username, localBalance, onSpend, setStatsAndRef]);
 
   const handleUpgradeTier = useCallback(() => {
-    const currentIdx = TIER_ORDER.indexOf(statsRef.current.pickaxeTier);
+    const currentTier = statsRef.current.pickaxeTier;
+    const currentIdx = TIER_ORDER.indexOf(currentTier);
     if (currentIdx >= TIER_ORDER.length - 1) return;
     const nextTier = TIER_ORDER[currentIdx + 1];
     const nextData = PICKAXE_TIERS[nextTier];
@@ -476,7 +495,13 @@ export default function Game({ username, initialSave, initialInventory, bankBala
     setLocalBalance((prev) => prev - nextData.cost);
     onSpend(nextData.cost);
     setStatsAndRef((prev) => ({ ...prev, pickaxeTier: nextTier }));
-  }, [localBalance, onSpend, setStatsAndRef]);
+    // Registra transacao para o plugin Minecraft processar
+    registrarTransacao(username, 'upgrade_pickaxe', nextData.cost, {
+      from_tier: currentTier,
+      to_tier: nextTier,
+      pickaxe_name: nextData.name,
+    });
+  }, [username, localBalance, onSpend, setStatsAndRef]);
 
   const handleEnchant = useCallback(() => {
     // Verifica se tem XP e coins suficientes
@@ -536,7 +561,16 @@ export default function Game({ username, initialSave, initialInventory, bankBala
     // Cobra coins
     setLocalBalance(prev => prev - ENCHANT_COST.coins);
     onSpend(ENCHANT_COST.coins);
-  }, [stats.xp, localBalance, enchantments, setStatsAndRef, onSpend]);
+    
+    // Registra transacao para o plugin Minecraft processar
+    registrarTransacao(username, 'enchant', ENCHANT_COST.coins, {
+      enchantment_id: selectedEnchant.id,
+      enchantment_name: selectedEnchant.name,
+      enchantment_type: selectedEnchant.type,
+      enchantment_level: selectedEnchant.level,
+      xp_cost: ENCHANT_COST.xp,
+    });
+  }, [username, stats.xp, localBalance, enchantments, setStatsAndRef, onSpend]);
 
   return (
     <div className="w-screen h-screen overflow-hidden relative" style={{ background: "#0a0a0f" }}>
