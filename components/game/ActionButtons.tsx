@@ -34,8 +34,8 @@ export default function ActionButtons({ onShop, onEnchant, onInventory }: Action
           SHOP
         </button>
 
-        {/* Enchant button */}
-        <button
+        {/* Enchant button — temporariamente desativado, nao remover */}
+        {/* <button
           onClick={() => {
             audioService.playClick();
             onEnchant();
@@ -52,7 +52,7 @@ export default function ActionButtons({ onShop, onEnchant, onInventory }: Action
         >
           <span style={{ fontSize: 14 }}>{"\u2728"}</span>
           ENCHANT
-        </button>
+        </button> */}
 
         {/* Inventory button */}
         <button
