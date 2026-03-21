@@ -461,10 +461,12 @@ export default function GameCanvas({
   const damage = (isManual ? baseDmg * MANUAL_MINING_MULT : baseDmg) * boostMult;
 
         hitBlock.hp -= damage;
-        // During boost, almost no cooldown (super fast mining)
+        // Eficiencia reduz o cooldown entre golpes (mais rapido)
+        // efficiencyMult 1.1 = 10% mais rapido, 1.4 = 40% mais rapido
+        const effCooldownMult = 1 / efficiencyMultRef.current;
         p.miningCooldown = boostActiveRef.current
           ? 1
-          : Math.max(4, MINING_COOLDOWN - Math.floor(tierData.speed * 2));
+          : Math.max(2, Math.floor((MINING_COOLDOWN - Math.floor(tierData.speed * 2)) * effCooldownMult));
 
           // Play mining sound (rate-limited in audioService to avoid spam)
           audioService.playMining(hitBlock.type);
@@ -620,7 +622,9 @@ export default function GameCanvas({
 
         hitMob.hp -= damage;
         hitMob.hitFlash = 6;
-        p.miningCooldown = Math.max(4, MINING_COOLDOWN - Math.floor(tierData.speed * 2));
+        // Eficiencia tambem reduz cooldown contra mobs
+        const effCooldownMultMob = 1 / efficiencyMultRef.current;
+        p.miningCooldown = Math.max(2, Math.floor(Math.max(4, MINING_COOLDOWN - Math.floor(tierData.speed * 2)) * effCooldownMultMob));
 
         const mobConfig = MOB_CONFIGS[hitMob.type];
         audioService.playMobHit(hitMob.type);
