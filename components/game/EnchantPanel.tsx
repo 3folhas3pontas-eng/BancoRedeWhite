@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { PlayerStats, Enchantment, Rarity } from "@/lib/game/types";
+import { useEffect, useRef, useState } from "react";
+import { PlayerStats, Enchantment } from "@/lib/game/types";
 import {
   ENCHANTMENTS,
   RARITY_COLORS,
@@ -11,7 +11,6 @@ import {
   PICKAXE_TEXTURES,
 } from "@/lib/game/constants";
 import { audioService } from "@/lib/game/audio";
-import { PickaxeTier } from "@/lib/game/types";
 
 interface EnchantPanelProps {
   stats: PlayerStats;
@@ -22,81 +21,85 @@ interface EnchantPanelProps {
   onClose: () => void;
 }
 
-// Glyphs flutuantes do canvas — efeito da mesa de encantamento
-function FloatingGlyphs({ width, height }: { width: number; height: number }) {
+// Glyphs runicas flutuando — identico ao canvas da mesa original do Minecraft
+function RuneCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
     const cvs = canvasRef.current;
     if (!cvs) return;
     const ctx = cvs.getContext("2d");
     if (!ctx) return;
+    const W = cvs.width, H = cvs.height;
     const CHARS = "ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗᛚᛜᛞᛟ";
-    interface G { x: number; y: number; ch: string; a: number; speed: number; size: number }
-    const pts: G[] = Array.from({ length: 18 }, () => ({
-      x: Math.random() * width,
-      y: Math.random() * height,
+    type Glyph = { x: number; y: number; ch: string; alpha: number; speed: number; size: number };
+    const glyphs: Glyph[] = Array.from({ length: 14 }, () => ({
+      x: Math.random() * W,
+      y: Math.random() * H,
       ch: CHARS[Math.floor(Math.random() * CHARS.length)],
-      a: Math.random() * 0.35 + 0.05,
-      speed: 0.15 + Math.random() * 0.4,
-      size: 9 + Math.random() * 5,
+      alpha: Math.random() * 0.4 + 0.08,
+      speed: 0.2 + Math.random() * 0.45,
+      size: 8 + Math.random() * 5,
     }));
     let raf: number;
     const draw = () => {
-      ctx.clearRect(0, 0, width, height);
-      for (const p of pts) {
-        ctx.globalAlpha = p.a;
-        ctx.fillStyle = "#7C4DFF";
-        ctx.font = `bold ${p.size}px monospace`;
-        ctx.fillText(p.ch, p.x, p.y);
-        p.y -= p.speed;
-        p.a -= 0.0015;
-        if (p.y < -12 || p.a <= 0) {
-          p.y = height + 5;
-          p.x = Math.random() * width;
-          p.a = Math.random() * 0.35 + 0.05;
-          p.ch = CHARS[Math.floor(Math.random() * CHARS.length)];
+      ctx.clearRect(0, 0, W, H);
+      for (const g of glyphs) {
+        ctx.globalAlpha = g.alpha;
+        ctx.fillStyle = "#A78BFA";
+        ctx.font = `bold ${g.size}px monospace`;
+        ctx.fillText(g.ch, g.x, g.y);
+        g.y -= g.speed;
+        g.alpha -= 0.001;
+        if (g.y < -14 || g.alpha <= 0) {
+          g.y = H + 6;
+          g.x = Math.random() * W;
+          g.alpha = Math.random() * 0.4 + 0.08;
+          g.ch = CHARS[Math.floor(Math.random() * CHARS.length)];
         }
       }
       raf = requestAnimationFrame(draw);
     };
     draw();
     return () => cancelAnimationFrame(raf);
-  }, [width, height]);
+  }, []);
   return (
     <canvas
       ref={canvasRef}
-      width={width}
-      height={height}
+      width={64}
+      height={64}
       className="absolute inset-0 pointer-events-none"
+      style={{ imageRendering: "pixelated" }}
     />
   );
 }
 
-// Slot estilo Minecraft
+// Slot estilo InventoryPanel — bordas biseladas cinza Minecraft
 function MCSlot({
   children,
   size = 48,
-  active = false,
+  highlighted = false,
 }: {
   children?: React.ReactNode;
   size?: number;
-  active?: boolean;
+  highlighted?: boolean;
 }) {
   return (
     <div
       style={{
         width: size,
         height: size,
-        background: active ? "#3A3A3A" : "#282828",
-        border: "none",
-        boxShadow: active
-          ? "inset -2px -2px 0 #555, inset 2px 2px 0 #111"
-          : "inset -2px -2px 0 #444, inset 2px 2px 0 #000",
+        background: highlighted ? "#9A9A9A" : "#8B8B8B",
+        border: "2px solid",
+        borderTopColor: "#373737",
+        borderLeftColor: "#373737",
+        borderBottomColor: "#FFFFFF",
+        borderRightColor: "#FFFFFF",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        position: "relative",
         imageRendering: "pixelated",
+        flexShrink: 0,
+        boxShadow: highlighted ? "inset 0 0 6px rgba(167,139,250,0.3)" : "none",
       }}
     >
       {children}
@@ -104,57 +107,117 @@ function MCSlot({
   );
 }
 
-// Linha de encantamento — estilo slots escuros da mesa
-function EnchantSlot({
+// Linha de encantamento no painel direito — estilo inventario
+function EnchantRow({
   enchant,
-  isEmpty,
   index,
 }: {
-  enchant?: Enchantment;
-  isEmpty: boolean;
+  enchant: Enchantment | null;
   index: number;
 }) {
-  // Textos "glifo" embaralhados quando vazio
-  const glyphText = ["?eϯλφ?", "?ΩΨΔΛδ?", "?ξζηθι?"][index] ?? "?????";
+  const GLYPHS = ["ᚠᚢᚦᚨᚱᚲᚷ", "ᚹᚺᚾᛁᛃᛇᛈ", "ᛉᛊᛏᛒᛖᛗᛚ"];
   return (
     <div
       style={{
-        height: 28,
-        background: "#1A1A1A",
-        borderTop: index === 0 ? "none" : "1px solid #111",
-        borderBottom: "1px solid #2A2A2A",
+        height: 30,
+        background: "#8B8B8B",
+        border: "2px solid",
+        borderTopColor: "#373737",
+        borderLeftColor: "#373737",
+        borderBottomColor: "#FFFFFF",
+        borderRightColor: "#FFFFFF",
         display: "flex",
         alignItems: "center",
-        paddingLeft: 10,
-        paddingRight: 10,
-        gap: 8,
-        cursor: isEmpty ? "default" : "default",
+        paddingLeft: 8,
+        paddingRight: 8,
+        gap: 6,
       }}
     >
-      {isEmpty ? (
-        <span style={{ fontFamily: "monospace", fontSize: 10, color: "#3A3A3A", letterSpacing: 2 }}>
-          {glyphText}
-        </span>
-      ) : enchant ? (
+      {enchant ? (
         <>
           <span
             style={{
               fontFamily: "monospace",
-              fontSize: 11,
               fontWeight: "bold",
+              fontSize: 11,
               color: RARITY_COLORS[enchant.rarity],
               textShadow: "1px 1px 0 #000",
               flex: 1,
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
             }}
           >
             {enchant.name}
           </span>
-          <span style={{ fontFamily: "monospace", fontSize: 10, color: "#888" }}>
+          <span style={{ fontFamily: "monospace", fontSize: 9, color: "#555", flexShrink: 0 }}>
             {enchant.description}
           </span>
         </>
-      ) : null}
+      ) : (
+        <span style={{ fontFamily: "monospace", fontSize: 10, color: "#777", letterSpacing: 3, opacity: 0.5 }}>
+          {GLYPHS[index]}
+        </span>
+      )}
     </div>
+  );
+}
+
+// Botao estilo Minecraft — borda biselada com luz/sombra
+function MCButton({
+  label,
+  sublabel,
+  onClick,
+  disabled,
+  color,
+}: {
+  label: string;
+  sublabel: string;
+  onClick: () => void;
+  disabled: boolean;
+  color: "purple" | "red";
+}) {
+  const bg     = disabled ? "#8B8B8B" : color === "purple" ? "#7E57C2" : "#B71C1C";
+  const top    = disabled ? "#FFFFFF" : color === "purple" ? "#B39DDB" : "#E57373";
+  const bottom = disabled ? "#555555" : color === "purple" ? "#4527A0" : "#7F0000";
+  const text   = disabled ? "#555555" : "#FFFFFF";
+
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      style={{
+        width: "100%",
+        padding: "6px 10px",
+        background: bg,
+        border: "2px solid",
+        borderTopColor: top,
+        borderLeftColor: top,
+        borderBottomColor: bottom,
+        borderRightColor: bottom,
+        cursor: disabled ? "not-allowed" : "pointer",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 8,
+        imageRendering: "pixelated",
+      }}
+    >
+      <span
+        style={{
+          fontFamily: "monospace",
+          fontWeight: "bold",
+          fontSize: 11,
+          color: text,
+          textShadow: disabled ? "none" : "1px 1px 0 #000",
+        }}
+      >
+        {label}
+      </span>
+      <span style={{ fontFamily: "monospace", fontSize: 10, color: disabled ? "#666" : "#DDD", textAlign: "right", textShadow: "1px 1px 0 #000" }}>
+        {sublabel}
+      </span>
+    </button>
   );
 }
 
@@ -168,250 +231,249 @@ export default function EnchantPanel({
 }: EnchantPanelProps) {
   const [spinning, setSpinning] = useState(false);
   const [recycling, setRecycling] = useState(false);
-  const [lastResult, setLastResult] = useState<{ enchant: Enchantment; upgraded: boolean } | null>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
 
-  const canAffordEnchant = stats.xp >= ENCHANT_COST.xp && bankBalance >= ENCHANT_COST.coins;
-  const canAffordRecycle = stats.xp >= RECYCLE_COST.xp && bankBalance >= RECYCLE_COST.coins && enchantments.length > 0;
+  const canAffordEnchant = !spinning && stats.xp >= ENCHANT_COST.xp && bankBalance >= ENCHANT_COST.coins;
+  const canAffordRecycle = !recycling && enchantments.length > 0 && stats.xp >= RECYCLE_COST.xp && bankBalance >= RECYCLE_COST.coins;
+
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" || e.key.toLowerCase() === "e") onClose();
+    };
+    const handleClickOutside = (e: MouseEvent) => {
+      if (panelRef.current && !panelRef.current.contains(e.target as Node)) onClose();
+    };
+    window.addEventListener("keydown", handleKey);
+    window.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      window.removeEventListener("keydown", handleKey);
+      window.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [onClose]);
 
   const handleEnchant = () => {
-    if (!canAffordEnchant || spinning) return;
+    if (!canAffordEnchant) return;
     setSpinning(true);
     audioService.playClick();
-    setTimeout(() => {
-      onEnchant();
-      setSpinning(false);
-    }, 700);
+    setTimeout(() => { onEnchant(); setSpinning(false); }, 600);
   };
 
   const handleRecycle = () => {
-    if (!canAffordRecycle || recycling) return;
+    if (!canAffordRecycle) return;
     setRecycling(true);
     audioService.playClick();
-    setTimeout(() => {
-      onRecycle();
-      setRecycling(false);
-      setLastResult(null);
-    }, 500);
+    setTimeout(() => { onRecycle(); setRecycling(false); }, 400);
   };
 
-  // Rastreia o ultimo encantamento adicionado/upado
-  useEffect(() => {
-    if (enchantments.length > 0) {
-      setLastResult({ enchant: enchantments[enchantments.length - 1], upgraded: false });
-    }
-  }, [enchantments]);
-
-  const pickaxeName = PICKAXE_TIERS[stats.pickaxeTier].name;
-  const pickaxeImg = PICKAXE_TEXTURES[stats.pickaxeTier];
-
-  // Monta sempre 3 slots para eficiencia, 1 para fortuna, 1 para remendo
-  const effEnchant = enchantments.find(e => e.type === "efficiency");
-  const fortEnchant = enchantments.find(e => e.type === "fortune");
-  const mendEnchant = enchantments.find(e => e.type === "mending");
-  const displaySlots: (Enchantment | null)[] = [
-    effEnchant ?? null,
-    fortEnchant ?? null,
-    mendEnchant ?? null,
-  ];
+  const effEnchant  = enchantments.find(e => e.type === "efficiency") ?? null;
+  const fortEnchant = enchantments.find(e => e.type === "fortune") ?? null;
+  const mendEnchant = enchantments.find(e => e.type === "mending") ?? null;
 
   return (
     <div
       className="fixed inset-0 z-[60] flex items-center justify-center"
-      style={{ background: "rgba(0,0,0,0.80)" }}
-      onClick={(e) => { if (e.target === e.currentTarget) { audioService.playClick(); onClose(); } }}
+      style={{ background: "rgba(0,0,0,0.78)" }}
     >
-      {/* Janela principal — fundo cinza escuro estilo Minecraft GUI */}
+      {/* Janela — exatamente o mesmo padrao do InventoryPanel */}
       <div
+        ref={panelRef}
         style={{
-          width: 380,
           background: "#C6C6C6",
-          boxShadow: "inset -2px -4px 0 #555, inset 2px 2px 0 #FFF, 0 0 0 2px #000, 4px 4px 0 #000",
+          border: "4px solid",
+          borderTopColor: "#FFFFFF",
+          borderLeftColor: "#FFFFFF",
+          borderBottomColor: "#555555",
+          borderRightColor: "#555555",
+          boxShadow: "8px 8px 32px rgba(0,0,0,0.6)",
+          padding: 10,
           imageRendering: "pixelated",
-          fontFamily: "monospace",
-          position: "relative",
+          width: 360,
+          maxWidth: "95vw",
         }}
       >
         {/* Titulo */}
-        <div style={{ padding: "8px 10px 4px", background: "#C6C6C6" }}>
-          <span style={{ fontSize: 14, fontWeight: "bold", color: "#3F3F3F", textShadow: "1px 1px 0 rgba(255,255,255,0.5)" }}>
-            Encantar
-          </span>
-          {/* Botao fechar */}
-          <button
-            onClick={() => { audioService.playClick(); onClose(); }}
-            style={{
-              position: "absolute", top: 6, right: 8,
-              width: 20, height: 20,
-              background: "#C6C6C6",
-              boxShadow: "inset -1px -2px 0 #555, inset 1px 1px 0 #FFF",
-              border: "none", cursor: "pointer",
-              fontSize: 10, fontWeight: "bold", color: "#3F3F3F",
-              display: "flex", alignItems: "center", justifyContent: "center",
-            }}
-          >
-            X
-          </button>
+        <div
+          style={{
+            fontFamily: "monospace",
+            fontWeight: "bold",
+            fontSize: 13,
+            color: "#404040",
+            textShadow: "1px 1px 0 rgba(255,255,255,0.5)",
+            marginBottom: 8,
+            letterSpacing: 1,
+          }}
+        >
+          Encantar
         </div>
 
-        {/* Area principal da mesa */}
-        <div style={{ padding: "6px 10px", display: "flex", gap: 8, alignItems: "flex-start" }}>
-          {/* Coluna esquerda: livro + slot picareta + slot lapis */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 6, alignItems: "center" }}>
-            {/* Livro animado */}
+        {/* Area superior — livro + slots de encantamento (igual print do Minecraft) */}
+        <div
+          style={{
+            background: "#8B8B8B",
+            border: "2px solid",
+            borderTopColor: "#373737",
+            borderLeftColor: "#373737",
+            borderBottomColor: "#FFFFFF",
+            borderRightColor: "#FFFFFF",
+            padding: 8,
+            display: "flex",
+            gap: 10,
+            alignItems: "flex-start",
+            marginBottom: 10,
+          }}
+        >
+          {/* Coluna esquerda: livro + picareta + lapis */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "center" }}>
+            {/* Livro com runas */}
             <div
               style={{
-                width: 56,
-                height: 56,
+                width: 64,
+                height: 64,
+                background: "#111122",
+                border: "2px solid",
+                borderTopColor: "#373737",
+                borderLeftColor: "#373737",
+                borderBottomColor: "#FFFFFF",
+                borderRightColor: "#FFFFFF",
                 position: "relative",
                 overflow: "hidden",
-                background: "#1A1A2E",
-                boxShadow: "inset -2px -2px 0 #0A0A15, inset 2px 2px 0 #2A2A4E",
               }}
             >
-              <FloatingGlyphs width={56} height={56} />
-              {/* Livro pixel art */}
+              <RuneCanvas />
+              {/* Livro pixel art por cima */}
               <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <div style={{ position: "relative", width: 36, height: 28 }}>
-                  {/* capa esquerda */}
-                  <div style={{ position: "absolute", left: 0, top: 2, width: 16, height: 24, background: "#8B4513", boxShadow: "inset -1px 0 0 #6B3010" }} />
-                  {/* paginas */}
-                  <div style={{ position: "absolute", left: 8, top: 4, width: 10, height: 20, background: "#F5F5DC" }} />
-                  <div style={{ position: "absolute", left: 18, top: 4, width: 10, height: 20, background: "#EEEECC" }} />
-                  {/* capa direita */}
-                  <div style={{ position: "absolute", right: 0, top: 2, width: 16, height: 24, background: "#8B4513", boxShadow: "inset 1px 0 0 #6B3010" }} />
-                  {/* lombada */}
-                  <div style={{ position: "absolute", left: 16, top: 2, width: 4, height: 24, background: "#5C2A08" }} />
-                  {/* brilho */}
-                  <div style={{ position: "absolute", left: 0, top: 2, width: 6, height: 3, background: "rgba(255,255,255,0.25)" }} />
+                <div style={{ position: "relative", width: 38, height: 30 }}>
+                  <div style={{ position: "absolute", left: 0, top: 2, width: 16, height: 26, background: "#8B4513" }} />
+                  <div style={{ position: "absolute", left: 8, top: 4, width: 10, height: 22, background: "#F5F5DC" }} />
+                  <div style={{ position: "absolute", left: 18, top: 4, width: 10, height: 22, background: "#EEEECC" }} />
+                  <div style={{ position: "absolute", right: 0, top: 2, width: 16, height: 26, background: "#8B4513" }} />
+                  <div style={{ position: "absolute", left: 16, top: 2, width: 4, height: 26, background: "#5C2A08" }} />
+                  <div style={{ position: "absolute", left: 0, top: 2, width: 8, height: 3, background: "rgba(255,255,255,0.2)" }} />
                 </div>
               </div>
             </div>
 
-            {/* Slot picareta */}
-            <MCSlot size={48} active>
-              <img src={pickaxeImg} alt={pickaxeName} width={32} height={32} style={{ imageRendering: "pixelated" }} />
+            {/* Slot picareta equipada */}
+            <MCSlot size={48} highlighted>
+              <img
+                src={PICKAXE_TEXTURES[stats.pickaxeTier]}
+                alt={PICKAXE_TIERS[stats.pickaxeTier].name}
+                width={36}
+                height={36}
+                style={{ imageRendering: "pixelated" }}
+              />
             </MCSlot>
 
-            {/* Slot lapis (decorativo) */}
+            {/* Slot lapis (decorativo, identico ao Minecraft) */}
             <MCSlot size={48}>
-              <div style={{ width: 22, height: 22, background: "#1A47A5", boxShadow: "inset -2px -2px 0 #0D2A6E, inset 1px 1px 0 #3060C0" }} />
+              <div
+                style={{
+                  width: 24,
+                  height: 24,
+                  background: "#1A47A5",
+                  border: "2px solid",
+                  borderTopColor: "#3060C0",
+                  borderLeftColor: "#3060C0",
+                  borderBottomColor: "#0D2A6E",
+                  borderRightColor: "#0D2A6E",
+                }}
+              />
             </MCSlot>
           </div>
 
-          {/* Coluna direita: slots de encantamento estilo Minecraft */}
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 0 }}>
+          {/* Coluna direita: nome + 3 linhas de encantamento */}
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4 }}>
             {/* Nome da picareta */}
-            <div style={{
-              padding: "3px 8px",
-              background: "#1A1A1A",
-              boxShadow: "inset -1px -1px 0 #333, inset 1px 1px 0 #000",
-              marginBottom: 4,
-            }}>
-              <span style={{ fontSize: 10, color: "#AAAAAA" }}>{pickaxeName}</span>
+            <div style={{ marginBottom: 2 }}>
+              <span
+                style={{
+                  fontFamily: "monospace",
+                  fontWeight: "bold",
+                  fontSize: 12,
+                  color: PICKAXE_TIERS[stats.pickaxeTier].color,
+                  textShadow: "1px 1px 0 rgba(0,0,0,0.6)",
+                }}
+              >
+                {PICKAXE_TIERS[stats.pickaxeTier].name}
+              </span>
             </div>
 
-            {/* 3 slots de encantamento */}
-            <div style={{ background: "#1A1A1A", boxShadow: "inset -1px -1px 0 #333, inset 1px 1px 0 #000" }}>
-              {displaySlots.map((enc, i) => (
-                <EnchantSlot key={i} enchant={enc ?? undefined} isEmpty={enc === null} index={i} />
-              ))}
-            </div>
-
-            {/* Resultado do ultimo encantamento */}
-            {lastResult && (
-              <div style={{
-                marginTop: 4,
-                padding: "3px 8px",
-                background: "#111",
-                boxShadow: "inset -1px -1px 0 #333, inset 1px 1px 0 #000",
-                display: "flex", alignItems: "center", gap: 6,
-              }}>
-                <span style={{ fontSize: 9, color: "#666" }}>Obtido:</span>
-                <span style={{ fontSize: 10, fontWeight: "bold", color: RARITY_COLORS[lastResult.enchant.rarity] }}>
-                  {lastResult.enchant.name}
-                </span>
-              </div>
-            )}
+            {/* 3 linhas — Eficiencia, Fortuna, Remendo */}
+            <EnchantRow enchant={effEnchant}  index={0} />
+            <EnchantRow enchant={fortEnchant} index={1} />
+            <EnchantRow enchant={mendEnchant} index={2} />
           </div>
         </div>
 
-        {/* Separador */}
-        <div style={{ height: 2, background: "#555", margin: "0 4px", boxShadow: "0 1px 0 #FFF" }} />
-
-        {/* Inventario label */}
-        <div style={{ padding: "6px 10px 2px" }}>
-          <span style={{ fontSize: 13, fontWeight: "bold", color: "#3F3F3F", textShadow: "1px 1px 0 rgba(255,255,255,0.5)" }}>
-            Acoes
-          </span>
+        {/* Separador — igual ao InventoryPanel */}
+        <div
+          style={{
+            fontFamily: "monospace",
+            fontWeight: "bold",
+            fontSize: 10,
+            color: "#555",
+            textTransform: "uppercase",
+            letterSpacing: 1,
+            marginBottom: 6,
+          }}
+        >
+          Acoes
         </div>
 
         {/* Botoes */}
-        <div style={{ padding: "4px 10px 10px", display: "flex", flexDirection: "column", gap: 6 }}>
-          {/* Botao Encantar */}
-          <button
+        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+          <MCButton
+            label={spinning ? "Encantando..." : "Encantar Picareta"}
+            sublabel={`${ENCHANT_COST.coins.toLocaleString()} coins + ${ENCHANT_COST.xp} XP`}
             onClick={handleEnchant}
-            disabled={!canAffordEnchant || spinning}
-            style={{
-              width: "100%",
-              padding: "6px 10px",
-              background: canAffordEnchant && !spinning ? "#5A3A8A" : "#3A3A3A",
-              boxShadow: canAffordEnchant && !spinning
-                ? "inset -2px -3px 0 #2A1A50, inset 2px 2px 0 #8A6AB0"
-                : "inset -2px -3px 0 #222, inset 2px 2px 0 #555",
-              border: "none",
-              cursor: canAffordEnchant && !spinning ? "pointer" : "not-allowed",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: 8,
-              opacity: canAffordEnchant ? 1 : 0.6,
-            }}
-          >
-            <span style={{ fontSize: 11, fontWeight: "bold", color: canAffordEnchant && !spinning ? "#CE93D8" : "#888", textShadow: "1px 1px 0 #000" }}>
-              {spinning ? "Encantando..." : "Encantar Picareta"}
-            </span>
-            <span style={{ fontSize: 10, color: "#AAA", textAlign: "right", lineHeight: 1.4 }}>
-              {ENCHANT_COST.coins.toLocaleString()} coins{"\n"}+ {ENCHANT_COST.xp} XP
-            </span>
-          </button>
-
-          {/* Botao Reciclar */}
-          <button
+            disabled={!canAffordEnchant}
+            color="purple"
+          />
+          <MCButton
+            label={recycling ? "Reciclando..." : "Reciclar Encantamentos"}
+            sublabel={`${RECYCLE_COST.coins.toLocaleString()} coins + ${RECYCLE_COST.xp} XP`}
             onClick={handleRecycle}
-            disabled={!canAffordRecycle || recycling}
+            disabled={!canAffordRecycle}
+            color="red"
+          />
+        </div>
+
+        {/* Rodape com XP e coins */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            marginTop: 8,
+            padding: "0 2px",
+          }}
+        >
+          <span
             style={{
-              width: "100%",
-              padding: "6px 10px",
-              background: canAffordRecycle && !recycling ? "#7A2A2A" : "#3A3A3A",
-              boxShadow: canAffordRecycle && !recycling
-                ? "inset -2px -3px 0 #4A1010, inset 2px 2px 0 #B04A4A"
-                : "inset -2px -3px 0 #222, inset 2px 2px 0 #555",
-              border: "none",
-              cursor: canAffordRecycle && !recycling ? "pointer" : "not-allowed",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: 8,
-              opacity: canAffordRecycle ? 1 : 0.6,
+              fontFamily: "monospace",
+              fontSize: 10,
+              color: stats.xp >= ENCHANT_COST.xp ? "#2E7D32" : "#C62828",
+              fontWeight: "bold",
             }}
           >
-            <span style={{ fontSize: 11, fontWeight: "bold", color: canAffordRecycle && !recycling ? "#EF9A9A" : "#888", textShadow: "1px 1px 0 #000" }}>
-              {recycling ? "Reciclando..." : "Reciclar (resetar) Encantamentos"}
-            </span>
-            <span style={{ fontSize: 10, color: "#AAA", textAlign: "right", lineHeight: 1.4 }}>
-              {RECYCLE_COST.coins.toLocaleString()} coins{"\n"}+ {RECYCLE_COST.xp} XP
-            </span>
-          </button>
+            XP: {stats.xp.toLocaleString()}
+          </span>
+          <span
+            style={{
+              fontFamily: "monospace",
+              fontSize: 10,
+              color: bankBalance >= ENCHANT_COST.coins ? "#1565C0" : "#C62828",
+              fontWeight: "bold",
+            }}
+          >
+            Coins: R$ {bankBalance.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+          </span>
+        </div>
 
-          {/* Info custos */}
-          <div style={{ display: "flex", justifyContent: "space-between", paddingTop: 2 }}>
-            <span style={{ fontSize: 10, color: stats.xp >= ENCHANT_COST.xp ? "#8BC34A" : "#EF5350" }}>
-              XP: {stats.xp.toLocaleString()}
-            </span>
-            <span style={{ fontSize: 10, color: bankBalance >= ENCHANT_COST.coins ? "#FBC02D" : "#EF5350" }}>
-              Coins: {bankBalance.toLocaleString()}
-            </span>
-          </div>
+        {/* Fechar */}
+        <div style={{ textAlign: "center", marginTop: 6 }}>
+          <span style={{ fontFamily: "monospace", fontSize: 9, color: "#6D6D6D" }}>
+            [E] ou [ESC] para fechar
+          </span>
         </div>
       </div>
     </div>
