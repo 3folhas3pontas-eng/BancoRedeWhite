@@ -102,6 +102,9 @@ export default function GameCanvas({
   const boostActiveRef = useRef(false);
   const beaconEventRef = useRef<BeaconEvent | null>(null);
   const keysRef = useRef<Set<string>>(new Set());
+  // Refs para encantamentos - necessario pois o loop captura closure e nao re-renderiza
+  const efficiencyMultRef = useRef(efficiencyMult);
+  const mendingMultRef = useRef(mendingMult);
 
   useEffect(() => {
     statsRef.current = stats;
@@ -114,6 +117,12 @@ export default function GameCanvas({
   useEffect(() => {
     beaconEventRef.current = beaconEvent;
   }, [beaconEvent]);
+
+  // Atualiza refs dos encantamentos toda vez que as props mudarem
+  useEffect(() => {
+    efficiencyMultRef.current = efficiencyMult;
+    mendingMultRef.current = mendingMult;
+  }, [efficiencyMult, mendingMult]);
 
   // Preload all textures
   useEffect(() => {
@@ -447,11 +456,7 @@ export default function GameCanvas({
         p.swingAngle = 0.5;
 
   const isManual = isPointerDown.current && targetRef.current;
-  // Log para debug - SEMPRE mostrar efficiencyMult a cada 2 segundos
-  if (Math.random() < 0.02) {
-    console.log('[v0] efficiencyMult recebido:', efficiencyMult, '| tipo:', typeof efficiencyMult);
-  }
-  const baseDmg = tierData.strength * s.pickStrength * efficiencyMult;
+  const baseDmg = tierData.strength * s.pickStrength * efficiencyMultRef.current;
   const boostMult = boostActiveRef.current ? BOOST_MINING_MULT : 1;
   const damage = (isManual ? baseDmg * MANUAL_MINING_MULT : baseDmg) * boostMult;
 
@@ -608,7 +613,7 @@ export default function GameCanvas({
         p.isSwinging = true;
         p.swingAngle = 0.6;
 
-  const baseDmg = tierData.strength * s.pickStrength * efficiencyMult;
+  const baseDmg = tierData.strength * s.pickStrength * efficiencyMultRef.current;
   const damage = (isPointerDown.current && targetRef.current)
   ? baseDmg * MANUAL_MINING_MULT
   : baseDmg;

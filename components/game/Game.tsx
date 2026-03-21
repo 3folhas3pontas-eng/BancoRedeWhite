@@ -73,15 +73,9 @@ export default function Game({ username, initialSave, initialInventory, bankBala
     chestSpawn:      initialSave?.chest_spawn   ?? 0,
   }));
 
-  const [enchantments, setEnchantments] = useState<Enchantment[]>(() => {
-    const loaded = initialSave?.enchantments ?? [];
-    console.log('[v0] 1. Enchantments do initialSave:', JSON.stringify(loaded));
-    if (loaded.length > 0) {
-      console.log('[v0] 1.1 Primeiro enchantment:', loaded[0]);
-      console.log('[v0] 1.2 type:', loaded[0].type, '| value:', loaded[0].value, '| level:', loaded[0].level);
-    }
-    return loaded;
-  });
+  const [enchantments, setEnchantments] = useState<Enchantment[]>(
+    () => initialSave?.enchantments ?? []
+  );
 
   // === NOVO SISTEMA DE INVENTARIO ===
   // dbInventory = valor atual do Supabase (fonte da verdade)
@@ -370,28 +364,12 @@ export default function Game({ username, initialSave, initialInventory, bankBala
   
   // Inicializa multiplicadores baseado nos encantamentos carregados
   useEffect(() => {
-    console.log('[v0] 2. useEffect disparado - enchantments.length:', enchantments.length);
-    console.log('[v0] 2.1 Enchantments array:', JSON.stringify(enchantments));
-    
     const efficiency = enchantments.find(e => e.type === 'efficiency');
     const fortune = enchantments.find(e => e.type === 'fortune');
     const mending = enchantments.find(e => e.type === 'mending');
-    
-    console.log('[v0] 2.2 efficiency encontrado:', efficiency);
-    console.log('[v0] 2.3 fortune encontrado:', fortune);
-    console.log('[v0] 2.4 mending encontrado:', mending);
-    
-    const effValue = efficiency?.value || 1;
-    const fortLevel = fortune?.level || 0;
-    const mendValue = mending?.value || 1;
-    
-    console.log('[v0] 2.5 Valores a serem aplicados - eff:', effValue, '| fort:', fortLevel, '| mend:', mendValue);
-    
-    setFortuneLevel(fortLevel);
-    setEfficiencyMultState(effValue);
-    setMendingMultState(mendValue);
-    
-    console.log('[v0] 2.6 setState chamados com:', { effValue, fortLevel, mendValue });
+    setFortuneLevel(fortune?.level ?? 0);
+    setEfficiencyMultState(efficiency?.value ?? 1);
+    setMendingMultState(mending?.value ?? 1);
   }, [enchantments]);
 
   const handleStatsUpdate = useCallback((partial: Partial<PlayerStats>) => {
