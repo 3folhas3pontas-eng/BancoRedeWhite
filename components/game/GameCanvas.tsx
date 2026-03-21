@@ -447,9 +447,9 @@ export default function GameCanvas({
         p.swingAngle = 0.5;
 
   const isManual = isPointerDown.current && targetRef.current;
-  // Log para debug - verificar se efficiencyMult esta sendo aplicado
-  if (efficiencyMult !== 1 && Math.random() < 0.01) {
-    console.log('[v0] Mining com efficiencyMult:', efficiencyMult, '| strength:', tierData.strength, '| pickStrength:', s.pickStrength);
+  // Log para debug - SEMPRE mostrar efficiencyMult a cada 2 segundos
+  if (Math.random() < 0.02) {
+    console.log('[v0] efficiencyMult recebido:', efficiencyMult, '| tipo:', typeof efficiencyMult);
   }
   const baseDmg = tierData.strength * s.pickStrength * efficiencyMult;
   const boostMult = boostActiveRef.current ? BOOST_MINING_MULT : 1;
