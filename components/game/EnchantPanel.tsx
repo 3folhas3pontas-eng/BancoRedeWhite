@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { PlayerStats, Enchantment, Rarity } from "@/lib/game/types";
+import { PlayerStats, Enchantment, Rarity, PickaxeTier } from "@/lib/game/types";
 import {
   ENCHANTMENTS,
   RARITY_COLORS,
@@ -10,6 +10,16 @@ import {
   PICKAXE_TIERS,
 } from "@/lib/game/constants";
 import { audioService } from "@/lib/game/audio";
+
+// Texturas das picaretas
+const PICKAXE_TEXTURES: Record<PickaxeTier, string> = {
+  wood: "https://minecraft.wiki/images/Wooden_Pickaxe_JE2_BE2.png",
+  stone: "https://minecraft.wiki/images/Stone_Pickaxe_JE2_BE2.png",
+  iron: "https://minecraft.wiki/images/Iron_Pickaxe_JE2_BE2.png",
+  gold: "https://minecraft.wiki/images/Golden_Pickaxe_JE2_BE2.png",
+  diamond: "https://minecraft.wiki/images/Diamond_Pickaxe_JE2_BE2.png",
+  netherite: "https://minecraft.wiki/images/Netherite_Pickaxe_JE2_BE1.png",
+};
 
 interface EnchantPanelProps {
   stats: PlayerStats;
@@ -101,7 +111,11 @@ export default function EnchantPanel({
   
   const canAffordEnchantXP = stats.xp >= ENCHANT_COST.xp;
   const canAffordEnchantCoins = bankBalance >= ENCHANT_COST.coins;
-  const canAffordEnchant = canAffordEnchantXP && canAffordEnchantCoins;
+  
+  // Verifica se ainda tem encantamentos disponiveis (tipos nao obtidos)
+  const typesObtidos = enchantments.map(e => e.type);
+  const hasAvailableEnchants = ENCHANTMENTS.some(e => !typesObtidos.includes(e.type));
+  const canAffordEnchant = canAffordEnchantXP && canAffordEnchantCoins && hasAvailableEnchants;
   
   const canAffordRecycleXP = stats.xp >= RECYCLE_COST.xp;
   const canAffordRecycleCoins = bankBalance >= RECYCLE_COST.coins;
@@ -201,7 +215,17 @@ export default function EnchantPanel({
                 boxShadow: `0 0 15px ${pickaxeData.color}40`,
               }}
             >
-              <span style={{ fontSize: 40 }}>{"⛏️"}</span>
+              <div
+                style={{
+                  width: 56,
+                  height: 56,
+                  backgroundImage: `url(${PICKAXE_TEXTURES[stats.pickaxeTier]})`,
+                  backgroundSize: "contain",
+                  backgroundRepeat: "no-repeat",
+                  backgroundPosition: "center",
+                  imageRendering: "pixelated",
+                }}
+              />
             </div>
             
             {/* Pickaxe Info */}
@@ -277,10 +301,12 @@ export default function EnchantPanel({
                     className="font-bold text-sm"
                     style={{ color: canAffordEnchant ? "#e1bee7" : "#666" }}
                   >
-                    {spinning ? "Encantando..." : "ENCANTAR"}
+                    {spinning ? "Encantando..." : !hasAvailableEnchants ? "COMPLETO" : "ENCANTAR"}
                   </div>
                   <div className="text-xs" style={{ color: "#888" }}>
-                    Recebe um encantamento aleatorio
+                    {!hasAvailableEnchants 
+                      ? "Voce ja tem todos os tipos de encantamento" 
+                      : "Recebe um encantamento aleatorio"}
                   </div>
                 </div>
               </div>
