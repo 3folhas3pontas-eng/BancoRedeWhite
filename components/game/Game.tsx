@@ -393,9 +393,25 @@ export default function Game({ username, initialSave, initialInventory, bankBala
   // Multipliers from enchantments
   const fortuneMult = useRef(1);   // Mais minerios (ref pois nao precisa re-render)
   const mendingMult = useRef(1);   // Mais XP (ref pois nao precisa re-render)
-  // efficiencyMult precisa ser state pois e passado como prop pro GameCanvas
-  const [efficiencyMult, setEfficiencyMult] = useState(1);
-  const efficiencyMultRef = useRef(1);
+  // pickStrength base (sem encantamento) — salvo para poder reverter ao reciclar
+  const basePickStrength = useRef(statsRef.current.pickStrength);
+
+  // Quando o jogador faz upgrade de tier (muda pickStrength via shop), atualiza a base
+  // e re-aplica o bonus de eficiencia por cima
+  useEffect(() => {
+    const efficiencyEnchant = enchantments.find(e => e.type === 'efficiency');
+    const effVal = efficiencyEnchant ? efficiencyEnchant.value : 1;
+    // A base e o pickStrength DIVIDIDO pelo effVal atual para extrair o valor puro
+    basePickStrength.current = +(stats.pickStrength / effVal).toFixed(2);
+  }, [stats.pickaxeTier]); // so roda quando muda o tier
+
+  // Aplica eficiencia ao pickStrength e atualiza stats
+  const applyEfficiency = useCallback((effVal: number) => {
+    setStatsAndRef(prev => ({
+      ...prev,
+      pickStrength: +(basePickStrength.current * effVal).toFixed(2),
+    }));
+  }, [setStatsAndRef]);
 
   // Inicializa multiplicadores baseado nos encantamentos carregados
   useEffect(() => {
@@ -404,10 +420,9 @@ export default function Game({ username, initialSave, initialInventory, bankBala
     const mending = enchantments.find(e => e.type === 'mending');
     fortuneMult.current = fortune ? fortune.value : 1;
     const effVal = efficiency ? efficiency.value : 1;
-    efficiencyMultRef.current = effVal;
-    setEfficiencyMult(effVal);
+    applyEfficiency(effVal);
     mendingMult.current = mending ? mending.value : 1;
-  }, [enchantments]);
+  }, [enchantments, applyEfficiency]);
 
   const handleStatsUpdate = useCallback((partial: Partial<PlayerStats>) => {
     setStatsAndRef((prev) => ({ ...prev, ...partial }));
@@ -587,8 +602,7 @@ export default function Game({ username, initialSave, initialInventory, bankBala
     const mendingEnchant = newEnchants.find(e => e.type === 'mending');
     fortuneMult.current = fortuneEnchant ? fortuneEnchant.value : 1;
     const effVal = efficiencyEnchant ? efficiencyEnchant.value : 1;
-    efficiencyMultRef.current = effVal;
-    setEfficiencyMult(effVal);
+    applyEfficiency(effVal);
     mendingMult.current = mendingEnchant ? mendingEnchant.value : 1;
 
     audioService.playOrb();
@@ -623,7 +637,7 @@ export default function Game({ username, initialSave, initialInventory, bankBala
         isBoostActive={isBoostActive}
         beaconEvent={beaconEvent}
         onDungeonChestOpen={handleDungeonChestOpen}
-        efficiencyMult={efficiencyMult}
+        efficiencyMult={1}
         mendingMult={mendingMult.current}
       />
       <GameHUD stats={stats} bankBalance={localBalance} />
