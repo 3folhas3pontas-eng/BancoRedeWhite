@@ -213,39 +213,32 @@ export const BEACON_EVENTS: {
 // Tipos de encantamento
 export type EnchantmentType = "efficiency" | "fortune" | "mending";
 
-// Encantamentos
-// Eficiencia: value = multiplicador de dano (1.10 = 10% mais rapido)
-//   niveis 1-3 mais comuns, 4-5 muito raros
-// Fortuna: value = minerios extras (com 60% de chance de ativar)
-//   nivel 1 quase impossivel, 2 e 3 ainda mais raros
-// Remendo: value = multiplicador de XP (apenas 2 niveis, bem comun)
+// Encantamentos disponiveis com suas chances individuais (peso)
+// Eficiencia: 1-3 raro, 4-5 muito dificil
+// Fortuna: muito raro, nivel 3 quase impossivel
+// Remendo: meio termo, nivel 3 mais dificil
 export const ENCHANTMENTS: (Enchantment & { type: EnchantmentType; level: number; weight: number })[] = [
-  // Eficiencia — value = multiplicador de dano
-  { id: "eff_1", type: "efficiency", level: 1, name: "Eficiencia I",   rarity: Rarity.COMMON,    description: "+10% velocidade", value: 1.10, weight: 35 },
-  { id: "eff_2", type: "efficiency", level: 2, name: "Eficiencia II",  rarity: Rarity.RARE,      description: "+15% velocidade", value: 1.15, weight: 20 },
-  { id: "eff_3", type: "efficiency", level: 3, name: "Eficiencia III", rarity: Rarity.RARE,      description: "+25% velocidade", value: 1.25, weight: 10 },
-  { id: "eff_4", type: "efficiency", level: 4, name: "Eficiencia IV",  rarity: Rarity.LEGENDARY, description: "+30% velocidade", value: 1.30, weight: 2  },
-  { id: "eff_5", type: "efficiency", level: 5, name: "Eficiencia V",   rarity: Rarity.MYTHIC,    description: "+40% velocidade", value: 1.40, weight: 0.5 },
-
-  // Fortuna — value = qtd minerios extras (60% chance de ativar por quebra)
-  { id: "fort_1", type: "fortune", level: 1, name: "Fortuna I",   rarity: Rarity.EPIC,      description: "+1 minerio (60%)",  value: 1, weight: 4   },
-  { id: "fort_2", type: "fortune", level: 2, name: "Fortuna II",  rarity: Rarity.LEGENDARY, description: "+2 minerios (60%)", value: 2, weight: 0.8 },
-  { id: "fort_3", type: "fortune", level: 3, name: "Fortuna III", rarity: Rarity.MYTHIC,    description: "+3 minerios (60%)", value: 3, weight: 0.1 },
-
-  // Remendo — value = multiplicador de XP (apenas 2 niveis)
-  { id: "mend_1", type: "mending", level: 1, name: "Remendo I",  rarity: Rarity.COMMON, description: "+20% XP de mineracao", value: 1.20, weight: 25 },
-  { id: "mend_2", type: "mending", level: 2, name: "Remendo II", rarity: Rarity.RARE,   description: "+40% XP de mineracao", value: 1.40, weight: 10 },
+  // Eficiencia (melhora velocidade de mineracao)
+  { id: "eff_1", type: "efficiency", level: 1, name: "Eficiencia I", rarity: Rarity.RARE, description: "+15% Velocidade", value: 1.15, weight: 25 },
+  { id: "eff_2", type: "efficiency", level: 2, name: "Eficiencia II", rarity: Rarity.RARE, description: "+30% Velocidade", value: 1.30, weight: 15 },
+  { id: "eff_3", type: "efficiency", level: 3, name: "Eficiencia III", rarity: Rarity.EPIC, description: "+50% Velocidade", value: 1.50, weight: 8 },
+  { id: "eff_4", type: "efficiency", level: 4, name: "Eficiencia IV", rarity: Rarity.LEGENDARY, description: "+75% Velocidade", value: 1.75, weight: 2 },
+  { id: "eff_5", type: "efficiency", level: 5, name: "Eficiencia V", rarity: Rarity.MYTHIC, description: "+100% Velocidade", value: 2.00, weight: 0.5 },
+  
+  // Fortuna (da mais minerios) - MUITO RARO
+  { id: "fort_1", type: "fortune", level: 1, name: "Fortuna I", rarity: Rarity.EPIC, description: "+25% Minerios", value: 1.25, weight: 5 },
+  { id: "fort_2", type: "fortune", level: 2, name: "Fortuna II", rarity: Rarity.LEGENDARY, description: "+50% Minerios", value: 1.50, weight: 1.5 },
+  { id: "fort_3", type: "fortune", level: 3, name: "Fortuna III", rarity: Rarity.MYTHIC, description: "+100% Minerios", value: 2.00, weight: 0.2 },
+  
+  // Remendo (da mais XP) - Meio termo
+  { id: "mend_1", type: "mending", level: 1, name: "Remendo I", rarity: Rarity.RARE, description: "+20% XP", value: 1.20, weight: 20 },
+  { id: "mend_2", type: "mending", level: 2, name: "Remendo II", rarity: Rarity.EPIC, description: "+40% XP", value: 1.40, weight: 8 },
+  { id: "mend_3", type: "mending", level: 3, name: "Remendo III", rarity: Rarity.LEGENDARY, description: "+70% XP", value: 1.70, weight: 2 },
 ];
 
-// Custo para encantar: 5000 coins + 1000 XP
+// Custo do encantamento
 export const ENCHANT_COST = {
   xp: 1000,
-  coins: 5000,
-};
-
-// Custo para reciclar (resetar) encantamentos: 5000 coins + 500 XP
-export const RECYCLE_COST = {
-  xp: 500,
   coins: 5000,
 };
 
@@ -253,7 +246,7 @@ export const RECYCLE_COST = {
 export const MAX_ENCHANT_LEVELS: Record<EnchantmentType, number> = {
   efficiency: 5,
   fortune: 3,
-  mending: 2,
+  mending: 3,
 };
 
 export const RARITY_COLORS: Record<Rarity, string> = {

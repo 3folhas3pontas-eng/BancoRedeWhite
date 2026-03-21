@@ -15,7 +15,6 @@ import {
   BLOCK_CONFIGS,
   ENCHANTMENTS,
   ENCHANT_COST,
-  RECYCLE_COST,
   TIER_ORDER,
   PICKAXE_TIERS,
   BOOST_CHARGE_TIME,
@@ -424,12 +423,9 @@ export default function Game({ username, initialSave, initialInventory, bankBala
       const oreType = blockToOre(block.type);
       if (oreType) {
         const eventMult = beaconEventRef.current?.active && beaconEventRef.current.type === "double_ores" ? 2 : 1;
-        const baseAmount = getDropAmount(block.type) * eventMult;
-        // Fortuna: 60% de chance de dar +value minerios extras
-        const fortuneBonus = fortuneMult.current > 0 && Math.random() < 0.6
-          ? Math.floor(fortuneMult.current)
-          : 0;
-        addOre(oreType, baseAmount + fortuneBonus);
+        // Aplica fortuneMult para mais minerios
+        const dropAmount = Math.ceil(getDropAmount(block.type) * eventMult * fortuneMult.current);
+        addOre(oreType, dropAmount);
       }
 
       setStatsAndRef((prev) => {
@@ -543,44 +539,65 @@ export default function Game({ username, initialSave, initialInventory, bankBala
   }, [username, localBalance, onSpend, setStatsAndRef]);
 
   const handleEnchant = useCallback(() => {
+    // Verifica se tem XP e coins suficientes
     if (stats.xp < ENCHANT_COST.xp || localBalance < ENCHANT_COST.coins) return;
 
-    // Sorteio ponderado pelo peso de cada encantamento
+    // Selecao de encantamento baseado no peso individual de cada um
     const totalWeight = ENCHANTMENTS.reduce((sum, e) => sum + e.weight, 0);
     let roll = Math.random() * totalWeight;
     let selectedEnchant = ENCHANTMENTS[0];
+    
     for (const enchant of ENCHANTMENTS) {
       roll -= enchant.weight;
-      if (roll <= 0) { selectedEnchant = enchant; break; }
-    }
-
-    // Se ja tem esse tipo, so substitui se for nivel MAIOR (caso contrario jogador perde o custo)
-    const existingOfType = enchantments.find(e => e.type === selectedEnchant.type);
-    if (existingOfType) {
-      if (selectedEnchant.level > existingOfType.level) {
-        setEnchantments(prev => prev.map(e => e.type === selectedEnchant.type ? selectedEnchant : e));
+      if (roll <= 0) {
+        selectedEnchant = enchant;
+        break;
       }
-    } else {
-      setEnchantments(prev => [...prev, selectedEnchant]);
     }
 
-    // Recalcula multiplicadores
+    // Verifica se ja tem esse tipo de encantamento
+    const existingOfType = enchantments.find(e => e.type === selectedEnchant.type);
+    
+    if (existingOfType) {
+      // Se ja tem encantamento desse tipo, so substitui se for nivel maior
+      if (selectedEnchant.level > existingOfType.level) {
+        setEnchantments(prevEnc => 
+          prevEnc.map(e => e.type === selectedEnchant.type ? selectedEnchant : e)
+        );
+      }
+      // Se for igual ou menor, nao faz nada (perde o encantamento)
+    } else {
+      // Nao tem esse tipo ainda, adiciona
+      setEnchantments(prevEnc => [...prevEnc, selectedEnchant]);
+    }
+
+    // Atualiza multiplicadores baseado nos novos encantamentos
     const newEnchants = existingOfType && selectedEnchant.level > existingOfType.level
       ? enchantments.map(e => e.type === selectedEnchant.type ? selectedEnchant : e)
-      : existingOfType ? enchantments : [...enchantments, selectedEnchant];
-
+      : existingOfType
+        ? enchantments
+        : [...enchantments, selectedEnchant];
+    
     const fortuneEnchant = newEnchants.find(e => e.type === 'fortune');
     const efficiencyEnchant = newEnchants.find(e => e.type === 'efficiency');
     const mendingEnchant = newEnchants.find(e => e.type === 'mending');
-    // Fortuna: value = qtd de minerios extras, ativada com 60% de chance (tratado no handleBlockBreak)
-    fortuneMult.current = fortuneEnchant ? fortuneEnchant.value : 0;
+    fortuneMult.current = fortuneEnchant ? fortuneEnchant.value : 1;
     efficiencyMult.current = efficiencyEnchant ? efficiencyEnchant.value : 1;
     mendingMult.current = mendingEnchant ? mendingEnchant.value : 1;
 
     audioService.playOrb();
-    setStatsAndRef(prev => ({ ...prev, xp: prev.xp - ENCHANT_COST.xp }));
+
+    // Cobra XP
+    setStatsAndRef(prev => ({
+      ...prev,
+      xp: prev.xp - ENCHANT_COST.xp,
+    }));
+
+    // Cobra coins
     setLocalBalance(prev => prev - ENCHANT_COST.coins);
     onSpend(ENCHANT_COST.coins);
+    
+    // Registra transacao para o plugin Minecraft processar
     registrarTransacao(username, 'enchant', ENCHANT_COST.coins, {
       enchantment_id: selectedEnchant.id,
       enchantment_name: selectedEnchant.name,
@@ -588,19 +605,6 @@ export default function Game({ username, initialSave, initialInventory, bankBala
       enchantment_level: selectedEnchant.level,
       xp_cost: ENCHANT_COST.xp,
     });
-  }, [username, stats.xp, localBalance, enchantments, setStatsAndRef, onSpend]);
-
-  const handleRecycle = useCallback(() => {
-    if (stats.xp < RECYCLE_COST.xp || localBalance < RECYCLE_COST.coins || enchantments.length === 0) return;
-    setEnchantments([]);
-    fortuneMult.current = 0;
-    efficiencyMult.current = 1;
-    mendingMult.current = 1;
-    audioService.playClick();
-    setStatsAndRef(prev => ({ ...prev, xp: prev.xp - RECYCLE_COST.xp }));
-    setLocalBalance(prev => prev - RECYCLE_COST.coins);
-    onSpend(RECYCLE_COST.coins);
-    registrarTransacao(username, 'recycle_enchant', RECYCLE_COST.coins, { xp_cost: RECYCLE_COST.xp });
   }, [username, stats.xp, localBalance, enchantments, setStatsAndRef, onSpend]);
 
   return (
@@ -646,7 +650,6 @@ export default function Game({ username, initialSave, initialInventory, bankBala
           enchantments={enchantments}
           bankBalance={localBalance}
           onEnchant={handleEnchant}
-          onRecycle={handleRecycle}
           onClose={() => setShowEnchant(false)}
         />
       )}
