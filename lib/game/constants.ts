@@ -15,12 +15,12 @@ export const PICKAXE_TIERS: Record<
   PickaxeTier,
   { strength: number; speed: number; cost: number; color: string; name: string }
 > = {
-  wood:      { strength: 0.9, speed: 1,   cost: 0,      color: "#8B5E3C", name: "Wood Pickaxe" },
-  stone:     { strength: 1,   speed: 1.2, cost: 200,    color: "#9E9E9E", name: "Stone Pickaxe" },
-  iron:      { strength: 1.5, speed: 1.2, cost: 1500,   color: "#D7CCC8", name: "Iron Pickaxe" },
-  gold:      { strength: 1.6, speed: 1.5, cost: 8000,   color: "#FBC02D", name: "Gold Pickaxe" },
-  diamond:   { strength: 1.7, speed: 1.8, cost: 50000,  color: "#00E5FF", name: "Diamond Pickaxe" },
-  netherite: { strength: 1.9, speed: 2,   cost: 1000,   color: "#4A3B4A", name: "Netherite Pickaxe" },
+  wood: { strength: 0.9, speed: 1, cost: 0, color: "#8B5E3C", name: "Wood Pickaxe" },
+  stone: { strength: 1, speed: 1.2, cost: 200, color: "#9E9E9E", name: "Stone Pickaxe" },
+  iron: { strength: 1.6, speed: 1.2, cost: 1500, color: "#D7CCC8", name: "Iron Pickaxe" },
+  gold: { strength: 1.6, speed: 1.5, cost: 8000, color: "#FBC02D", name: "Gold Pickaxe" },
+  diamond: { strength: 1.7, speed: 1.8, cost: 50000, color: "#00E5FF", name: "Diamond Pickaxe" },
+  netherite: { strength: 1.9, speed: 2, cost: 1000, color: "#4A3B4A", name: "Netherite Pickaxe" },
 };
 
 // Retorna o strength final da picareta com bonus de eficiencia aplicado
@@ -225,21 +225,21 @@ export type EnchantmentType = "efficiency" | "fortune" | "mending";
 // Remendo: mais XP ao minerar
 export const ENCHANTMENTS: (Enchantment & { type: EnchantmentType; level: number; weight: number })[] = [
   // Eficiencia — value = bonus de pickStrength somado direto (igual upgrade de velocidade)
-  { id: "eff_1", type: "efficiency", level: 1, name: "Eficiencia I",   rarity: Rarity.COMMON,    description: "+Velocidade de mineracao", value: 0.2,  weight: 30 },
-  { id: "eff_2", type: "efficiency", level: 2, name: "Eficiencia II",  rarity: Rarity.RARE,      description: "+Velocidade de mineracao", value: 0.4,  weight: 18 },
-  { id: "eff_3", type: "efficiency", level: 3, name: "Eficiencia III", rarity: Rarity.EPIC,      description: "+Velocidade de mineracao", value: 0.6,  weight: 8  },
-  { id: "eff_4", type: "efficiency", level: 4, name: "Eficiencia IV",  rarity: Rarity.LEGENDARY, description: "+Velocidade de mineracao", value: 0.8,  weight: 3  },
-  { id: "eff_5", type: "efficiency", level: 5, name: "Eficiencia V",   rarity: Rarity.MYTHIC,    description: "+Velocidade de mineracao", value: 1.0,  weight: 0.8 },
-  
+  { id: "eff_1", type: "efficiency", level: 1, name: "Eficiencia I", rarity: Rarity.COMMON, description: "+Velocidade de mineracao", value: 0.2, weight: 30 },
+  { id: "eff_2", type: "efficiency", level: 2, name: "Eficiencia II", rarity: Rarity.RARE, description: "+Velocidade de mineracao", value: 0.4, weight: 18 },
+  { id: "eff_3", type: "efficiency", level: 3, name: "Eficiencia III", rarity: Rarity.EPIC, description: "+Velocidade de mineracao", value: 0.6, weight: 8 },
+  { id: "eff_4", type: "efficiency", level: 4, name: "Eficiencia IV", rarity: Rarity.LEGENDARY, description: "+Velocidade de mineracao", value: 0.8, weight: 3 },
+  { id: "eff_5", type: "efficiency", level: 5, name: "Eficiencia V", rarity: Rarity.MYTHIC, description: "+Velocidade de mineracao", value: 1.0, weight: 0.8 },
+
   // Fortuna (40% de chance de +nivel minerios) - MUITO RARO
-  { id: "fort_1", type: "fortune", level: 1, name: "Fortuna I",   rarity: Rarity.EPIC,      description: "40% chance +1 minerio",  value: 1, weight: 6   },
-  { id: "fort_2", type: "fortune", level: 2, name: "Fortuna II",  rarity: Rarity.LEGENDARY, description: "40% chance +2 minerios", value: 2, weight: 2   },
-  { id: "fort_3", type: "fortune", level: 3, name: "Fortuna III", rarity: Rarity.MYTHIC,    description: "40% chance +3 minerios", value: 3, weight: 0.3 },
-  
+  { id: "fort_1", type: "fortune", level: 1, name: "Fortuna I", rarity: Rarity.EPIC, description: "40% chance +1 minerio", value: 1, weight: 6 },
+  { id: "fort_2", type: "fortune", level: 2, name: "Fortuna II", rarity: Rarity.LEGENDARY, description: "40% chance +2 minerios", value: 2, weight: 2 },
+  { id: "fort_3", type: "fortune", level: 3, name: "Fortuna III", rarity: Rarity.MYTHIC, description: "40% chance +3 minerios", value: 3, weight: 0.3 },
+
   // Remendo (bonus de XP — value = bonus percentual, ex: 0.15 = +15%)
-  { id: "mend_1", type: "mending", level: 1, name: "Remendo I",   rarity: Rarity.COMMON, description: "+15% XP", value: 0.15, weight: 25 },
-  { id: "mend_2", type: "mending", level: 2, name: "Remendo II",  rarity: Rarity.RARE,   description: "+25% XP", value: 0.25, weight: 12 },
-  { id: "mend_3", type: "mending", level: 3, name: "Remendo III", rarity: Rarity.EPIC,   description: "+40% XP", value: 0.40, weight: 4  },
+  { id: "mend_1", type: "mending", level: 1, name: "Remendo I", rarity: Rarity.COMMON, description: "+15% XP", value: 0.15, weight: 25 },
+  { id: "mend_2", type: "mending", level: 2, name: "Remendo II", rarity: Rarity.RARE, description: "+25% XP", value: 0.25, weight: 12 },
+  { id: "mend_3", type: "mending", level: 3, name: "Remendo III", rarity: Rarity.EPIC, description: "+40% XP", value: 0.40, weight: 4 },
 ];
 
 // Chance de fortuna ativar (40%)
