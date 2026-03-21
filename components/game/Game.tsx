@@ -391,17 +391,21 @@ export default function Game({ username, initialSave, initialInventory, bankBala
   const closeLoot = useCallback(() => setCurrentLoot(null), []);
 
   // Multipliers from enchantments
-  const fortuneMult = useRef(1);  // Mais minerios
-  const efficiencyMult = useRef(1);  // Mais velocidade
-  const mendingMult = useRef(1);  // Mais XP
-  
+  const fortuneMult = useRef(1);   // Mais minerios (ref pois nao precisa re-render)
+  const mendingMult = useRef(1);   // Mais XP (ref pois nao precisa re-render)
+  // efficiencyMult precisa ser state pois e passado como prop pro GameCanvas
+  const [efficiencyMult, setEfficiencyMult] = useState(1);
+  const efficiencyMultRef = useRef(1);
+
   // Inicializa multiplicadores baseado nos encantamentos carregados
   useEffect(() => {
     const fortune = enchantments.find(e => e.type === 'fortune');
     const efficiency = enchantments.find(e => e.type === 'efficiency');
     const mending = enchantments.find(e => e.type === 'mending');
     fortuneMult.current = fortune ? fortune.value : 1;
-    efficiencyMult.current = efficiency ? efficiency.value : 1;
+    const effVal = efficiency ? efficiency.value : 1;
+    efficiencyMultRef.current = effVal;
+    setEfficiencyMult(effVal);
     mendingMult.current = mending ? mending.value : 1;
   }, [enchantments]);
 
@@ -582,7 +586,9 @@ export default function Game({ username, initialSave, initialInventory, bankBala
     const efficiencyEnchant = newEnchants.find(e => e.type === 'efficiency');
     const mendingEnchant = newEnchants.find(e => e.type === 'mending');
     fortuneMult.current = fortuneEnchant ? fortuneEnchant.value : 1;
-    efficiencyMult.current = efficiencyEnchant ? efficiencyEnchant.value : 1;
+    const effVal = efficiencyEnchant ? efficiencyEnchant.value : 1;
+    efficiencyMultRef.current = effVal;
+    setEfficiencyMult(effVal);
     mendingMult.current = mendingEnchant ? mendingEnchant.value : 1;
 
     audioService.playOrb();
@@ -617,7 +623,7 @@ export default function Game({ username, initialSave, initialInventory, bankBala
         isBoostActive={isBoostActive}
         beaconEvent={beaconEvent}
         onDungeonChestOpen={handleDungeonChestOpen}
-        efficiencyMult={efficiencyMult.current}
+        efficiencyMult={efficiencyMult}
         mendingMult={mendingMult.current}
       />
       <GameHUD stats={stats} bankBalance={localBalance} />
