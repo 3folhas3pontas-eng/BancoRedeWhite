@@ -104,14 +104,37 @@ function Slot({
 }
 
 // Textura da picareta baseada no tier
-const PICKAXE_TEXTURES: Record<PickaxeTier, string> = {
-  wood: "https://minecraft.wiki/images/Wooden_Pickaxe_JE2_BE2.png",
-  stone: "https://minecraft.wiki/images/Stone_Pickaxe_JE2_BE2.png",
-  iron: "https://minecraft.wiki/images/Iron_Pickaxe_JE2_BE2.png",
-  gold: "https://minecraft.wiki/images/Golden_Pickaxe_JE2_BE2.png",
-  diamond: "https://minecraft.wiki/images/Diamond_Pickaxe_JE2_BE2.png",
-  netherite: "https://minecraft.wiki/images/Netherite_Pickaxe_JE2_BE1.png",
+// Cores de cada tier para o SVG da picareta
+const PICKAXE_COLORS: Record<PickaxeTier, { head: string; stick: string }> = {
+  wood:      { head: "#8B5E3C", stick: "#6B3E1A" },
+  stone:     { head: "#9E9E9E", stick: "#795548" },
+  iron:      { head: "#D7CCC8", stick: "#795548" },
+  gold:      { head: "#FBC02D", stick: "#795548" },
+  diamond:   { head: "#00E5FF", stick: "#795548" },
+  netherite: { head: "#4A3B4A", stick: "#2D2D2D" },
 };
+
+function PickaxeIcon({ tier, size = 36 }: { tier: PickaxeTier; size?: number }) {
+  const { head, stick } = PICKAXE_COLORS[tier];
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" style={{ imageRendering: "pixelated" }}>
+      {/* Cabo */}
+      <rect x="9" y="7" width="2" height="2" fill={stick} />
+      <rect x="11" y="9" width="2" height="2" fill={stick} />
+      <rect x="13" y="11" width="2" height="2" fill={stick} />
+      {/* Cabeca da picareta */}
+      <rect x="0" y="4" width="2" height="2" fill={head} />
+      <rect x="2" y="2" width="2" height="2" fill={head} />
+      <rect x="4" y="0" width="6" height="2" fill={head} />
+      <rect x="4" y="2" width="2" height="2" fill={head} />
+      <rect x="6" y="4" width="4" height="2" fill={head} />
+      <rect x="2" y="4" width="2" height="2" fill={head} />
+      <rect x="6" y="2" width="2" height="2" fill={head} />
+      {/* Brilho */}
+      <rect x="4" y="0" width="2" height="1" fill="rgba(255,255,255,0.4)" />
+    </svg>
+  );
+}
 
 export default function InventoryPanel({ inventory, pickaxeTier, enchantments, onClose }: InventoryPanelProps) {
   const panelRef = useRef<HTMLDivElement>(null);
@@ -226,17 +249,7 @@ export default function InventoryPanel({ inventory, pickaxeTier, enchantments, o
                 flexShrink: 0,
               }}
             >
-              <div
-                style={{
-                  width: 36,
-                  height: 36,
-                  backgroundImage: `url(${PICKAXE_TEXTURES[pickaxeTier]})`,
-                  backgroundSize: "contain",
-                  backgroundRepeat: "no-repeat",
-                  backgroundPosition: "center",
-                  imageRendering: "pixelated",
-                }}
-              />
+              <PickaxeIcon tier={pickaxeTier} size={36} />
             </div>
             
             {/* Picareta info */}
