@@ -115,7 +115,7 @@ export default function Game({ username, initialSave, initialInventory, bankBala
   }, []);
 
   const doSave = useCallback(async () => {
-    saveMiningSave(username, statsRef.current, enchantmentsRef.current);
+    await saveMiningSave(username, statsRef.current, enchantmentsRef.current);
     
     // Salva APENAS o delta da sessao de forma incremental
     // NUNCA sobrescreve valores - apenas adiciona ao banco
@@ -498,18 +498,10 @@ export default function Game({ username, initialSave, initialInventory, bankBala
   const handleUpgradeTier = useCallback(() => {
     const currentTier = statsRef.current.pickaxeTier;
     const currentIdx = TIER_ORDER.indexOf(currentTier);
-    console.log('[v0] handleUpgradeTier:', { currentTier, currentIdx, localBalance });
-    if (currentIdx >= TIER_ORDER.length - 1) {
-      console.log('[v0] Ja esta no tier maximo');
-      return;
-    }
+    if (currentIdx >= TIER_ORDER.length - 1) return;
     const nextTier = TIER_ORDER[currentIdx + 1];
     const nextData = PICKAXE_TIERS[nextTier];
-    console.log('[v0] Proximo tier:', { nextTier, cost: nextData.cost, hasBalance: localBalance >= nextData.cost });
-    if (localBalance < nextData.cost) {
-      console.log('[v0] Saldo insuficiente');
-      return;
-    }
+    if (localBalance < nextData.cost) return;
     audioService.playLevelUp();
     setLocalBalance((prev) => prev - nextData.cost);
     onSpend(nextData.cost);

@@ -79,7 +79,11 @@ export async function saveMiningSave(
     enchantments: enchantments,
   };
 
-  await supabase
+  const { error } = await supabase
     .from('mining_save')
     .upsert(payload, { onConflict: 'username' });
+  
+  if (error) {
+    console.error('[v0] Erro ao salvar mining_save:', error);
+  }
 }
