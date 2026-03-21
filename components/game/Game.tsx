@@ -361,20 +361,16 @@ export default function Game({ username, initialSave, initialInventory, bankBala
   const [fortuneLevel, setFortuneLevel] = useState(0);
   const [mendingMultState, setMendingMultState] = useState(0);
   
-  // Aplica encantamentos carregados do banco nos stats do jogador
-  const enchantmentsApplied = useRef(false);
-  useEffect(() => {
-    if (enchantmentsApplied.current || enchantments.length === 0) return;
-    enchantmentsApplied.current = true;
+  // Calcula o bonus de eficiencia dos encantamentos
+  const efficiencyBonus = useMemo(() => {
+    const eff = enchantments.find(e => e.type === 'efficiency');
+    return eff?.value ?? 0;
+  }, [enchantments]);
 
-    const efficiency = enchantments.find(e => e.type === 'efficiency');
+  // Aplica encantamentos carregados do banco
+  useEffect(() => {
     const fortune = enchantments.find(e => e.type === 'fortune');
     const mending = enchantments.find(e => e.type === 'mending');
-
-    // Eficiencia: soma ao pickStrength igual o upgrade de velocidade
-    if (efficiency) {
-      setStatsAndRef(prev => ({ ...prev, pickStrength: +(prev.pickStrength + efficiency.value).toFixed(2) }));
-    }
     setFortuneLevel(fortune?.level ?? 0);
     setMendingMultState(mending?.value ?? 0);
   }, [enchantments]);
@@ -529,10 +525,7 @@ export default function Game({ username, initialSave, initialInventory, bankBala
     const availableEnchants = ENCHANTMENTS.filter(e => !typesObtidos.includes(e.type));
     
     // Se nao tem mais encantamentos disponiveis, nao faz nada
-    if (availableEnchants.length === 0) {
-      console.log('[v0] Nenhum encantamento disponivel - jogador ja tem todos os tipos');
-      return;
-    }
+    if (availableEnchants.length === 0) return;
 
     // Selecao de encantamento baseado no peso individual de cada um
     const totalWeight = availableEnchants.reduce((sum, e) => sum + e.weight, 0);
@@ -550,11 +543,6 @@ export default function Game({ username, initialSave, initialInventory, bankBala
     // Adiciona o novo encantamento
     const newEnchants = [...enchantments, selectedEnchant];
     setEnchantments(newEnchants);
-
-    // Eficiencia: soma direto ao pickStrength, igual o upgrade de velocidade
-    if (selectedEnchant.type === 'efficiency') {
-      setStatsAndRef(prev => ({ ...prev, pickStrength: +(prev.pickStrength + selectedEnchant.value).toFixed(2) }));
-    }
 
     // Fortuna: salva o nivel
     setFortuneLevel(newEnchants.find(e => e.type === 'fortune')?.level ?? 0);
@@ -592,13 +580,7 @@ export default function Game({ username, initialSave, initialInventory, bankBala
     // Remove todos os encantamentos
     setEnchantments([]);
 
-    // Remove bonus de eficiencia do pickStrength
-    const effEnchant = enchantments.find(e => e.type === 'efficiency');
-    if (effEnchant) {
-      setStatsAndRef(prev => ({ ...prev, pickStrength: +(prev.pickStrength - effEnchant.value).toFixed(2) }));
-    }
-
-    // Reseta fortuna e remendo
+    // Reseta fortuna e remendo (eficiencia já é calculada em tempo real)
     setFortuneLevel(0);
     setMendingMultState(0);
 
@@ -632,6 +614,7 @@ export default function Game({ username, initialSave, initialInventory, bankBala
         isBoostActive={isBoostActive}
         beaconEvent={beaconEvent}
         onDungeonChestOpen={handleDungeonChestOpen}
+        efficiencyBonus={efficiencyBonus}
       />
       <GameHUD stats={stats} bankBalance={localBalance} />
       <EventBanner event={beaconEvent} />
