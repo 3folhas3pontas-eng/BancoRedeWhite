@@ -55,7 +55,7 @@ export default function GameCanvas({
   isBoostActive = false,
   beaconEvent = null,
   onDungeonChestOpen,
-  efficiencyMult = 1,
+  efficiencyMult = 0,
   mendingMult = 1,
 }: GameCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -102,7 +102,6 @@ export default function GameCanvas({
   const boostActiveRef = useRef(false);
   const beaconEventRef = useRef<BeaconEvent | null>(null);
   const keysRef = useRef<Set<string>>(new Set());
-  // Refs para encantamentos - necessario pois o loop captura closure e nao re-renderiza
   const efficiencyMultRef = useRef(efficiencyMult);
   const mendingMultRef = useRef(mendingMult);
 
@@ -350,10 +349,10 @@ export default function GameCanvas({
   function update(dt: number) {
     const p = pickaxeRef.current;
     const s = statsRef.current;
-    // Aplica eficiencia direto no strength — eff1=+10%, eff2=+15%, etc.
+    // Aplica eficiencia: strength * (1 + bonus). Ex: eff1 bonus=0.10 → wood = 0.9 * 1.10 = 0.99
     const tierData = {
       ...PICKAXE_TIERS[s.pickaxeTier],
-      strength: PICKAXE_TIERS[s.pickaxeTier].strength * efficiencyMultRef.current,
+      strength: PICKAXE_TIERS[s.pickaxeTier].strength * (1 + efficiencyMultRef.current),
     };
 
     if (p.miningCooldown > 0) p.miningCooldown--;

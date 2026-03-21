@@ -359,8 +359,8 @@ export default function Game({ username, initialSave, initialInventory, bankBala
 
   // Multipliers from enchantments (usando useState para causar re-render)
   const [fortuneLevel, setFortuneLevel] = useState(0);  // Nivel da fortuna (0, 1, 2 ou 3)
-  const [efficiencyMultState, setEfficiencyMultState] = useState(1);  // Multiplicador de velocidade
-  const [mendingMultState, setMendingMultState] = useState(1);  // Multiplicador de XP
+  const [efficiencyMultState, setEfficiencyMultState] = useState(0);  // bonus: 0=sem, 0.10=+10%
+  const [mendingMultState, setMendingMultState] = useState(0);  // bonus: 0=sem, 0.15=+15%
   
   // Inicializa multiplicadores baseado nos encantamentos carregados
   useEffect(() => {
@@ -368,8 +368,8 @@ export default function Game({ username, initialSave, initialInventory, bankBala
     const fortune = enchantments.find(e => e.type === 'fortune');
     const mending = enchantments.find(e => e.type === 'mending');
     setFortuneLevel(fortune?.level ?? 0);
-    setEfficiencyMultState(efficiency?.value ?? 1);
-    setMendingMultState(mending?.value ?? 1);
+    setEfficiencyMultState(efficiency?.value ?? 0);
+    setMendingMultState(mending?.value ?? 0);
   }, [enchantments]);
 
   const handleStatsUpdate = useCallback((partial: Partial<PlayerStats>) => {
@@ -405,7 +405,7 @@ export default function Game({ username, initialSave, initialInventory, bankBala
         const eventMult =
           beaconEventRef.current?.active && beaconEventRef.current.type === "double_ores" ? 2 : 1;
         // Aplica mendingMultState para mais XP
-        const xpGain = Math.ceil(config.xp * eventMult * mendingMultState);
+        const xpGain = Math.ceil(config.xp * eventMult * (1 + mendingMultState));
 
         let newXp = prev.xp + xpGain;
         let newLevel = prev.level;
@@ -544,7 +544,6 @@ export default function Game({ username, initialSave, initialInventory, bankBala
     const newEnchants = [...enchantments, selectedEnchant];
     
     setEnchantments(newEnchants);
-    console.log('[v0] Encantamento adicionado:', selectedEnchant.name, '| Total:', newEnchants.length);
 
     // Atualiza multiplicadores
     const fortuneEnchant = newEnchants.find(e => e.type === 'fortune');
@@ -552,8 +551,8 @@ export default function Game({ username, initialSave, initialInventory, bankBala
     const mendingEnchant = newEnchants.find(e => e.type === 'mending');
     // Fortuna usa o nivel (1, 2, 3) para +minerios extras
     setFortuneLevel(fortuneEnchant ? fortuneEnchant.level : 0);
-    setEfficiencyMultState(efficiencyEnchant ? efficiencyEnchant.value : 1);
-    setMendingMultState(mendingEnchant ? mendingEnchant.value : 1);
+    setEfficiencyMultState(efficiencyEnchant ? efficiencyEnchant.value : 0);
+    setMendingMultState(mendingEnchant ? mendingEnchant.value : 0);
 
     audioService.playOrb();
 
