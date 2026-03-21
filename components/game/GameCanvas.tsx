@@ -350,7 +350,11 @@ export default function GameCanvas({
   function update(dt: number) {
     const p = pickaxeRef.current;
     const s = statsRef.current;
-    const tierData = PICKAXE_TIERS[s.pickaxeTier];
+    // Aplica eficiencia direto no strength — eff1=+10%, eff2=+15%, etc.
+    const tierData = {
+      ...PICKAXE_TIERS[s.pickaxeTier],
+      strength: PICKAXE_TIERS[s.pickaxeTier].strength * efficiencyMultRef.current,
+    };
 
     if (p.miningCooldown > 0) p.miningCooldown--;
 
@@ -456,17 +460,14 @@ export default function GameCanvas({
         p.swingAngle = 0.5;
 
   const isManual = isPointerDown.current && targetRef.current;
-  const baseDmg = tierData.strength * s.pickStrength * efficiencyMultRef.current;
+        const baseDmg = tierData.strength * s.pickStrength;
   const boostMult = boostActiveRef.current ? BOOST_MINING_MULT : 1;
   const damage = (isManual ? baseDmg * MANUAL_MINING_MULT : baseDmg) * boostMult;
 
         hitBlock.hp -= damage;
-        // Eficiencia reduz o cooldown entre golpes (mais rapido)
-        // efficiencyMult 1.1 = 10% mais rapido, 1.4 = 40% mais rapido
-        const effCooldownMult = 1 / efficiencyMultRef.current;
         p.miningCooldown = boostActiveRef.current
           ? 1
-          : Math.max(2, Math.floor((MINING_COOLDOWN - Math.floor(tierData.speed * 2)) * effCooldownMult));
+          : Math.max(4, MINING_COOLDOWN - Math.floor(tierData.speed * 2));
 
           // Play mining sound (rate-limited in audioService to avoid spam)
           audioService.playMining(hitBlock.type);
@@ -615,16 +616,14 @@ export default function GameCanvas({
         p.isSwinging = true;
         p.swingAngle = 0.6;
 
-  const baseDmg = tierData.strength * s.pickStrength * efficiencyMultRef.current;
+        const baseDmg = tierData.strength * s.pickStrength;
   const damage = (isPointerDown.current && targetRef.current)
   ? baseDmg * MANUAL_MINING_MULT
   : baseDmg;
 
         hitMob.hp -= damage;
         hitMob.hitFlash = 6;
-        // Eficiencia tambem reduz cooldown contra mobs
-        const effCooldownMultMob = 1 / efficiencyMultRef.current;
-        p.miningCooldown = Math.max(2, Math.floor(Math.max(4, MINING_COOLDOWN - Math.floor(tierData.speed * 2)) * effCooldownMultMob));
+        p.miningCooldown = Math.max(4, MINING_COOLDOWN - Math.floor(tierData.speed * 2));
 
         const mobConfig = MOB_CONFIGS[hitMob.type];
         audioService.playMobHit(hitMob.type);
