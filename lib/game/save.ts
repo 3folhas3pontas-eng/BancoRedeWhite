@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { PlayerStats, Enchantment } from '@/lib/game/types';
+import { ENCHANTMENTS } from '@/lib/game/constants';
 
 export interface MiningSave {
   xp: number;
@@ -16,6 +17,16 @@ export interface MiningSave {
   chest_spawn: number;
   max_combo: number;
   enchantments: Enchantment[];
+}
+
+// Normaliza encantamentos do banco para o formato atual (sempre pega o value do constants.ts)
+// Isso resolve encantamentos salvos em formato antigo (ex: value:1.1 vs value:0.10)
+function normalizeEnchantments(raw: Enchantment[]): Enchantment[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.map(e => {
+    const canonical = ENCHANTMENTS.find(c => c.id === e.id);
+    return canonical ?? e;
+  });
 }
 
 export async function loadMiningSave(username: string): Promise<MiningSave | null> {
@@ -41,7 +52,7 @@ export async function loadMiningSave(username: string): Promise<MiningSave | nul
     dungeon_spawn:parseFloat(data.dungeon_spawn),
     chest_spawn:  parseFloat(data.chest_spawn),
     max_combo:    data.max_combo,
-    enchantments: data.enchantments ?? [],
+    enchantments: normalizeEnchantments(data.enchantments ?? []),
   };
 }
 

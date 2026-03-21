@@ -236,10 +236,10 @@ export const ENCHANTMENTS: (Enchantment & { type: EnchantmentType; level: number
   { id: "fort_2", type: "fortune", level: 2, name: "Fortuna II", rarity: Rarity.LEGENDARY, description: "40% chance +2 minerios", value: 2, weight: 2 },
   { id: "fort_3", type: "fortune", level: 3, name: "Fortuna III", rarity: Rarity.MYTHIC, description: "40% chance +3 minerios", value: 3, weight: 0.3 },
   
-  // Remendo (da mais XP)
-  { id: "mend_1", type: "mending", level: 1, name: "Remendo I", rarity: Rarity.COMMON, description: "+15% XP", value: 1.15, weight: 25 },
-  { id: "mend_2", type: "mending", level: 2, name: "Remendo II", rarity: Rarity.RARE, description: "+25% XP", value: 1.25, weight: 12 },
-  { id: "mend_3", type: "mending", level: 3, name: "Remendo III", rarity: Rarity.EPIC, description: "+40% XP", value: 1.40, weight: 4 },
+  // Remendo (bonus percentual de XP — value = bonus, ex: 0.15 = +15%)
+  { id: "mend_1", type: "mending", level: 1, name: "Remendo I",   rarity: Rarity.COMMON, description: "+15% XP", value: 0.15, weight: 25 },
+  { id: "mend_2", type: "mending", level: 2, name: "Remendo II",  rarity: Rarity.RARE,   description: "+25% XP", value: 0.25, weight: 12 },
+  { id: "mend_3", type: "mending", level: 3, name: "Remendo III", rarity: Rarity.EPIC,   description: "+40% XP", value: 0.40, weight: 4 },
 ];
 
 // Chance de fortuna ativar (40%)

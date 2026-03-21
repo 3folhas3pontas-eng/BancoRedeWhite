@@ -349,11 +349,10 @@ export default function GameCanvas({
   function update(dt: number) {
     const p = pickaxeRef.current;
     const s = statsRef.current;
-    // Aplica eficiencia: strength * (1 + bonus). Ex: eff1 bonus=0.10 → wood = 0.9 * 1.10 = 0.99
-    const tierData = {
-      ...PICKAXE_TIERS[s.pickaxeTier],
-      strength: PICKAXE_TIERS[s.pickaxeTier].strength * (1 + efficiencyMultRef.current),
-    };
+    const tierData = PICKAXE_TIERS[s.pickaxeTier];
+    // Eficiencia soma diretamente no pickStrength, igual upgrade de velocidade
+    // eff1=+10%, eff2=+15%, eff3=+25%, eff4=+30%, eff5=+40%
+    const effectiveStrength = s.pickStrength * (1 + efficiencyMultRef.current);
 
     if (p.miningCooldown > 0) p.miningCooldown--;
 
@@ -459,7 +458,7 @@ export default function GameCanvas({
         p.swingAngle = 0.5;
 
   const isManual = isPointerDown.current && targetRef.current;
-        const baseDmg = tierData.strength * s.pickStrength;
+        const baseDmg = tierData.strength * effectiveStrength;
   const boostMult = boostActiveRef.current ? BOOST_MINING_MULT : 1;
   const damage = (isManual ? baseDmg * MANUAL_MINING_MULT : baseDmg) * boostMult;
 
@@ -615,7 +614,7 @@ export default function GameCanvas({
         p.isSwinging = true;
         p.swingAngle = 0.6;
 
-        const baseDmg = tierData.strength * s.pickStrength;
+        const baseDmg = tierData.strength * effectiveStrength;
   const damage = (isPointerDown.current && targetRef.current)
   ? baseDmg * MANUAL_MINING_MULT
   : baseDmg;
