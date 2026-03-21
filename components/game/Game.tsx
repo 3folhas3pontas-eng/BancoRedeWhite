@@ -496,7 +496,7 @@ export default function Game({ username, initialSave, initialInventory, bankBala
   }, [username, localBalance, onSpend, setStatsAndRef]);
 
   const handleUpgradeTier = useCallback(() => {
-    const currentTier = statsRef.current.pickaxeTier;
+    const currentTier = stats.pickaxeTier;
     const currentIdx = TIER_ORDER.indexOf(currentTier);
     if (currentIdx >= TIER_ORDER.length - 1) return;
     const nextTier = TIER_ORDER[currentIdx + 1];
@@ -512,7 +512,7 @@ export default function Game({ username, initialSave, initialInventory, bankBala
       to_tier: nextTier,
       pickaxe_name: nextData.name,
     });
-  }, [username, localBalance, onSpend, setStatsAndRef]);
+  }, [username, localBalance, onSpend, setStatsAndRef, stats.pickaxeTier]);
 
   const handleEnchant = useCallback(() => {
     // Verifica se tem XP e coins suficientes
