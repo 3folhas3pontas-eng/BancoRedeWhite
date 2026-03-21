@@ -73,9 +73,11 @@ export default function Game({ username, initialSave, initialInventory, bankBala
     chestSpawn:      initialSave?.chest_spawn   ?? 0,
   }));
 
-  const [enchantments, setEnchantments] = useState<Enchantment[]>(
-    () => initialSave?.enchantments ?? []
-  );
+  const [enchantments, setEnchantments] = useState<Enchantment[]>(() => {
+    const loaded = initialSave?.enchantments ?? [];
+    console.log('[v0] Enchantments do initialSave:', JSON.stringify(loaded));
+    return loaded;
+  });
 
   // === NOVO SISTEMA DE INVENTARIO ===
   // dbInventory = valor atual do Supabase (fonte da verdade)
@@ -364,17 +366,29 @@ export default function Game({ username, initialSave, initialInventory, bankBala
   
   // Inicializa multiplicadores baseado nos encantamentos carregados
   useEffect(() => {
+    console.log('[v0] Enchantments carregados:', JSON.stringify(enchantments));
     const fortune = enchantments.find(e => e.type === 'fortune');
     const efficiency = enchantments.find(e => e.type === 'efficiency');
     const mending = enchantments.find(e => e.type === 'mending');
+    
+    // Se encantamento nao tem type, pode ser formato antigo - tenta pelo id
+    const efficiencyById = enchantments.find(e => e.id?.startsWith('eff_'));
+    const fortuneById = enchantments.find(e => e.id?.startsWith('fort_'));
+    const mendingById = enchantments.find(e => e.id?.startsWith('mend_'));
+    
+    const effFinal = efficiency || efficiencyById;
+    const fortFinal = fortune || fortuneById;
+    const mendFinal = mending || mendingById;
+    
     // Fortuna usa o nivel (1, 2, 3) para +minerios extras
-    setFortuneLevel(fortune ? fortune.level : 0);
-    setEfficiencyMultState(efficiency ? efficiency.value : 1);
-    setMendingMultState(mending ? mending.value : 1);
+    setFortuneLevel(fortFinal?.level || 0);
+    setEfficiencyMultState(effFinal?.value || 1);
+    setMendingMultState(mendFinal?.value || 1);
     console.log('[v0] Multiplicadores atualizados:', { 
-      fortune: fortune?.level || 0, 
-      efficiency: efficiency?.value || 1, 
-      mending: mending?.value || 1 
+      fortune: fortFinal?.level || 0, 
+      efficiency: effFinal?.value || 1, 
+      mending: mendFinal?.value || 1,
+      efficiencyMultState: effFinal?.value || 1
     });
   }, [enchantments]);
 
