@@ -115,7 +115,7 @@ export default function Game({ username, initialSave, initialInventory, bankBala
   }, []);
 
   const doSave = useCallback(async () => {
-    await saveMiningSave(username, statsRef.current, enchantmentsRef.current);
+    saveMiningSave(username, statsRef.current, enchantmentsRef.current);
     
     // Salva APENAS o delta da sessao de forma incremental
     // NUNCA sobrescreve valores - apenas adiciona ao banco
@@ -357,22 +357,20 @@ export default function Game({ username, initialSave, initialInventory, bankBala
 
   const closeLoot = useCallback(() => setCurrentLoot(null), []);
 
-  // Multipliers from enchantments (usando useState para causar re-render)
-  const [fortuneLevel, setFortuneLevel] = useState(0);
-  const [mendingMultState, setMendingMultState] = useState(0);
+  // Multipliers from enchantments
+  const fortuneMult = useRef(0);  // Nivel da fortuna (0, 1, 2 ou 3) - usado para +minerios
+  const efficiencyMult = useRef(1);  // Multiplicador de velocidade
+  const mendingMult = useRef(1);  // Multiplicador de XP
   
-  // Calcula o bonus de eficiencia dos encantamentos
-  const efficiencyBonus = useMemo(() => {
-    const eff = enchantments.find(e => e.type === 'efficiency');
-    return eff?.value ?? 0;
-  }, [enchantments]);
-
-  // Aplica encantamentos carregados do banco
+  // Inicializa multiplicadores baseado nos encantamentos carregados
   useEffect(() => {
     const fortune = enchantments.find(e => e.type === 'fortune');
+    const efficiency = enchantments.find(e => e.type === 'efficiency');
     const mending = enchantments.find(e => e.type === 'mending');
-    setFortuneLevel(fortune?.level ?? 0);
-    setMendingMultState(mending?.value ?? 0);
+    // Fortuna usa o nivel (1, 2, 3) para +minerios extras
+    fortuneMult.current = fortune ? fortune.level : 0;
+    efficiencyMult.current = efficiency ? efficiency.value : 1;
+    mendingMult.current = mending ? mending.value : 1;
   }, [enchantments]);
 
   const handleStatsUpdate = useCallback((partial: Partial<PlayerStats>) => {
@@ -396,9 +394,9 @@ export default function Game({ username, initialSave, initialInventory, bankBala
         let dropAmount = getDropAmount(block.type) * eventMult;
         
         // Fortuna: 40% de chance de dar +nivel minerios extras
-        // fortuneLevel = nivel do encantamento (1, 2 ou 3)
-        if (fortuneLevel > 0 && Math.random() < FORTUNE_TRIGGER_CHANCE) {
-          dropAmount += fortuneLevel; // +1, +2 ou +3 minerios extras
+        // fortuneMult.current = nivel do encantamento (1, 2 ou 3)
+        if (fortuneMult.current > 0 && Math.random() < FORTUNE_TRIGGER_CHANCE) {
+          dropAmount += fortuneMult.current; // +1, +2 ou +3 minerios extras
         }
         
         addOre(oreType, Math.ceil(dropAmount));
@@ -407,8 +405,8 @@ export default function Game({ username, initialSave, initialInventory, bankBala
       setStatsAndRef((prev) => {
         const eventMult =
           beaconEventRef.current?.active && beaconEventRef.current.type === "double_ores" ? 2 : 1;
-        // Aplica mendingMultState para mais XP
-        const xpGain = Math.ceil(config.xp * eventMult * (1 + mendingMultState));
+        // Aplica mendingMult para mais XP
+        const xpGain = Math.ceil(config.xp * eventMult * mendingMult.current);
 
         let newXp = prev.xp + xpGain;
         let newLevel = prev.level;
@@ -496,7 +494,7 @@ export default function Game({ username, initialSave, initialInventory, bankBala
   }, [username, localBalance, onSpend, setStatsAndRef]);
 
   const handleUpgradeTier = useCallback(() => {
-    const currentTier = stats.pickaxeTier;
+    const currentTier = statsRef.current.pickaxeTier;
     const currentIdx = TIER_ORDER.indexOf(currentTier);
     if (currentIdx >= TIER_ORDER.length - 1) return;
     const nextTier = TIER_ORDER[currentIdx + 1];
@@ -512,27 +510,18 @@ export default function Game({ username, initialSave, initialInventory, bankBala
       to_tier: nextTier,
       pickaxe_name: nextData.name,
     });
-  }, [username, localBalance, onSpend, setStatsAndRef, stats.pickaxeTier]);
+  }, [username, localBalance, onSpend, setStatsAndRef]);
 
   const handleEnchant = useCallback(() => {
     // Verifica se tem XP e coins suficientes
     if (stats.xp < ENCHANT_COST.xp || localBalance < ENCHANT_COST.coins) return;
 
-    // Tipos de encantamento ja obtidos
-    const typesObtidos = enchantments.map(e => e.type);
-    
-    // Filtra encantamentos disponiveis (exclui tipos ja obtidos)
-    const availableEnchants = ENCHANTMENTS.filter(e => !typesObtidos.includes(e.type));
-    
-    // Se nao tem mais encantamentos disponiveis, nao faz nada
-    if (availableEnchants.length === 0) return;
-
     // Selecao de encantamento baseado no peso individual de cada um
-    const totalWeight = availableEnchants.reduce((sum, e) => sum + e.weight, 0);
+    const totalWeight = ENCHANTMENTS.reduce((sum, e) => sum + e.weight, 0);
     let roll = Math.random() * totalWeight;
-    let selectedEnchant = availableEnchants[0];
+    let selectedEnchant = ENCHANTMENTS[0];
     
-    for (const enchant of availableEnchants) {
+    for (const enchant of ENCHANTMENTS) {
       roll -= enchant.weight;
       if (roll <= 0) {
         selectedEnchant = enchant;
@@ -540,15 +529,29 @@ export default function Game({ username, initialSave, initialInventory, bankBala
       }
     }
 
-    // Adiciona o novo encantamento
-    const newEnchants = [...enchantments, selectedEnchant];
+    // SEMPRE substitui o encantamento do mesmo tipo (mesmo se for pior)
+    // Jogador precisa reciclar para tentar novamente
+    const existingOfType = enchantments.find(e => e.type === selectedEnchant.type);
+    
+    let newEnchants: Enchantment[];
+    if (existingOfType) {
+      // Substitui o encantamento existente pelo novo (mesmo se for menor)
+      newEnchants = enchantments.map(e => e.type === selectedEnchant.type ? selectedEnchant : e);
+    } else {
+      // Nao tem esse tipo ainda, adiciona
+      newEnchants = [...enchantments, selectedEnchant];
+    }
+    
     setEnchantments(newEnchants);
 
-    // Fortuna: salva o nivel
-    setFortuneLevel(newEnchants.find(e => e.type === 'fortune')?.level ?? 0);
-
-    // Remendo: salva o bonus de XP
-    setMendingMultState(newEnchants.find(e => e.type === 'mending')?.value ?? 0);
+    // Atualiza multiplicadores
+    const fortuneEnchant = newEnchants.find(e => e.type === 'fortune');
+    const efficiencyEnchant = newEnchants.find(e => e.type === 'efficiency');
+    const mendingEnchant = newEnchants.find(e => e.type === 'mending');
+    // Fortuna usa o nivel (1, 2, 3) para +minerios extras
+    fortuneMult.current = fortuneEnchant ? fortuneEnchant.level : 0;
+    efficiencyMult.current = efficiencyEnchant ? efficiencyEnchant.value : 1;
+    mendingMult.current = mendingEnchant ? mendingEnchant.value : 1;
 
     audioService.playOrb();
 
@@ -579,10 +582,11 @@ export default function Game({ username, initialSave, initialInventory, bankBala
 
     // Remove todos os encantamentos
     setEnchantments([]);
-
-    // Reseta fortuna e remendo (eficiencia já é calculada em tempo real)
-    setFortuneLevel(0);
-    setMendingMultState(0);
+    
+    // Reseta multiplicadores
+    fortuneMult.current = 1;
+    efficiencyMult.current = 1;
+    mendingMult.current = 1;
 
     audioService.playClick();
 
@@ -614,7 +618,8 @@ export default function Game({ username, initialSave, initialInventory, bankBala
         isBoostActive={isBoostActive}
         beaconEvent={beaconEvent}
         onDungeonChestOpen={handleDungeonChestOpen}
-        efficiencyBonus={efficiencyBonus}
+        efficiencyMult={efficiencyMult.current}
+        mendingMult={mendingMult.current}
       />
       <GameHUD stats={stats} bankBalance={localBalance} />
       <EventBanner event={beaconEvent} />

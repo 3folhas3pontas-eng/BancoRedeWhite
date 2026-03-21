@@ -42,7 +42,9 @@ interface GameCanvasProps {
   isBoostActive?: boolean;
   beaconEvent?: BeaconEvent | null;
   onDungeonChestOpen?: () => void;
-  efficiencyBonus?: number;
+  // Multiplicadores de encantamentos
+  efficiencyMult?: number;
+  mendingMult?: number;
 }
 
 export default function GameCanvas({
@@ -53,7 +55,8 @@ export default function GameCanvas({
   isBoostActive = false,
   beaconEvent = null,
   onDungeonChestOpen,
-  efficiencyBonus = 0,
+  efficiencyMult = 1,
+  mendingMult = 1,
 }: GameCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -99,12 +102,18 @@ export default function GameCanvas({
   const boostActiveRef = useRef(false);
   const beaconEventRef = useRef<BeaconEvent | null>(null);
   const keysRef = useRef<Set<string>>(new Set());
-  const efficiencyBonusRef = useRef(efficiencyBonus);
 
-  // Sync efficiencyBonus prop to ref
   useEffect(() => {
-    efficiencyBonusRef.current = efficiencyBonus;
-  }, [efficiencyBonus]);
+    statsRef.current = stats;
+  }, [stats]);
+
+  useEffect(() => {
+    boostActiveRef.current = isBoostActive;
+  }, [isBoostActive]);
+
+  useEffect(() => {
+    beaconEventRef.current = beaconEvent;
+  }, [beaconEvent]);
 
   // Preload all textures
   useEffect(() => {
@@ -438,12 +447,12 @@ export default function GameCanvas({
         p.swingAngle = 0.5;
 
   const isManual = isPointerDown.current && targetRef.current;
-        // Eficiencia soma bonus ao dano: eff1=+0.2, eff2=+0.4, eff3=+0.6, eff4=+0.8, eff5=+1.0
-        const baseDmg = tierData.strength * s.pickStrength * (1 + efficiencyBonusRef.current);
+  const baseDmg = tierData.strength * s.pickStrength * efficiencyMult;
   const boostMult = boostActiveRef.current ? BOOST_MINING_MULT : 1;
   const damage = (isManual ? baseDmg * MANUAL_MINING_MULT : baseDmg) * boostMult;
 
         hitBlock.hp -= damage;
+        // During boost, almost no cooldown (super fast mining)
         p.miningCooldown = boostActiveRef.current
           ? 1
           : Math.max(4, MINING_COOLDOWN - Math.floor(tierData.speed * 2));
@@ -595,7 +604,7 @@ export default function GameCanvas({
         p.isSwinging = true;
         p.swingAngle = 0.6;
 
-        const baseDmg = tierData.strength * s.pickStrength * (1 + efficiencyBonusRef.current);
+  const baseDmg = tierData.strength * s.pickStrength * efficiencyMult;
   const damage = (isPointerDown.current && targetRef.current)
   ? baseDmg * MANUAL_MINING_MULT
   : baseDmg;
