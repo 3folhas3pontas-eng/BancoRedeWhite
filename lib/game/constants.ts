@@ -220,10 +220,10 @@ export type EnchantmentType = "efficiency" | "fortune" | "mending";
 export const ENCHANTMENTS: (Enchantment & { type: EnchantmentType; level: number; weight: number })[] = [
   // Eficiencia (melhora velocidade de mineracao)
   { id: "eff_1", type: "efficiency", level: 1, name: "Eficiencia I",   rarity: Rarity.RARE,      description: "+1000% Velocidade [TESTE]", value: 10,  weight: 99 },
-  { id: "eff_2", type: "efficiency", level: 2, name: "Eficiencia II",  rarity: Rarity.RARE,      description: "+2000% Velocidade [TESTE]", value: 20,  weight: 15 },
-  { id: "eff_3", type: "efficiency", level: 3, name: "Eficiencia III", rarity: Rarity.EPIC,      description: "+3000% Velocidade [TESTE]", value: 30,  weight: 8  },
-  { id: "eff_4", type: "efficiency", level: 4, name: "Eficiencia IV",  rarity: Rarity.LEGENDARY, description: "+5000% Velocidade [TESTE]", value: 50,  weight: 2  },
-  { id: "eff_5", type: "efficiency", level: 5, name: "Eficiencia V",   rarity: Rarity.MYTHIC,    description: "+9900% Velocidade [TESTE]", value: 100, weight: 0.5 },
+  { id: "eff_2", type: "efficiency", level: 2, name: "Eficiencia II",  rarity: Rarity.RARE,      description: "+2000% Velocidade [TESTE]", value: 20,  weight: 99 },
+  { id: "eff_3", type: "efficiency", level: 3, name: "Eficiencia III", rarity: Rarity.EPIC,      description: "+3000% Velocidade [TESTE]", value: 30,  weight: 99 },
+  { id: "eff_4", type: "efficiency", level: 4, name: "Eficiencia IV",  rarity: Rarity.LEGENDARY, description: "+5000% Velocidade [TESTE]", value: 50,  weight: 99 },
+  { id: "eff_5", type: "efficiency", level: 5, name: "Eficiencia V",   rarity: Rarity.MYTHIC,    description: "+9900% Velocidade [TESTE]", value: 100, weight: 99 },
   
   // Fortuna (da mais minerios) - MUITO RARO
   { id: "fort_1", type: "fortune", level: 1, name: "Fortuna I", rarity: Rarity.EPIC, description: "+25% Minerios", value: 1.25, weight: 5 },
