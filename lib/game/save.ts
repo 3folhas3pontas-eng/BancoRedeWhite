@@ -25,7 +25,12 @@ export async function loadMiningSave(username: string): Promise<MiningSave | nul
     .eq('username', username)
     .single();
 
-  if (error || !data) return null;
+  if (error || !data) {
+    console.log('[v0] loadMiningSave error ou sem dados:', error);
+    return null;
+  }
+
+  console.log('[v0] loadMiningSave enchantments do banco:', JSON.stringify(data.enchantments));
 
   return {
     xp:           data.xp,
