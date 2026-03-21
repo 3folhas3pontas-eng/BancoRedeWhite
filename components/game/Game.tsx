@@ -498,10 +498,18 @@ export default function Game({ username, initialSave, initialInventory, bankBala
   const handleUpgradeTier = useCallback(() => {
     const currentTier = statsRef.current.pickaxeTier;
     const currentIdx = TIER_ORDER.indexOf(currentTier);
-    if (currentIdx >= TIER_ORDER.length - 1) return;
+    console.log('[v0] handleUpgradeTier:', { currentTier, currentIdx, localBalance });
+    if (currentIdx >= TIER_ORDER.length - 1) {
+      console.log('[v0] Ja esta no tier maximo');
+      return;
+    }
     const nextTier = TIER_ORDER[currentIdx + 1];
     const nextData = PICKAXE_TIERS[nextTier];
-    if (localBalance < nextData.cost) return;
+    console.log('[v0] Proximo tier:', { nextTier, cost: nextData.cost, hasBalance: localBalance >= nextData.cost });
+    if (localBalance < nextData.cost) {
+      console.log('[v0] Saldo insuficiente');
+      return;
+    }
     audioService.playLevelUp();
     setLocalBalance((prev) => prev - nextData.cost);
     onSpend(nextData.cost);
