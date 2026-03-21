@@ -6,8 +6,6 @@ import {
   ENCHANTMENTS,
   RARITY_COLORS,
   ENCHANT_COST,
-  RECYCLE_COST,
-  PICKAXE_TIERS,
 } from "@/lib/game/constants";
 import { audioService } from "@/lib/game/audio";
 
@@ -16,11 +14,43 @@ interface EnchantPanelProps {
   enchantments: Enchantment[];
   bankBalance: number;
   onEnchant: () => void;
-  onRecycle: () => void;
   onClose: () => void;
 }
 
-// Animated floating glyphs
+// Enchantment Table pixel art
+function EnchantTableIcon() {
+  return (
+    <div className="relative" style={{ width: 64, height: 56, imageRendering: "pixelated" }}>
+      {/* Book on top */}
+      <div className="absolute" style={{ top: 0, left: 16, width: 32, height: 8, background: "#8B4513" }} />
+      <div className="absolute" style={{ top: 2, left: 18, width: 12, height: 5, background: "#F5F5DC" }} />
+      <div className="absolute" style={{ top: 2, left: 34, width: 12, height: 5, background: "#F5F5DC" }} />
+      {/* Book spine */}
+      <div className="absolute" style={{ top: 0, left: 30, width: 4, height: 8, background: "#6B3410" }} />
+      {/* Table top - obsidian look */}
+      <div className="absolute" style={{ top: 10, left: 4, width: 56, height: 10, background: "#1A0A2E" }} />
+      {/* Diamond corners */}
+      <div className="absolute" style={{ top: 10, left: 4, width: 6, height: 6, background: "#00E5FF" }} />
+      <div className="absolute" style={{ top: 10, left: 54, width: 6, height: 6, background: "#00E5FF" }} />
+      {/* Red cloth detail on top */}
+      <div className="absolute" style={{ top: 12, left: 14, width: 36, height: 6, background: "#8B0000" }} />
+      {/* Table body */}
+      <div className="absolute" style={{ top: 20, left: 8, width: 48, height: 28, background: "#2A1040" }} />
+      {/* Obsidian texture lines */}
+      <div className="absolute" style={{ top: 24, left: 10, width: 44, height: 2, background: "#3A1A55", opacity: 0.6 }} />
+      <div className="absolute" style={{ top: 32, left: 12, width: 40, height: 2, background: "#3A1A55", opacity: 0.4 }} />
+      <div className="absolute" style={{ top: 38, left: 10, width: 44, height: 2, background: "#3A1A55", opacity: 0.5 }} />
+      {/* Diamond ornaments on sides */}
+      <div className="absolute" style={{ top: 28, left: 10, width: 4, height: 4, background: "#00BCD4" }} />
+      <div className="absolute" style={{ top: 28, left: 50, width: 4, height: 4, background: "#00BCD4" }} />
+      {/* Base */}
+      <div className="absolute" style={{ top: 48, left: 4, width: 56, height: 8, background: "#1A0A2E" }} />
+      <div className="absolute" style={{ top: 48, left: 4, width: 56, height: 2, background: "#2A1555" }} />
+    </div>
+  );
+}
+
+// Animated floating glyphs (Enchanting Particle effect)
 function FloatingGlyphs() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -30,7 +60,8 @@ function FloatingGlyphs() {
     const ctx = cvs.getContext("2d");
     if (!ctx) return;
 
-    const glyphs = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    // Standard Galactic Alphabet characters (enchanting glyphs)
+    const glyphs = "\u1780\u1781\u1782\u1783\u1784\u1785\u1786\u1787\u1788\u1789\u178A\u178B\u178C\u178D\u178E\u178F";
 
     interface Glyph {
       x: number;
@@ -39,34 +70,37 @@ function FloatingGlyphs() {
       alpha: number;
       speed: number;
       size: number;
+      dx: number;
     }
 
     const particles: Glyph[] = [];
-    for (let i = 0; i < 15; i++) {
+    for (let i = 0; i < 12; i++) {
       particles.push({
-        x: Math.random() * 320,
-        y: Math.random() * 60 + 60,
+        x: Math.random() * 300,
+        y: Math.random() * 80,
         char: glyphs[Math.floor(Math.random() * glyphs.length)],
-        alpha: Math.random() * 0.3 + 0.1,
-        speed: 0.3 + Math.random() * 0.4,
-        size: 10 + Math.random() * 8,
+        alpha: Math.random() * 0.4 + 0.1,
+        speed: 0.2 + Math.random() * 0.5,
+        size: 8 + Math.random() * 6,
+        dx: (Math.random() - 0.5) * 0.3,
       });
     }
 
     let raf: number;
     const draw = () => {
-      ctx.clearRect(0, 0, 320, 120);
+      ctx.clearRect(0, 0, 300, 80);
       for (const p of particles) {
         ctx.globalAlpha = p.alpha;
         ctx.fillStyle = "#9C27B0";
-        ctx.font = `bold ${p.size}px serif`;
+        ctx.font = `${p.size}px monospace`;
         ctx.fillText(p.char, p.x, p.y);
         p.y -= p.speed;
-        p.alpha -= 0.003;
-        if (p.y < 0 || p.alpha <= 0) {
-          p.y = 120;
-          p.x = Math.random() * 320;
-          p.alpha = Math.random() * 0.3 + 0.1;
+        p.x += p.dx;
+        p.alpha -= 0.002;
+        if (p.y < -10 || p.alpha <= 0) {
+          p.y = 85;
+          p.x = Math.random() * 300;
+          p.alpha = Math.random() * 0.4 + 0.1;
           p.char = glyphs[Math.floor(Math.random() * glyphs.length)];
         }
       }
@@ -79,10 +113,10 @@ function FloatingGlyphs() {
   return (
     <canvas
       ref={canvasRef}
-      width={320}
-      height={120}
-      className="absolute inset-0 w-full h-full pointer-events-none"
-      style={{ opacity: 0.6 }}
+      width={300}
+      height={80}
+      className="absolute top-0 left-0 w-full pointer-events-none"
+      style={{ opacity: 0.7 }}
     />
   );
 }
@@ -92,25 +126,17 @@ export default function EnchantPanel({
   enchantments,
   bankBalance,
   onEnchant,
-  onRecycle,
   onClose,
 }: EnchantPanelProps) {
   const [spinning, setSpinning] = useState(false);
   const [lastResult, setLastResult] = useState<Enchantment | null>(null);
   const [showResult, setShowResult] = useState(false);
-  
-  const canAffordEnchantXP = stats.xp >= ENCHANT_COST.xp;
-  const canAffordEnchantCoins = bankBalance >= ENCHANT_COST.coins;
-  const canAffordEnchant = canAffordEnchantXP && canAffordEnchantCoins;
-  
-  const canAffordRecycleXP = stats.xp >= RECYCLE_COST.xp;
-  const canAffordRecycleCoins = bankBalance >= RECYCLE_COST.coins;
-  const canAffordRecycle = canAffordRecycleXP && canAffordRecycleCoins && enchantments.length > 0;
+  const canAffordXP = stats.xp >= ENCHANT_COST.xp;
+  const canAffordCoins = bankBalance >= ENCHANT_COST.coins;
+  const canAfford = canAffordXP && canAffordCoins;
 
-  const pickaxeData = PICKAXE_TIERS[stats.pickaxeTier];
-
-  const handleEnchant = () => {
-    if (!canAffordEnchant || spinning) return;
+  const handleSpin = () => {
+    if (!canAfford || spinning) return;
     setSpinning(true);
     setShowResult(false);
     audioService.playClick();
@@ -118,16 +144,12 @@ export default function EnchantPanel({
     setTimeout(() => {
       onEnchant();
       setSpinning(false);
+      // Show the newest enchantment
       setShowResult(true);
-    }, 1200);
+    }, 800);
   };
 
-  const handleRecycle = () => {
-    if (!canAffordRecycle || spinning) return;
-    audioService.playClick();
-    onRecycle();
-  };
-
+  // Track last added enchantment for result display
   useEffect(() => {
     if (enchantments.length > 0) {
       setLastResult(enchantments[enchantments.length - 1]);
@@ -137,7 +159,7 @@ export default function EnchantPanel({
   return (
     <div
       className="fixed inset-0 z-[60] flex items-center justify-center p-4"
-      style={{ background: "rgba(0,0,0,0.85)" }}
+      style={{ background: "rgba(0,0,0,0.75)" }}
       onClick={(e) => {
         if (e.target === e.currentTarget) {
           audioService.playClick();
@@ -146,243 +168,251 @@ export default function EnchantPanel({
       }}
     >
       <div
-        className="w-full max-w-md relative overflow-hidden"
+        className="w-full max-w-sm relative overflow-hidden"
         style={{
-          background: "linear-gradient(180deg, #1a1a2e 0%, #16213e 100%)",
-          border: "3px solid #4a1942",
-          borderRadius: 8,
-          boxShadow: "0 0 40px rgba(156, 39, 176, 0.3), inset 0 0 60px rgba(0,0,0,0.5)",
+          background: "#1C1C1C",
+          border: "4px solid #3C3C3C",
+          boxShadow: "inset 0 0 0 2px #555, 0 8px 40px rgba(0,0,0,0.7)",
+          imageRendering: "auto",
         }}
       >
-        {/* Header */}
+        {/* Header bar */}
         <div
-          className="relative flex items-center justify-between px-4 py-3"
+          className="relative flex items-center justify-center py-3"
           style={{
-            background: "linear-gradient(90deg, #4a1942 0%, #1a1a2e 50%, #4a1942 100%)",
-            borderBottom: "2px solid #6a1b9a",
+            background: "linear-gradient(180deg, #2A1040 0%, #1A0A2E 100%)",
+            borderBottom: "2px solid #4A2070",
           }}
         >
-          <div className="flex items-center gap-2">
-            <span style={{ fontSize: 20 }}>{"✨"}</span>
-            <span
-              className="font-bold text-base tracking-wide"
-              style={{ color: "#e1bee7", textShadow: "0 0 10px rgba(156, 39, 176, 0.5)" }}
-            >
-              MESA DE ENCANTAMENTOS
-            </span>
-          </div>
+          <span
+            className="font-mono font-bold text-sm tracking-wider"
+            style={{ color: "#CE93D8", textShadow: "2px 2px 0 #000" }}
+          >
+            ENCHANT
+          </span>
           <button
             onClick={() => {
               audioService.playClick();
               onClose();
             }}
-            className="w-8 h-8 flex items-center justify-center font-bold text-sm rounded"
+            className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center font-mono font-bold text-xs"
             style={{
-              background: "linear-gradient(180deg, #c62828 0%, #8e0000 100%)",
-              border: "2px solid #ef5350",
+              background: "linear-gradient(180deg, #C0392B 0%, #922B21 100%)",
+              border: "2px solid #E74C3C",
               color: "#fff",
+              textShadow: "1px 1px 0 #000",
             }}
           >
             X
           </button>
         </div>
 
-        {/* Pickaxe Display */}
-        <div className="relative p-4" style={{ minHeight: 120 }}>
+        {/* Enchantment table scene */}
+        <div
+          className="relative flex flex-col items-center py-4 overflow-hidden"
+          style={{
+            background: "radial-gradient(ellipse at center, #2A1555 0%, #1A0A2E 60%, #0A0015 100%)",
+            minHeight: 100,
+          }}
+        >
           <FloatingGlyphs />
-          
-          <div className="relative z-10 flex items-center gap-4">
-            {/* Pickaxe Icon */}
+          <div className="relative z-10">
+            <EnchantTableIcon />
+          </div>
+          {/* Glow under the table */}
+          <div
+            className="absolute bottom-0 left-1/2 -translate-x-1/2"
+            style={{
+              width: 100,
+              height: 20,
+              background: "radial-gradient(ellipse, rgba(156, 39, 176, 0.3) 0%, transparent 70%)",
+            }}
+          />
+          {/* XP e Coins counter */}
+          <div className="relative z-10 mt-2 flex flex-col items-center gap-1">
+            <div className="flex items-center gap-3">
+              <span
+                className="font-mono text-xs font-bold"
+                style={{ color: canAffordXP ? "#8BC34A" : "#EF5350", textShadow: "1px 1px 0 #000" }}
+              >
+                {stats.xp + " XP"}
+              </span>
+              <span
+                className="font-mono text-xs font-bold"
+                style={{ color: canAffordCoins ? "#FFD700" : "#EF5350", textShadow: "1px 1px 0 #000" }}
+              >
+                {bankBalance.toLocaleString()} Coins
+              </span>
+            </div>
+            <span className="font-mono text-[10px]" style={{ color: "#666" }}>
+              Custo: {ENCHANT_COST.xp} XP + {ENCHANT_COST.coins.toLocaleString()} Coins
+            </span>
+          </div>
+        </div>
+
+        {/* Enchant options - 3 slots like the real GUI */}
+        <div className="px-3 py-3 flex flex-col gap-2">
+          {/* Main enchant button */}
+          <button
+            onClick={handleSpin}
+            disabled={!canAfford || spinning}
+            className="w-full flex items-center gap-3 p-2 transition-all active:scale-[0.98] disabled:opacity-35 disabled:cursor-not-allowed"
+            style={{
+              background: canAfford && !spinning
+                ? "linear-gradient(180deg, #2A1555 0%, #1A0A2E 100%)"
+                : "#222",
+              border: `2px solid ${canAfford && !spinning ? "#7C4DFF" : "#333"}`,
+              boxShadow: canAfford && !spinning ? "inset 0 1px 0 rgba(124,77,255,0.2), 0 0 12px rgba(124,77,255,0.15)" : "none",
+            }}
+          >
+            {/* Lapis slot icon */}
             <div
-              className="w-20 h-20 flex items-center justify-center rounded-lg"
+              className="w-10 h-10 flex items-center justify-center flex-shrink-0"
               style={{
-                background: "linear-gradient(135deg, #2d2d44 0%, #1a1a2e 100%)",
-                border: `3px solid ${pickaxeData.color}`,
-                boxShadow: `0 0 15px ${pickaxeData.color}40`,
+                background: "#1A1A1A",
+                border: "2px solid #444",
               }}
             >
-              <span style={{ fontSize: 40 }}>{"⛏️"}</span>
-            </div>
-            
-            {/* Pickaxe Info */}
-            <div className="flex-1">
               <div
-                className="font-bold text-sm mb-1"
-                style={{ color: pickaxeData.color, textShadow: "1px 1px 0 #000" }}
-              >
-                {pickaxeData.name}
-              </div>
-              
-              {/* Current Enchantments */}
-              {enchantments.length > 0 ? (
-                <div className="flex flex-col gap-0.5">
-                  {enchantments.map((enc) => (
-                    <div
-                      key={enc.id}
-                      className="text-xs font-semibold"
-                      style={{ color: RARITY_COLORS[enc.rarity], textShadow: "1px 1px 0 #000" }}
-                    >
-                      {enc.name} - {enc.description}
-                    </div>
-                  ))}
+                className="w-5 h-5"
+                style={{
+                  background: canAfford ? "#1A47A5" : "#333",
+                  boxShadow: canAfford ? "0 0 6px rgba(26,71,165,0.5)" : "none",
+                }}
+              />
+            </div>
+            <div className="flex-1 text-left">
+              {spinning ? (
+                <div
+                  className="font-mono text-xs font-bold"
+                  style={{ color: "#CE93D8", textShadow: "1px 1px 0 #000" }}
+                >
+                  Enchanting...
                 </div>
               ) : (
-                <div className="text-xs italic" style={{ color: "#666" }}>
-                  Sem encantamentos
-                </div>
+                <>
+                  <div
+                    className="font-mono font-bold text-xs"
+                    style={{
+                      color: canAfford ? "#CE93D8" : "#666",
+                      textShadow: "1px 1px 0 #000",
+                      fontStyle: canAfford ? "normal" : "italic",
+                    }}
+                  >
+                    {canAfford ? "Encantar Picareta" : (!canAffordXP ? "XP insuficiente" : "Coins insuficientes")}
+                  </div>
+                  <div className="font-mono text-[9px]" style={{ color: "#888" }}>
+                    Random enchantment for your pickaxe
+                  </div>
+                </>
               )}
             </div>
-          </div>
-        </div>
-
-        {/* Resources Display */}
-        <div
-          className="flex items-center justify-center gap-6 py-2 px-4"
-          style={{ background: "rgba(0,0,0,0.3)", borderTop: "1px solid #4a1942", borderBottom: "1px solid #4a1942" }}
-        >
-          <div className="flex items-center gap-2">
-            <span style={{ fontSize: 14 }}>{"🟢"}</span>
-            <span className="font-bold text-sm" style={{ color: "#8bc34a" }}>
-              {stats.xp.toLocaleString()} XP
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span style={{ fontSize: 14 }}>{"🪙"}</span>
-            <span className="font-bold text-sm" style={{ color: "#ffd700" }}>
-              {bankBalance.toLocaleString()} Coins
-            </span>
-          </div>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="p-4 flex flex-col gap-3">
-          {/* Enchant Button */}
-          <button
-            onClick={handleEnchant}
-            disabled={!canAffordEnchant || spinning}
-            className="w-full p-3 rounded-lg transition-all active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed"
-            style={{
-              background: canAffordEnchant && !spinning
-                ? "linear-gradient(180deg, #6a1b9a 0%, #4a148c 100%)"
-                : "linear-gradient(180deg, #333 0%, #222 100%)",
-              border: `2px solid ${canAffordEnchant && !spinning ? "#9c27b0" : "#444"}`,
-              boxShadow: canAffordEnchant && !spinning ? "0 0 20px rgba(156, 39, 176, 0.4)" : "none",
-            }}
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <span style={{ fontSize: 24 }}>{"📖"}</span>
-                <div className="text-left">
-                  <div
-                    className="font-bold text-sm"
-                    style={{ color: canAffordEnchant ? "#e1bee7" : "#666" }}
-                  >
-                    {spinning ? "Encantando..." : "ENCANTAR"}
-                  </div>
-                  <div className="text-xs" style={{ color: "#888" }}>
-                    Recebe um encantamento aleatorio
-                  </div>
-                </div>
-              </div>
-              <div
-                className="px-3 py-1 rounded text-xs font-bold text-center"
-                style={{
-                  background: canAffordEnchant ? "rgba(139, 195, 74, 0.2)" : "rgba(0,0,0,0.3)",
-                  border: `1px solid ${canAffordEnchant ? "#8bc34a" : "#444"}`,
-                  color: canAffordEnchant ? "#8bc34a" : "#666",
-                }}
-              >
-                {ENCHANT_COST.xp} XP<br/>{ENCHANT_COST.coins.toLocaleString()} Coins
-              </div>
-            </div>
-          </button>
-
-          {/* Recycle Button */}
-          <button
-            onClick={handleRecycle}
-            disabled={!canAffordRecycle || spinning}
-            className="w-full p-3 rounded-lg transition-all active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed"
-            style={{
-              background: canAffordRecycle && !spinning
-                ? "linear-gradient(180deg, #c62828 0%, #8e0000 100%)"
-                : "linear-gradient(180deg, #333 0%, #222 100%)",
-              border: `2px solid ${canAffordRecycle && !spinning ? "#ef5350" : "#444"}`,
-              boxShadow: canAffordRecycle && !spinning ? "0 0 15px rgba(239, 83, 80, 0.3)" : "none",
-            }}
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <span style={{ fontSize: 24 }}>{"🔄"}</span>
-                <div className="text-left">
-                  <div
-                    className="font-bold text-sm"
-                    style={{ color: canAffordRecycle ? "#ffcdd2" : "#666" }}
-                  >
-                    RECICLAR
-                  </div>
-                  <div className="text-xs" style={{ color: "#888" }}>
-                    Remove TODOS os encantamentos
-                  </div>
-                </div>
-              </div>
-              <div
-                className="px-3 py-1 rounded text-xs font-bold text-center"
-                style={{
-                  background: canAffordRecycle ? "rgba(239, 83, 80, 0.2)" : "rgba(0,0,0,0.3)",
-                  border: `1px solid ${canAffordRecycle ? "#ef5350" : "#444"}`,
-                  color: canAffordRecycle ? "#ef5350" : "#666",
-                }}
-              >
-                {RECYCLE_COST.xp} XP<br/>{RECYCLE_COST.coins.toLocaleString()} Coins
-              </div>
-            </div>
-          </button>
-
-          {/* Result Notification */}
-          {showResult && lastResult && (
             <div
-              className="p-3 rounded-lg flex items-center gap-3 animate-pulse"
+              className="px-2 py-1 font-mono font-bold text-[10px] flex-shrink-0 text-center"
               style={{
-                background: `linear-gradient(90deg, ${RARITY_COLORS[lastResult.rarity]}20 0%, transparent 100%)`,
-                border: `2px solid ${RARITY_COLORS[lastResult.rarity]}`,
+                background: canAfford && !spinning ? "#2E7D32" : "#333",
+                border: "2px solid",
+                borderColor: canAfford && !spinning ? "#4CAF50" : "#444",
+                color: canAfford && !spinning ? "#8BC34A" : "#666",
+                textShadow: "1px 1px 0 #000",
               }}
             >
-              <span style={{ fontSize: 20 }}>{"🎉"}</span>
-              <div>
-                <div className="text-xs" style={{ color: "#888" }}>Voce recebeu:</div>
-                <div
-                  className="font-bold text-sm"
-                  style={{ color: RARITY_COLORS[lastResult.rarity], textShadow: "1px 1px 0 #000" }}
-                >
-                  {lastResult.name}
-                </div>
-              </div>
-              <div className="ml-auto text-xs" style={{ color: "#888" }}>
+              {ENCHANT_COST.xp} XP<br/>+ {ENCHANT_COST.coins.toLocaleString()}
+            </div>
+          </button>
+
+          {/* Result notification */}
+          {showResult && lastResult && (
+            <div
+              className="p-2 flex items-center gap-2 animate-pulse"
+              style={{
+                background: "rgba(0,0,0,0.4)",
+                border: `2px solid ${RARITY_COLORS[lastResult.rarity]}60`,
+                boxShadow: `0 0 12px ${RARITY_COLORS[lastResult.rarity]}30`,
+              }}
+            >
+              <span className="font-mono text-[10px]" style={{ color: "#888" }}>
+                Got:
+              </span>
+              <span
+                className="font-mono text-xs font-bold"
+                style={{ color: RARITY_COLORS[lastResult.rarity], textShadow: "1px 1px 0 #000" }}
+              >
+                {lastResult.name}
+              </span>
+              <span className="font-mono text-[9px] ml-auto" style={{ color: "#888" }}>
                 {lastResult.description}
-              </div>
+              </span>
             </div>
           )}
+
+          {/* Current enchantments scroll */}
+          <div
+            className="max-h-28 overflow-y-auto"
+            style={{
+              background: "#1A1A1A",
+              border: "2px solid #333",
+              boxShadow: "inset 0 2px 4px rgba(0,0,0,0.5)",
+            }}
+          >
+            {enchantments.length === 0 ? (
+              <p
+                className="text-center py-4 font-mono text-[10px]"
+                style={{ color: "#444" }}
+              >
+                No enchantments yet...
+              </p>
+            ) : (
+              <div className="flex flex-col">
+                {enchantments.map((enc, i) => (
+                  <div
+                    key={enc.id + "-" + i}
+                    className="flex items-center justify-between px-2 py-1"
+                    style={{
+                      borderBottom: "1px solid #222",
+                      background: i % 2 === 0 ? "transparent" : "rgba(255,255,255,0.02)",
+                    }}
+                  >
+                    <span
+                      className="font-mono text-[10px] font-bold"
+                      style={{ color: RARITY_COLORS[enc.rarity], textShadow: "1px 1px 0 #000" }}
+                    >
+                      {enc.name}
+                    </span>
+                    <span
+                      className="font-mono text-[9px]"
+                      style={{ color: "#666" }}
+                    >
+                      {enc.description}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Rarity legend */}
+          <div className="flex flex-wrap items-center justify-center gap-2 pt-1 pb-1">
+            {Object.entries(RARITY_COLORS).map(([rarity, color]) => (
+              <span
+                key={rarity}
+                className="font-mono text-[8px] font-bold"
+                style={{ color, textShadow: "1px 1px 0 #000" }}
+              >
+                {rarity.toUpperCase()}
+              </span>
+            ))}
+          </div>
         </div>
 
-        {/* Rarity Legend */}
+        {/* Bottom decorative bar */}
         <div
-          className="flex flex-wrap items-center justify-center gap-3 py-2 px-4"
-          style={{ background: "rgba(0,0,0,0.4)", borderTop: "1px solid #4a1942" }}
-        >
-          <span className="text-xs" style={{ color: "#666" }}>Raridades:</span>
-          {Object.entries(RARITY_COLORS).map(([rarity, color]) => (
-            <span
-              key={rarity}
-              className="text-xs font-bold"
-              style={{ color }}
-            >
-              {rarity === "COMMON" ? "Comum" : 
-               rarity === "RARE" ? "Raro" : 
-               rarity === "EPIC" ? "Epico" : 
-               rarity === "LEGENDARY" ? "Lendario" : "Mitico"}
-            </span>
-          ))}
-        </div>
+          className="h-2"
+          style={{
+            background: "linear-gradient(180deg, #1A0A2E 0%, #2A1040 100%)",
+            borderTop: "2px solid #4A2070",
+          }}
+        />
       </div>
     </div>
   );
