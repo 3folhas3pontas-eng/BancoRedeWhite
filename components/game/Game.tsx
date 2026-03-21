@@ -391,29 +391,27 @@ export default function Game({ username, initialSave, initialInventory, bankBala
   const closeLoot = useCallback(() => setCurrentLoot(null), []);
 
   // Multipliers from enchantments
-  const fortuneMult = useRef(1);   // Mais minerios (ref pois nao precisa re-render)
-  const mendingMult = useRef(1);   // Mais XP (ref pois nao precisa re-render)
-  // pickStrength base (sem encantamento) — salvo para poder reverter ao reciclar
+  const fortuneMult = useRef(1);
+  const mendingMult = useRef(1);
+  const [efficiencyMult, setEfficiencyMult] = useState(1);
   const basePickStrength = useRef(statsRef.current.pickStrength);
 
-  // Quando o jogador faz upgrade de tier (muda pickStrength via shop), atualiza a base
-  // e re-aplica o bonus de eficiencia por cima
+  // Quando muda o tier da picareta, recalcula a base sem eficiencia
   useEffect(() => {
-    const efficiencyEnchant = enchantments.find(e => e.type === 'efficiency');
-    const effVal = efficiencyEnchant ? efficiencyEnchant.value : 1;
-    // A base e o pickStrength DIVIDIDO pelo effVal atual para extrair o valor puro
+    const effVal = efficiencyMult > 1 ? efficiencyMult : 1;
     basePickStrength.current = +(stats.pickStrength / effVal).toFixed(2);
-  }, [stats.pickaxeTier]); // so roda quando muda o tier
+  }, [stats.pickaxeTier]); // eslint-disable-line
 
-  // Aplica eficiencia ao pickStrength e atualiza stats
+  // Aplica eficiencia ao pickStrength e atualiza stats + efficiencyMult state
   const applyEfficiency = useCallback((effVal: number) => {
+    setEfficiencyMult(effVal);
     setStatsAndRef(prev => ({
       ...prev,
       pickStrength: +(basePickStrength.current * effVal).toFixed(2),
     }));
   }, [setStatsAndRef]);
 
-  // Inicializa multiplicadores baseado nos encantamentos carregados
+  // Inicializa multiplicadores baseado nos encantamentos carregados do banco
   useEffect(() => {
     const fortune = enchantments.find(e => e.type === 'fortune');
     const efficiency = enchantments.find(e => e.type === 'efficiency');
@@ -601,8 +599,7 @@ export default function Game({ username, initialSave, initialInventory, bankBala
     const efficiencyEnchant = newEnchants.find(e => e.type === 'efficiency');
     const mendingEnchant = newEnchants.find(e => e.type === 'mending');
     fortuneMult.current = fortuneEnchant ? fortuneEnchant.value : 1;
-    const effVal = efficiencyEnchant ? efficiencyEnchant.value : 1;
-    applyEfficiency(effVal);
+    applyEfficiency(efficiencyEnchant ? efficiencyEnchant.value : 1);
     mendingMult.current = mendingEnchant ? mendingEnchant.value : 1;
 
     audioService.playOrb();
@@ -637,7 +634,7 @@ export default function Game({ username, initialSave, initialInventory, bankBala
         isBoostActive={isBoostActive}
         beaconEvent={beaconEvent}
         onDungeonChestOpen={handleDungeonChestOpen}
-        efficiencyMult={1}
+        efficiencyMult={efficiencyMult}
         mendingMult={mendingMult.current}
       />
       <GameHUD stats={stats} bankBalance={localBalance} />
