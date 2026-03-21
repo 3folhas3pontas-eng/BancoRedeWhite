@@ -16,11 +16,11 @@ export const PICKAXE_TIERS: Record<
   { strength: number; speed: number; cost: number; color: string; name: string }
 > = {
   wood: { strength: 0.9, speed: 1, cost: 0, color: "#8B5E3C", name: "Wood Pickaxe" },
-  stone: { strength: 1, speed: 1.2, cost: 200, color: "#9E9E9E", name: "Stone Pickaxe" },
-  iron: { strength: 1.5, speed: 1.2, cost: 1500, color: "#D7CCC8", name: "Iron Pickaxe" },
-  gold: { strength: 1.6, speed: 1.5, cost: 8000, color: "#FBC02D", name: "Gold Pickaxe" },
-  diamond: { strength: 1.7, speed: 1.8, cost: 50000, color: "#00E5FF", name: "Diamond Pickaxe" },
-  netherite: { strength: 1.9, speed: 2, cost: 1000, color: "#4A3B4A", name: "Netherite Pickaxe" },
+  stone: { strength: 1, speed: 1.2, cost: 5000, color: "#9E9E9E", name: "Stone Pickaxe" },
+  iron: { strength: 1.5, speed: 1.2, cost: 500000, color: "#D7CCC8", name: "Iron Pickaxe" },
+  gold: { strength: 1.6, speed: 1.5, cost: 150000, color: "#FBC02D", name: "Gold Pickaxe" },
+  diamond: { strength: 1.7, speed: 1.8, cost: 200000, color: "#00E5FF", name: "Diamond Pickaxe" },
+  netherite: { strength: 1.9, speed: 2, cost: 300000, color: "#4A3B4A", name: "Netherite Pickaxe" },
 };
 
 export const TIER_ORDER: PickaxeTier[] = ["wood", "stone", "iron", "gold", "diamond", "netherite"];
@@ -219,17 +219,17 @@ export type EnchantmentType = "efficiency" | "fortune" | "mending";
 // Remendo: meio termo, nivel 3 mais dificil
 export const ENCHANTMENTS: (Enchantment & { type: EnchantmentType; level: number; weight: number })[] = [
   // Eficiencia (melhora velocidade de mineracao)
-  { id: "eff_1", type: "efficiency", level: 1, name: "Eficiencia I",   rarity: Rarity.RARE,      description: "+1000% Velocidade [TESTE]", value: 10,  weight: 99 },
-  { id: "eff_2", type: "efficiency", level: 2, name: "Eficiencia II",  rarity: Rarity.RARE,      description: "+2000% Velocidade [TESTE]", value: 20,  weight: 99 },
-  { id: "eff_3", type: "efficiency", level: 3, name: "Eficiencia III", rarity: Rarity.EPIC,      description: "+3000% Velocidade [TESTE]", value: 30,  weight: 99 },
-  { id: "eff_4", type: "efficiency", level: 4, name: "Eficiencia IV",  rarity: Rarity.LEGENDARY, description: "+5000% Velocidade [TESTE]", value: 50,  weight: 99 },
-  { id: "eff_5", type: "efficiency", level: 5, name: "Eficiencia V",   rarity: Rarity.MYTHIC,    description: "+9900% Velocidade [TESTE]", value: 100, weight: 99 },
-  
+  { id: "eff_1", type: "efficiency", level: 1, name: "Eficiencia I", rarity: Rarity.RARE, description: "+1000% Velocidade [TESTE]", value: 10, weight: 99 },
+  { id: "eff_2", type: "efficiency", level: 2, name: "Eficiencia II", rarity: Rarity.RARE, description: "+2000% Velocidade [TESTE]", value: 20, weight: 99 },
+  { id: "eff_3", type: "efficiency", level: 3, name: "Eficiencia III", rarity: Rarity.EPIC, description: "+3000% Velocidade [TESTE]", value: 30, weight: 99 },
+  { id: "eff_4", type: "efficiency", level: 4, name: "Eficiencia IV", rarity: Rarity.LEGENDARY, description: "+5000% Velocidade [TESTE]", value: 50, weight: 99 },
+  { id: "eff_5", type: "efficiency", level: 5, name: "Eficiencia V", rarity: Rarity.MYTHIC, description: "+9900% Velocidade [TESTE]", value: 100, weight: 99 },
+
   // Fortuna (da mais minerios) - MUITO RARO
   { id: "fort_1", type: "fortune", level: 1, name: "Fortuna I", rarity: Rarity.EPIC, description: "+25% Minerios", value: 1.25, weight: 5 },
   { id: "fort_2", type: "fortune", level: 2, name: "Fortuna II", rarity: Rarity.LEGENDARY, description: "+50% Minerios", value: 1.50, weight: 1.5 },
   { id: "fort_3", type: "fortune", level: 3, name: "Fortuna III", rarity: Rarity.MYTHIC, description: "+100% Minerios", value: 2.00, weight: 0.2 },
-  
+
   // Remendo (da mais XP) - Meio termo
   { id: "mend_1", type: "mending", level: 1, name: "Remendo I", rarity: Rarity.RARE, description: "+20% XP", value: 1.20, weight: 20 },
   { id: "mend_2", type: "mending", level: 2, name: "Remendo II", rarity: Rarity.EPIC, description: "+40% XP", value: 1.40, weight: 8 },
