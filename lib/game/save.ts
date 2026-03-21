@@ -25,7 +25,16 @@ export async function loadMiningSave(username: string): Promise<MiningSave | nul
     .eq('username', username)
     .single();
 
-  if (error || !data) return null;
+  if (error) {
+    console.error('[v0] loadMiningSave error:', error.message, '| code:', error.code);
+    return null;
+  }
+  if (!data) {
+    console.warn('[v0] loadMiningSave: nenhum dado encontrado para', username);
+    return null;
+  }
+
+  console.log('[v0] loadMiningSave OK:', { username, pickaxe_tier: data.pickaxe_tier, pick_strength: data.pick_strength, level: data.level });
 
   return {
     xp:           data.xp,
