@@ -113,7 +113,7 @@ export default function Game({ username, initialSave, initialInventory, bankBala
   }, []);
 
   const doSave = useCallback(async () => {
-    saveMiningSave(username, statsRef.current, enchantmentsRef.current);
+    await saveMiningSave(username, statsRef.current, enchantmentsRef.current);
     
     // Salva APENAS o delta da sessao de forma incremental
     // NUNCA sobrescreve valores - apenas adiciona ao banco
@@ -161,6 +161,41 @@ export default function Game({ username, initialSave, initialInventory, bankBala
       doSave(); // salva ao desmontar (sair do jogo)
     };
   }, [doSave]);
+
+  // Salva ao fechar/atualizar a aba usando sendBeacon (unico que funciona no beforeunload)
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      const payload = {
+        username,
+        xp:           statsRef.current.xp,
+        level:        statsRef.current.level,
+        depth:        statsRef.current.depth,
+        blocks_mined: statsRef.current.blocksMinedTotal,
+        pickaxe_tier: statsRef.current.pickaxeTier,
+        pick_strength:statsRef.current.pickStrength,
+        pick_speed:   statsRef.current.pickSpeed,
+        tnt_radius:   statsRef.current.tntRadius,
+        tnt_spawn:    statsRef.current.tntSpawn,
+        beacon_spawn: statsRef.current.beaconSpawn,
+        dungeon_spawn:statsRef.current.dungeonSpawn,
+        chest_spawn:  statsRef.current.chestSpawn,
+        max_combo:    statsRef.current.maxCombo,
+        enchantments: enchantmentsRef.current,
+      };
+      // sendBeacon garante envio mesmo ao fechar a pagina
+      navigator.sendBeacon('/api/save-mining', JSON.stringify(payload));
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    // Tambem salva ao esconder a aba (trocar de aba no celular)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') doSave();
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [username, doSave]);
 
   // Refresh do dbInventory a cada 5 segundos (detecta coletas do plugin Minecraft)
   // NAO mexe no sessionDelta - apenas atualiza o que esta no banco
