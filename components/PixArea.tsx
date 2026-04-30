@@ -304,13 +304,13 @@ export default function PixArea({ onBack, player }: PixAreaProps) {
             </div>
           </div>
         </main>
-        <footer className="p-6 bg-white border-t border-gray-50">
+        <footer className="flex-shrink-0 p-6 bg-white border-t border-gray-100">
           <button
             disabled={!isValidAmount}
             onClick={() => setStep('CONFIRM')}
             className={cn(
               'flex h-14 w-full items-center justify-center rounded-2xl font-bold transition-all active:scale-[0.98]',
-              isValidAmount ? 'text-white shadow-lg shadow-cyan-400/20' : 'bg-gray-100 text-gray-400'
+              isValidAmount ? 'text-white shadow-lg shadow-cyan-400/20' : 'bg-gray-200 text-gray-400 cursor-not-allowed'
             )}
             style={isValidAmount ? { backgroundColor: primaryColor } : {}}
           >
