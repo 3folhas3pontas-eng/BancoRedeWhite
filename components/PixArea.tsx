@@ -262,6 +262,7 @@ export default function PixArea({ onBack, player }: PixAreaProps) {
 
   if (step === 'INPUT_AMOUNT') {
     const isValidAmount = parsedAmount > 0 && parsedAmount <= player.balance;
+    console.log('[v0] INPUT_AMOUNT debug:', { amount, parsedAmount, balance: player.balance, isValidAmount });
     return (
       <div className="flex flex-col h-screen bg-white overflow-hidden">
         <header className="flex-shrink-0 px-6 pt-12 pb-4">
