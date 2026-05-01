@@ -3,8 +3,10 @@ import { createClient } from '@supabase/supabase-js';
 import bcrypt from 'bcryptjs';
 
 // Usa service role para validar login (nunca expor no cliente!)
+// Tenta SUPABASE_URL primeiro (padrao da integracao), senao usa NEXT_PUBLIC
+const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  supabaseUrl!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
@@ -14,8 +16,9 @@ export async function POST(request: NextRequest) {
 
     console.log('[v0] Login attempt:', { username, hasPassword: !!password });
     console.log('[v0] ENV check:', { 
-      hasUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
-      hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY 
+      hasUrl: !!supabaseUrl,
+      hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+      urlUsed: supabaseUrl?.substring(0, 30) + '...'
     });
 
     if (!username || !password) {
