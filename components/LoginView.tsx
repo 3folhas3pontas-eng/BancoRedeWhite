@@ -55,7 +55,7 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
   return (
     <div className="flex-1 flex flex-col items-center justify-center bg-white px-6 py-10 page-enter min-h-screen">
       <div className="w-full max-w-sm flex flex-col items-center">
-        {/* TESTE DE DEPLOY - PONTO VERMELHO */}
+        {/* DEPLOY TEST - RED DOT */}
         <div className="w-4 h-4 bg-red-500 rounded-full mb-2"></div>
         
         <div className="w-20 h-20 rounded-2xl overflow-hidden mb-8 shadow-sm">
