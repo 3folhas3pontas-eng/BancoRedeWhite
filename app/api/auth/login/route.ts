@@ -14,13 +14,6 @@ export async function POST(request: NextRequest) {
   try {
     const { username, password } = await request.json();
 
-    console.log('[v0] Login attempt:', { username, hasPassword: !!password });
-    console.log('[v0] ENV check:', { 
-      hasUrl: !!supabaseUrl,
-      hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
-      urlUsed: supabaseUrl?.substring(0, 30) + '...'
-    });
-
     if (!username || !password) {
       return NextResponse.json(
         { error: 'Username e senha são obrigatórios' },
@@ -35,28 +28,15 @@ export async function POST(request: NextRequest) {
       .eq('username', username.trim())
       .single();
 
-    console.log('[v0] Supabase response:', { 
-      hasUser: !!user, 
-      error: error?.message,
-      userFound: user?.username
-    });
-
     if (error || !user) {
-      // DEBUG TEMPORARIO - remover depois
       return NextResponse.json(
-        { error: `DEBUG: Usuario nao encontrado. Erro: ${error?.message || 'nenhum'}. Username buscado: ${username}` },
+        { error: 'Credenciais inválidas' },
         { status: 401 }
       );
     }
 
     // Verifica se a senha esta em bcrypt ou plaintext (migracao gradual)
     let isValidPassword = false;
-    
-    console.log('[v0] Password check:', { 
-      isBcrypt: user.password_hash?.startsWith('$2'),
-      storedLength: user.password_hash?.length,
-      inputLength: password?.length
-    });
 
     if (user.password_hash.startsWith('$2')) {
       // Senha ja esta em bcrypt
@@ -64,7 +44,6 @@ export async function POST(request: NextRequest) {
     } else {
       // Senha ainda em plaintext - compara e migra para bcrypt
       isValidPassword = user.password_hash === password;
-      console.log('[v0] Plaintext compare:', { isValidPassword });
       
       if (isValidPassword) {
         // Migra para bcrypt automaticamente no primeiro login
@@ -79,9 +58,8 @@ export async function POST(request: NextRequest) {
     }
 
     if (!isValidPassword) {
-      // DEBUG TEMPORARIO - remover depois
       return NextResponse.json(
-        { error: `DEBUG: Senha incorreta. Tipo: ${user.password_hash?.startsWith('$2') ? 'bcrypt' : 'plaintext'}` },
+        { error: 'Credenciais inválidas' },
         { status: 401 }
       );
     }
