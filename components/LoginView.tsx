@@ -2,10 +2,9 @@
 
 import { useState } from 'react';
 import { PlayerData } from '@/lib/types';
-import { supabase } from '@/lib/supabase';
 
 interface LoginViewProps {
-  onLoginSuccess: (player: PlayerData, remember: boolean) => void;
+  onLoginSuccess: (player: PlayerData, remember: boolean, sessionToken: string) => void;
 }
 
 const primaryColor = '#72E8F6';
@@ -22,25 +21,28 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
     setIsLoading(true);
 
     try {
-      const { data, error } = await supabase
-        .from('rede_white_accounts')
-        .select('*')
-        .eq('username', nick.trim())
-        .eq('password_hash', password)
-        .single();
+      // Usa API segura no backend (nunca expoe senha no cliente)
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: nick.trim(), password }),
+      });
 
-      if (error || !data) {
-        alert('Nick ou senha incorretos.');
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        alert(data.error || 'Nick ou senha incorretos.');
       } else {
         onLoginSuccess(
           {
-            nick: data.username,
-            uuid: data.uuid,
-            balance: parseFloat(data.balance || '0'),
+            nick: data.user.nick,
+            uuid: data.user.uuid,
+            balance: data.user.balance,
             creditLimit: 0,
             currentInvoice: 0,
           },
-          rememberMe
+          rememberMe,
+          data.sessionToken
         );
       }
     } catch {

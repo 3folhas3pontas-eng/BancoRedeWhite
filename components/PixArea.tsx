@@ -19,6 +19,7 @@ import {
 interface PixAreaProps {
   onBack: () => void;
   player: PlayerData;
+  sessionToken: string;
 }
 
 type PixStep = 'HOME' | 'INPUT_NICK' | 'INPUT_AMOUNT' | 'CONFIRM' | 'PROCESSING' | 'SUCCESS';
@@ -28,7 +29,7 @@ const primaryColor = '#72E8F6';
 const cn = (...classes: (string | boolean | undefined)[]) =>
   classes.filter(Boolean).join(' ');
 
-export default function PixArea({ onBack, player }: PixAreaProps) {
+export default function PixArea({ onBack, player, sessionToken }: PixAreaProps) {
   const [step, setStep] = useState<PixStep>('HOME');
   const [receiverNick, setReceiverNick] = useState('');
   const [amount, setAmount] = useState('');
@@ -80,45 +81,34 @@ export default function PixArea({ onBack, player }: PixAreaProps) {
     setErrorMessage('');
     const val = parseFloat(amount.replace(',', '.'));
 
-    setTimeout(async () => {
-      try {
-        const { data: accountData, error: accountError } = await supabase
-          .from('rede_white_accounts')
-          .select('balance')
-          .eq('username', player.nick)
-          .single();
+    try {
+      // Usa API segura no backend (validacao atomica de saldo)
+      const response = await fetch('/api/transfer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionToken,
+          receiverUsername: receiverData?.nick,
+          amount: val,
+        }),
+      });
 
-        if (accountError || !accountData) throw new Error('Falha de conexão.');
+      const data = await response.json();
 
-        const currentBalance = parseFloat(accountData.balance || '0');
-        if (currentBalance < val) {
-          setErrorMessage('Saldo insuficiente confirmado pelo servidor.');
-          setStep('INPUT_AMOUNT');
-          setIsLoading(false);
-          return;
-        }
-
-        const newId = Math.random().toString(36).substr(2, 9).toUpperCase();
-        const { error: txError } = await supabase.from('rede_white_transactions').insert([
-          {
-            sender_name: player.nick,
-            receiver_name: receiverData?.nick,
-            amount: val,
-            status: 'PENDENTE',
-          },
-        ]);
-
-        if (txError) throw txError;
-
-        setTransactionId(newId);
-        setStep('SUCCESS');
-      } catch {
-        setErrorMessage('Erro no sistema de pagamentos. Tente novamente.');
+      if (!response.ok || !data.success) {
+        setErrorMessage(data.error || 'Erro no sistema de pagamentos.');
         setStep('CONFIRM');
-      } finally {
-        setIsLoading(false);
+        return;
       }
-    }, 2500);
+
+      setTransactionId(data.transactionId);
+      setStep('SUCCESS');
+    } catch {
+      setErrorMessage('Erro no sistema de pagamentos. Tente novamente.');
+      setStep('CONFIRM');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => {

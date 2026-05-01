@@ -14,6 +14,7 @@ import LojasAbertasView from '@/components/LojasAbertasView';
 export default function WhiteBankApp() {
   const [currentView, setCurrentView] = useState<View>(View.LOGIN);
   const [user, setUser] = useState<PlayerData | null>(null);
+  const [sessionToken, setSessionToken] = useState<string | null>(null);
   const [isBalanceVisible, setIsBalanceVisible] = useState(true);
 
   const refreshUserData = useCallback(async (username: string) => {
@@ -40,9 +41,11 @@ export default function WhiteBankApp() {
 
   useEffect(() => {
     const savedUser = localStorage.getItem('whitebank_saved_user');
-    if (savedUser) {
+    const savedToken = localStorage.getItem('whitebank_session_token');
+    if (savedUser && savedToken) {
       const parsedUser = JSON.parse(savedUser) as PlayerData;
       setUser(parsedUser);
+      setSessionToken(savedToken);
       setCurrentView(View.HOME);
       refreshUserData(parsedUser.nick);
     }
@@ -57,17 +60,21 @@ export default function WhiteBankApp() {
     }
   }, [user, currentView, refreshUserData]);
 
-  const handleLoginSuccess = (playerData: PlayerData, remember: boolean) => {
+  const handleLoginSuccess = (playerData: PlayerData, remember: boolean, token: string) => {
     setUser(playerData);
+    setSessionToken(token);
     setCurrentView(View.HOME);
     if (remember) {
       localStorage.setItem('whitebank_saved_user', JSON.stringify(playerData));
+      localStorage.setItem('whitebank_session_token', token);
     }
   };
 
   const handleLogout = () => {
     localStorage.removeItem('whitebank_saved_user');
+    localStorage.removeItem('whitebank_session_token');
     setUser(null);
+    setSessionToken(null);
     setCurrentView(View.LOGIN);
   };
 
@@ -78,7 +85,7 @@ export default function WhiteBankApp() {
 
     switch (currentView) {
       case View.PIX:
-        return <PixArea onBack={() => setCurrentView(View.HOME)} player={user} />;
+        return <PixArea onBack={() => setCurrentView(View.HOME)} player={user} sessionToken={sessionToken || ''} />;
       case View.EXTRATO:
         return <StatementArea onBack={() => setCurrentView(View.HOME)} player={user} />;
       case View.LOJAS_ABERTAS:
