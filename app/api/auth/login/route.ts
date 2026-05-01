@@ -12,6 +12,12 @@ export async function POST(request: NextRequest) {
   try {
     const { username, password } = await request.json();
 
+    console.log('[v0] Login attempt:', { username, hasPassword: !!password });
+    console.log('[v0] ENV check:', { 
+      hasUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+      hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY 
+    });
+
     if (!username || !password) {
       return NextResponse.json(
         { error: 'Username e senha são obrigatórios' },
@@ -26,6 +32,12 @@ export async function POST(request: NextRequest) {
       .eq('username', username.trim())
       .single();
 
+    console.log('[v0] Supabase response:', { 
+      hasUser: !!user, 
+      error: error?.message,
+      userFound: user?.username
+    });
+
     if (error || !user) {
       // Resposta generica para nao revelar se usuario existe
       return NextResponse.json(
@@ -37,12 +49,19 @@ export async function POST(request: NextRequest) {
     // Verifica se a senha esta em bcrypt ou plaintext (migracao gradual)
     let isValidPassword = false;
     
+    console.log('[v0] Password check:', { 
+      isBcrypt: user.password_hash?.startsWith('$2'),
+      storedLength: user.password_hash?.length,
+      inputLength: password?.length
+    });
+
     if (user.password_hash.startsWith('$2')) {
       // Senha ja esta em bcrypt
       isValidPassword = await bcrypt.compare(password, user.password_hash);
     } else {
       // Senha ainda em plaintext - compara e migra para bcrypt
       isValidPassword = user.password_hash === password;
+      console.log('[v0] Plaintext compare:', { isValidPassword });
       
       if (isValidPassword) {
         // Migra para bcrypt automaticamente no primeiro login
