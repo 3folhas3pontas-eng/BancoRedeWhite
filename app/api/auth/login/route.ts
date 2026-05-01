@@ -42,9 +42,9 @@ export async function POST(request: NextRequest) {
     });
 
     if (error || !user) {
-      // Resposta generica para nao revelar se usuario existe
+      // DEBUG TEMPORARIO - remover depois
       return NextResponse.json(
-        { error: 'Credenciais inválidas' },
+        { error: `DEBUG: Usuario nao encontrado. Erro: ${error?.message || 'nenhum'}. Username buscado: ${username}` },
         { status: 401 }
       );
     }
@@ -79,8 +79,9 @@ export async function POST(request: NextRequest) {
     }
 
     if (!isValidPassword) {
+      // DEBUG TEMPORARIO - remover depois
       return NextResponse.json(
-        { error: 'Credenciais inválidas' },
+        { error: `DEBUG: Senha incorreta. Tipo: ${user.password_hash?.startsWith('$2') ? 'bcrypt' : 'plaintext'}` },
         { status: 401 }
       );
     }
