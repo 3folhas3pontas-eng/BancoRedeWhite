@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
 import { PlayerData } from '@/lib/types';
 import {
   ArrowLeft,
@@ -54,13 +53,15 @@ export default function PixArea({ onBack, player, sessionToken }: PixAreaProps) 
     setErrorMessage('');
 
     try {
-      const { data, error } = await supabase
-        .from('rede_white_accounts')
-        .select('username, uuid')
-        .ilike('username', receiverNick.trim())
-        .single();
+      const response = await fetch('/api/user/check-player', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: receiverNick.trim() })
+      });
 
-      if (error || !data) {
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
         setErrorMessage('Jogador não encontrado no servidor.');
       } else if (data.username.toLowerCase() === player.nick.toLowerCase()) {
         setErrorMessage('Você não pode transferir para si mesmo.');
