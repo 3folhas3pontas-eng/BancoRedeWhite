@@ -298,15 +298,9 @@ export default function PixArea({ onBack, player, sessionToken }: PixAreaProps) 
             <button
               disabled={!isValidAmount}
               onClick={() => setStep('CONFIRM')}
-              style={{ backgroundColor: isValidAmount ? '#06b6d4' : undefined }}
-              className={cn(
-                'flex h-16 w-full items-center justify-center gap-3 rounded-2xl text-lg font-bold transition-all active:scale-[0.98]',
-                isValidAmount
-                  ? 'text-white shadow-lg'
-                  : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-              )}
+              style={{ backgroundColor: isValidAmount ? '#06b6d4' : '#e5e7eb', color: isValidAmount ? '#fff' : '#9ca3af', display: 'flex', width: '100%', height: '64px', alignItems: 'center', justifyContent: 'center', gap: '12px', borderRadius: '16px', fontSize: '18px', fontWeight: 700, border: 'none', cursor: isValidAmount ? 'pointer' : 'not-allowed' }}
             >
-              <Send className="h-6 w-6" /> Transferir Agora
+              <Send style={{ width: 24, height: 24 }} /> Transferir Agora
             </button>
           </div>
         </main>
@@ -356,10 +350,9 @@ export default function PixArea({ onBack, player, sessionToken }: PixAreaProps) 
           <div className="mt-8 mb-8">
             <button
               onClick={startProcessing}
-              style={{ backgroundColor: '#06b6d4' }}
-              className="flex h-16 w-full items-center justify-center gap-3 rounded-2xl text-lg font-bold text-white shadow-lg transition-all active:scale-[0.98]"
+              style={{ backgroundColor: '#06b6d4', color: '#fff', display: 'flex', width: '100%', height: '64px', alignItems: 'center', justifyContent: 'center', gap: '12px', borderRadius: '16px', fontSize: '18px', fontWeight: 700, border: 'none', cursor: 'pointer' }}
             >
-              <Send className="h-6 w-6" /> Confirmar e Enviar
+              <Send style={{ width: 24, height: 24 }} /> Confirmar e Enviar
             </button>
           </div>
         </main>
