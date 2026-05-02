@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Destinatário não encontrado' }, { status: 404 });
     }
 
-    // 6. Cria transacao como PENDENTE - o PLUGIN vai processar e marcar como CONCLUIDO
+    // 6. Cria transacao como PENDENTE - o PLUGIN le, processa no jogo e marca como CONCLUIDO
     const { data: transaction, error: insertError } = await supabaseAdmin
       .from('rede_white_transactions')
       .insert({
