@@ -254,8 +254,8 @@ export default function PixArea({ onBack, player, sessionToken }: PixAreaProps) 
   if (step === 'INPUT_AMOUNT') {
     const isValidAmount = parsedAmount > 0 && parsedAmount <= player.balance;
     return (
-      <div className="min-h-screen bg-white flex flex-col">
-        <header className="px-6 pt-12 pb-4">
+      <div className="flex flex-col h-screen bg-white overflow-hidden">
+        <header className="flex-shrink-0 px-6 pt-12 pb-4">
           <button onClick={() => setStep('INPUT_NICK')} className="-ml-2 mb-6 flex h-10 w-10 items-center justify-center rounded-full text-gray-600">
             <ArrowLeft className="h-6 w-6" />
           </button>
@@ -265,7 +265,7 @@ export default function PixArea({ onBack, player, sessionToken }: PixAreaProps) 
             <span className="text-sm font-bold text-emerald-600">$ {formatCurrency(player.balance)}</span>
           </div>
         </header>
-        <main className="flex-1 px-6">
+        <main className="flex-1 px-6 overflow-y-auto">
           <div className="mt-6 flex items-baseline gap-2 border-b-2 border-gray-200 pb-4 focus-within:border-cyan-400">
             <span className="text-4xl font-bold text-gray-200">$</span>
             <input
@@ -294,19 +294,19 @@ export default function PixArea({ onBack, player, sessionToken }: PixAreaProps) 
             </div>
           </div>
         </main>
-        <div className="p-6">
+        <footer className="flex-shrink-0 p-6 bg-white border-t border-gray-50">
           <button
             disabled={!isValidAmount}
             onClick={() => setStep('CONFIRM')}
             className={cn(
-              'flex h-14 w-full items-center justify-center rounded-2xl font-bold transition-all active:scale-[0.98]',
+              'flex h-14 w-full items-center justify-center gap-2 rounded-2xl font-bold transition-all active:scale-[0.98]',
               isValidAmount ? 'text-white shadow-lg shadow-cyan-400/20' : 'bg-gray-200 text-gray-400 cursor-not-allowed'
             )}
             style={isValidAmount ? { backgroundColor: primaryColor } : {}}
           >
-            Revisar transferência
+            <Send className="h-5 w-5" /> Transferir
           </button>
-        </div>
+        </footer>
       </div>
     );
   }
