@@ -153,9 +153,9 @@ export default function Game({ username, initialSave, initialInventory, bankBala
     });
   }, []);
 
-  // Auto-save a cada 30 segundos
+  // Auto-save a cada 10 segundos
   useEffect(() => {
-    const interval = setInterval(doSave, 30_000);
+    const interval = setInterval(doSave, 10_000);
     return () => {
       clearInterval(interval);
       doSave(); // salva ao desmontar (sair do jogo)
@@ -184,6 +184,16 @@ export default function Game({ username, initialSave, initialInventory, bankBala
       };
       // sendBeacon garante envio mesmo ao fechar a pagina
       navigator.sendBeacon('/api/save-mining', JSON.stringify(payload));
+
+      // Salva o delta de minerios tambem
+      const delta = sessionDeltaRef.current;
+      const hasItems = Object.values(delta).some(v => typeof v === 'number' && v > 0);
+      if (hasItems) {
+        navigator.sendBeacon(
+          '/api/save-inventory',
+          JSON.stringify({ username, action: 'delta', delta })
+        );
+      }
     };
     window.addEventListener('beforeunload', handleBeforeUnload);
     // Tambem salva ao esconder a aba (trocar de aba no celular)

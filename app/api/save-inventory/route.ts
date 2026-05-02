@@ -30,11 +30,11 @@ export async function POST(req: NextRequest) {
 
     // action=delta: soma o delta ao inventario atual de forma atomica
     if (action === 'delta' && delta) {
-      // Busca valores atuais
+      // Busca valores atuais (ilike para ignorar diferenca de maiusculas)
       const { data: current, error: fetchError } = await supabase
         .from('mining_inventory')
         .select('*')
-        .eq('username', username)
+        .ilike('username', username)
         .single();
 
       if (fetchError || !current) {
@@ -58,10 +58,12 @@ export async function POST(req: NextRequest) {
         newValues[key] = cur + add;
       }
 
+      // Usa o username real do banco (preserva case original)
+      const realUsername = current.username ?? username;
       const { error: updateError } = await supabase
         .from('mining_inventory')
         .update(newValues)
-        .eq('username', username);
+        .eq('username', realUsername);
 
       if (updateError) {
         console.error('[save-inventory] update erro:', updateError);
