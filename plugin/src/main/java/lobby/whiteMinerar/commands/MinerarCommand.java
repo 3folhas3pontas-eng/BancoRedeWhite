@@ -54,21 +54,30 @@ public class MinerarCommand implements CommandExecutor {
         plugin.getSupabaseClient().fetchInventory(player.getName()).thenAccept(inventory -> {
             // Voltar para a thread principal do Bukkit para abrir GUI
             Bukkit.getScheduler().runTask(plugin, () -> {
-                if (inventory == null) {
-                    player.sendMessage("§c" + plugin.getConfigManager().getMessage("no_account"));
+                MiningInventory inv = inventory;
+
+                // Se nao tem inventario, cria um zerado automaticamente
+                if (inv == null) {
+                    inv = new MiningInventory();
+                    inv.setUsername(player.getName());
+                    final MiningInventory newInv = inv;
+                    plugin.getSupabaseClient().createInventory(player.getName()).thenAccept(created -> {
+                        Bukkit.getScheduler().runTask(plugin, () -> {
+                            MineracaoGUI gui = new MineracaoGUI(plugin, newInv, player.getName());
+                            GUISessionManager.addSession(player.getUniqueId(), gui);
+                            player.openInventory(gui.createGUI());
+                        });
+                    });
                     return;
                 }
-                
+
                 // Criar e abrir GUI
-                MineracaoGUI gui = new MineracaoGUI(plugin, inventory, player.getName());
+                MineracaoGUI gui = new MineracaoGUI(plugin, inv, player.getName());
                 GUISessionManager.addSession(player.getUniqueId(), gui);
-                
                 player.openInventory(gui.createGUI());
-                player.sendMessage("§aMenu de mineração aberto!");
             });
             
         }).exceptionally(ex -> {
-            // Voltar para a thread principal para enviar mensagem
             Bukkit.getScheduler().runTask(plugin, () -> {
                 player.sendMessage("§c" + plugin.getConfigManager().getMessage("error"));
             });

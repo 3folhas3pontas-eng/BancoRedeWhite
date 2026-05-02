@@ -77,6 +77,62 @@ public class SupabaseClient {
     }
 
     /**
+     * Cria um inventario zerado para o jogador caso nao exista.
+     */
+    public CompletableFuture<Boolean> createInventory(String username) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                String url = supabaseUrl + "/rest/v1/mining_inventory";
+
+                JsonObject body = new JsonObject();
+                body.addProperty("username",              username);
+                body.addProperty("coal",                  0);
+                body.addProperty("raw_iron",              0);
+                body.addProperty("raw_copper",            0);
+                body.addProperty("lapis_lazuli",          0);
+                body.addProperty("raw_gold",              0);
+                body.addProperty("redstone",              0);
+                body.addProperty("diamond",               0);
+                body.addProperty("emerald",               0);
+                body.addProperty("string",                0);
+                body.addProperty("rotten_flesh",          0);
+                body.addProperty("bone",                  0);
+                body.addProperty("wheat",                 0);
+                body.addProperty("gunpowder",             0);
+                body.addProperty("iron_ingot",            0);
+                body.addProperty("gold_ingot",            0);
+                body.addProperty("slimeball",             0);
+                body.addProperty("bucket",                0);
+                body.addProperty("name_tag",              0);
+                body.addProperty("saddle",                0);
+                body.addProperty("music_disc",            0);
+                body.addProperty("golden_apple",          0);
+                body.addProperty("enchanted_golden_apple",0);
+                body.addProperty("iron_horse_armor",      0);
+                body.addProperty("gold_horse_armor",      0);
+                body.addProperty("diamond_horse_armor",   0);
+                body.addProperty("enchantment_book",      0);
+                body.addProperty("experience_bottle",     0);
+
+                HttpRequest request = serviceBuilder(url)
+                        .POST(HttpRequest.BodyPublishers.ofString(body.toString()))
+                        .header("Prefer", "return=minimal")
+                        .build();
+
+                HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+                boolean ok = response.statusCode() >= 200 && response.statusCode() < 300;
+                if (!ok) {
+                    System.err.println("[SupabaseClient] createInventory status=" + response.statusCode() + " body=" + response.body());
+                }
+                return ok;
+            } catch (Exception e) {
+                e.printStackTrace();
+                return false;
+            }
+        });
+    }
+
+    /**
      * Zera todos os campos de itens do inventario apos a coleta.
      * Usa service_role_key para bypassar RLS.
      */
