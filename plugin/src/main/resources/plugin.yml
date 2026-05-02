@@ -1,0 +1,24 @@
+name: WhiteMinerar
+version: '1.0-SNAPSHOT'
+main: lobby.whiteMinerar.MineracaoPlugin
+api-version: '1.21'
+description: Plugin para coletar itens minerados do jogo web
+authors:
+  - WhiteMinerar
+commands:
+  minerar:
+    description: Abre o menu de coleta de mineracao
+    usage: /minerar
+    aliases: [mineracao]
+    permission: mineracao.use
+  mineracao:
+    description: Comandos administrativos
+    usage: /mineracao <subcomando>
+    permission: mineracao.admin
+permissions:
+  mineracao.use:
+    description: Permite usar /minerar
+    default: true
+  mineracao.admin:
+    description: Permite usar comandos admin
+    default: op

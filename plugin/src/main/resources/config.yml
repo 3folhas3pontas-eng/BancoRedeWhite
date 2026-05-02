@@ -1,0 +1,31 @@
+# Configuracao do Supabase
+supabase:
+  url: "https://mmmazuwqcssymohcdzyj.supabase.co"
+  # Chave publica (usada apenas para leituras publicas se necessario)
+  anon_key: "sb_publishable_bf0YEm9kQ92T5U9WFbKeeg_clS4zyLc"
+  # Chave de servico - NECESSARIA para bypassar RLS e fazer escrita/leitura admin
+  # Obtenha em: Supabase Dashboard > Project Settings > API > service_role key
+  service_role_key: "COLOQUE_SUA_SERVICE_ROLE_KEY_AQUI"
+
+# Modo de entrega dos itens
+delivery:
+  # Opcoes: "give" (direto no inventario) ou "command" (executa comando)
+  mode: "give"
+  # Se mode for "command", usar este comando. Placeholders: {player}, {item}, {amount}
+  command: "give {player} {item} {amount}"
+
+# Mensagens
+messages:
+  no_account: "&cVoce nao possui uma conta de mineracao!"
+  no_items: "&cVoce nao tem itens para coletar!"
+  collected: "&aVoce coletou &e{amount}x {item}&a!"
+  collected_all: "&aVoce coletou todos os seus itens!"
+  inventory_full: "&cSeu inventario esta cheio!"
+  error: "&cOcorreu um erro ao processar sua solicitacao."
+  menu_title: "Coletar Mineracao"
+
+# Configuracoes gerais
+settings:
+  # Intervalo em ticks para verificar transacoes pendentes (100 ticks = 5 segundos)
+  transaction_check_interval: 100
+  enable_logs: true
