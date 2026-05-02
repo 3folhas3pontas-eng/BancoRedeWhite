@@ -53,9 +53,10 @@ export default function WhiteBankApp() {
 
   useEffect(() => {
     if (user && currentView !== View.LOGIN) {
+      // Atualiza saldo a cada 2 segundos para ser praticamente em tempo real
       const interval = setInterval(() => {
         refreshUserData(user.nick);
-      }, 10000);
+      }, 2000);
       return () => clearInterval(interval);
     }
   }, [user, currentView, refreshUserData]);
