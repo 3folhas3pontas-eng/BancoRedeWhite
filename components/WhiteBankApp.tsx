@@ -86,7 +86,7 @@ export default function WhiteBankApp() {
       case View.PIX:
         return <PixArea onBack={() => setCurrentView(View.HOME)} player={user} sessionToken={sessionToken || localStorage.getItem('whitebank_session_token') || ''} />;
       case View.EXTRATO:
-        return <StatementArea onBack={() => setCurrentView(View.HOME)} player={user} />;
+        return <StatementArea onBack={() => setCurrentView(View.HOME)} player={user} sessionToken={sessionToken || localStorage.getItem('whitebank_session_token') || ''} />;
       case View.LOJAS_ABERTAS:
         return <LojasAbertasView onBack={() => setCurrentView(View.HOME)} />;
       case View.MINERAR:

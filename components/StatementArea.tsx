@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { PlayerData } from '@/lib/types';
-import { supabase } from '@/lib/supabase';
 import { ArrowLeft, Search, History, RefreshCw, AlertCircle } from 'lucide-react';
 
 interface Transaction {
@@ -17,6 +16,7 @@ interface Transaction {
 interface StatementAreaProps {
   onBack: () => void;
   player: PlayerData;
+  sessionToken: string;
 }
 
 type FilterType = 'Tudo' | 'Entradas' | 'Saídas';
@@ -25,7 +25,7 @@ const primaryColor = '#72E8F6';
 const greenIn = '#2ECC71';
 const redOut = '#E74C3C';
 
-export default function StatementArea({ onBack, player }: StatementAreaProps) {
+export default function StatementArea({ onBack, player, sessionToken }: StatementAreaProps) {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -35,14 +35,15 @@ export default function StatementArea({ onBack, player }: StatementAreaProps) {
     setLoading(true);
     setError(false);
     try {
-      const { data, error } = await supabase
-        .from('rede_white_transactions')
-        .select('*')
-        .or(`sender_name.ilike.${player.nick},receiver_name.ilike.${player.nick}`)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      if (data) setTransactions(data);
+      const token = sessionToken || localStorage.getItem('whitebank_session_token');
+      const response = await fetch('/api/user/transactions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: player.nick, session_token: token }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success) throw new Error(data.error);
+      setTransactions(data.transactions);
     } catch (err) {
       console.error('Erro ao carregar extrato:', err);
       setError(true);
