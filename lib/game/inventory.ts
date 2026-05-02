@@ -1,6 +1,4 @@
-import { supabase } from '@/lib/supabase';
 import { BlockType } from './types';
-// supabase usado apenas para leitura (fetchInventoryFromDB) - writes vao via API
 
 // Tipos de minerio que podem ser coletados
 export type OreType = 'coal' | 'raw_iron' | 'raw_copper' | 'lapis_lazuli' | 'raw_gold' | 'redstone' | 'diamond' | 'emerald';
@@ -199,29 +197,34 @@ function dataToInventory(data: Record<string, unknown>): MiningInventory {
 }
 
 export async function loadInventory(username: string): Promise<MiningInventory> {
-  const { data, error } = await supabase
-    .from('mining_inventory')
-    .select('*')
-    .eq('username', username)
-    .single();
-
-  if (error || !data) {
-    return { ...DEFAULT_INVENTORY };
-  }
-
-  return dataToInventory(data as Record<string, unknown>);
+  try {
+    const res = await fetch('/api/get-inventory', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username }),
+    });
+    const json = await res.json();
+    if (json.exists && json.inventory) {
+      return dataToInventory(json.inventory as Record<string, unknown>);
+    }
+  } catch {}
+  return { ...DEFAULT_INVENTORY };
 }
 
-// Busca inventario atual do banco (para sync)
+// Busca inventario atual do banco via API backend (bypassa RLS)
 export async function fetchInventoryFromDB(username: string): Promise<MiningInventory | null> {
-  const { data, error } = await supabase
-    .from('mining_inventory')
-    .select('*')
-    .eq('username', username)
-    .single();
-
-  if (error || !data) return null;
-  return dataToInventory(data as Record<string, unknown>);
+  try {
+    const res = await fetch('/api/get-inventory', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username }),
+    });
+    const json = await res.json();
+    if (json.exists && json.inventory) {
+      return dataToInventory(json.inventory as Record<string, unknown>);
+    }
+  } catch {}
+  return null;
 }
 
 // Calcula o delta (itens novos minerados na sessao)
