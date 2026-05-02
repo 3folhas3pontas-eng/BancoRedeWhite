@@ -215,7 +215,7 @@ export default function PixArea({ onBack, player, sessionToken }: PixAreaProps) 
           </h1>
           <p className="mt-1 text-sm text-gray-500">Nickname do jogador no servidor</p>
         </header>
-        <main className="flex-1 px-6 overflow-y-auto">
+        <main className="flex-1 px-6 overflow-y-auto pb-8">
           <input
             autoFocus
             type="text"
@@ -231,22 +231,21 @@ export default function PixArea({ onBack, player, sessionToken }: PixAreaProps) 
               <p className="text-sm font-medium text-red-600">{errorMessage}</p>
             </div>
           )}
+          <div className="mt-8">
+            <button
+              disabled={!receiverNick.trim() || isLoading}
+              onClick={handleNextToAmount}
+              className={cn(
+                'flex h-16 w-full items-center justify-center gap-2 rounded-2xl text-lg font-bold transition-all active:scale-[0.98]',
+                receiverNick.trim() && !isLoading
+                  ? 'bg-gradient-to-r from-cyan-500 to-cyan-400 text-white shadow-lg shadow-cyan-400/30'
+                  : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+              )}
+            >
+              {isLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : 'Continuar'}
+            </button>
+          </div>
         </main>
-        <footer className="p-6 bg-white border-t border-gray-50">
-          <button
-            disabled={!receiverNick.trim() || isLoading}
-            onClick={handleNextToAmount}
-            className={cn(
-              'flex h-14 w-full items-center justify-center rounded-2xl font-bold transition-all active:scale-[0.98]',
-              receiverNick.trim() && !isLoading
-                ? 'text-white shadow-lg shadow-cyan-400/20'
-                : 'bg-gray-100 text-gray-400'
-            )}
-            style={receiverNick.trim() && !isLoading ? { backgroundColor: primaryColor } : {}}
-          >
-            {isLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : 'Continuar'}
-          </button>
-        </footer>
       </div>
     );
   }
@@ -255,8 +254,7 @@ export default function PixArea({ onBack, player, sessionToken }: PixAreaProps) 
     const isValidAmount = parsedAmount > 0 && parsedAmount <= player.balance;
     return (
       <div className="flex flex-col h-screen bg-white overflow-hidden">
-        {/* TESTE DEPLOY - BOLINHA VERMELHA */}
-        <div className="fixed top-4 right-4 w-6 h-6 bg-red-500 rounded-full z-50"></div>
+
         <header className="flex-shrink-0 px-6 pt-12 pb-4">
           <button onClick={() => setStep('INPUT_NICK')} className="-ml-2 mb-6 flex h-10 w-10 items-center justify-center rounded-full text-gray-600">
             <ArrowLeft className="h-6 w-6" />
@@ -326,13 +324,13 @@ export default function PixArea({ onBack, player, sessionToken }: PixAreaProps) 
           <h1 className="text-2xl font-bold text-gray-900">Confira os dados</h1>
           <p className="mt-1 text-sm text-gray-500">Verifique os detalhes da transferência</p>
         </header>
-        <main className="flex-1 px-6 overflow-y-auto space-y-8">
+        <main className="flex-1 px-6 overflow-y-auto pb-8">
           <div className="mt-4 rounded-3xl p-6 text-white shadow-lg shadow-cyan-400/20" style={{ backgroundColor: primaryColor }}>
             <p className="mb-1 text-xs font-medium text-cyan-50 opacity-80 uppercase">Valor a enviar</p>
             <p className="text-4xl font-bold">$ {formatCurrency(parsedAmount)}</p>
           </div>
-          <div className="space-y-6">
-            <div className="flex items-center gap-4">
+          <div className="mt-6 space-y-4">
+            <div className="flex items-center gap-4 rounded-2xl bg-gray-50 p-4">
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 text-gray-400">
                 <User className="h-6 w-6" />
               </div>
@@ -349,16 +347,21 @@ export default function PixArea({ onBack, player, sessionToken }: PixAreaProps) 
               </p>
             </div>
           </div>
+          {errorMessage && (
+            <div className="mt-4 flex items-center gap-3 rounded-2xl bg-red-50 p-4">
+              <AlertCircle className="h-5 w-5 flex-shrink-0 text-red-500" />
+              <p className="text-sm font-medium text-red-600">{errorMessage}</p>
+            </div>
+          )}
+          <div className="mt-8">
+            <button
+              onClick={startProcessing}
+              className="flex h-16 w-full items-center justify-center gap-3 rounded-2xl text-lg font-bold text-white shadow-lg shadow-cyan-400/30 bg-gradient-to-r from-cyan-500 to-cyan-400 transition-all active:scale-[0.98]"
+            >
+              <Send className="h-6 w-6" /> Confirmar e Enviar
+            </button>
+          </div>
         </main>
-        <footer className="p-6 bg-white border-t border-gray-50">
-          <button
-            onClick={startProcessing}
-            className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl font-bold text-white shadow-lg shadow-cyan-400/20"
-            style={{ backgroundColor: primaryColor }}
-          >
-            <Send className="h-5 w-5" /> Confirmar e Enviar
-          </button>
-        </footer>
       </div>
     );
   }
