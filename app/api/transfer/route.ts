@@ -49,19 +49,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 4. Busca sender e valida saldo ATOMICAMENTE
+    // 4. Busca sender pelo username (mais confiavel que uuid)
+    console.log('[Transfer] Buscando sender:', session.username, 'uuid:', session.uuid);
     const { data: sender, error: senderError } = await supabaseAdmin
       .from('rede_white_accounts')
       .select('uuid, username, balance')
-      .eq('uuid', session.uuid)
+      .ilike('username', session.username)
       .single();
 
     if (senderError || !sender) {
+      console.error('[Transfer] Sender nao encontrado:', senderError?.message);
       return NextResponse.json(
         { error: 'Conta do remetente não encontrada' },
         { status: 404 }
       );
     }
+    console.log('[Transfer] Sender encontrado:', sender.username, 'balance:', sender.balance);
 
     const senderBalance = parseFloat(sender.balance || '0');
     if (senderBalance < parsedAmount) {
@@ -89,12 +92,16 @@ export async function POST(request: NextRequest) {
     // Como Supabase nao tem transacoes nativas via REST, usamos RPC
     // Por enquanto, fazemos as operacoes em sequencia com validacao extra
     
-    // 6a. Debita do sender (com validacao de saldo novamente para evitar race condition)
-    const { error: debitError } = await supabaseAdmin
+    // 6a. Debita do sender usando username (mais confiavel)
+    console.log('[Transfer] Debitando', parsedAmount, 'de', sender.username, '- saldo atual:', senderBalance);
+    const { error: debitError, count: debitCount } = await supabaseAdmin
       .from('rede_white_accounts')
       .update({ balance: senderBalance - parsedAmount })
-      .eq('uuid', sender.uuid)
-      .gte('balance', parsedAmount); // So debita se ainda tiver saldo
+      .ilike('username', sender.username)
+      .gte('balance', parsedAmount)
+      .select();
+
+    console.log('[Transfer] Debito resultado - erro:', debitError?.message, 'count:', debitCount);
 
     if (debitError) {
       console.error('[Transfer] Erro ao debitar:', debitError);
@@ -132,18 +139,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 7. Registra a transacao (apenas para historico, nao para processamento)
+    // 7. Registra a transacao no historico
     const transactionId = Math.random().toString(36).substr(2, 9).toUpperCase();
-    
-    await supabaseAdmin
+
+    const { error: insertError } = await supabaseAdmin
       .from('rede_white_transactions')
       .insert({
         sender_name: sender.username,
         receiver_name: receiver.username,
         amount: parsedAmount,
-        status: 'CONCLUIDO', // Ja processado pelo backend!
-        transaction_id: transactionId,
+        status: 'CONCLUIDO',
       });
+
+    if (insertError) {
+      console.error('[Transfer] Aviso: falha ao registrar transacao no historico:', insertError.message);
+      // Nao falha a transferencia por isso - saldo ja foi transferido
+    }
 
     console.log(`[Transfer] Sucesso: ${sender.username} -> ${receiver.username}: ${parsedAmount}`);
 
