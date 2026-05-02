@@ -56,80 +56,45 @@ export async function POST(request: NextRequest) {
     }
 
     const senderBalance = parseFloat(String(sender.balance ?? 0));
-    console.log('[v0] Saldo sender:', senderBalance, 'Valor a transferir:', parsedAmount);
 
     if (senderBalance < parsedAmount) {
       return NextResponse.json({ error: 'Saldo insuficiente' }, { status: 400 });
     }
 
-    // 5. Busca receiver
+    // 5. Verifica se o receiver existe
     const { data: receiver, error: receiverError } = await supabaseAdmin
       .from('rede_white_accounts')
-      .select('uuid, username, balance')
+      .select('username')
       .ilike('username', receiverUsername.trim())
       .single();
-
-    console.log('[v0] Receiver:', JSON.stringify(receiver), 'Erro:', receiverError?.message);
 
     if (receiverError || !receiver) {
       return NextResponse.json({ error: 'Destinatário não encontrado' }, { status: 404 });
     }
 
-    const receiverBalance = parseFloat(String(receiver.balance ?? 0));
-    const novoSaldoSender = senderBalance - parsedAmount;
-    const novoSaldoReceiver = receiverBalance + parsedAmount;
-
-    // 6a. Debita sender
-    const { error: debitError } = await supabaseAdmin
-      .from('rede_white_accounts')
-      .update({ balance: novoSaldoSender })
-      .ilike('username', sender.username);
-
-    console.log('[v0] Debito erro:', debitError?.message);
-
-    if (debitError) {
-      return NextResponse.json({ error: 'Erro ao processar débito' }, { status: 500 });
-    }
-
-    // 6b. Credita receiver
-    const { error: creditError } = await supabaseAdmin
-      .from('rede_white_accounts')
-      .update({ balance: novoSaldoReceiver })
-      .ilike('username', receiver.username);
-
-    console.log('[v0] Credito erro:', creditError?.message);
-
-    if (creditError) {
-      // Rollback do sender
-      await supabaseAdmin
-        .from('rede_white_accounts')
-        .update({ balance: senderBalance })
-        .ilike('username', sender.username);
-
-      return NextResponse.json({ error: 'Erro ao processar crédito' }, { status: 500 });
-    }
-
-    // 7. Registra transacao
-    const transactionId = Math.random().toString(36).substr(2, 9).toUpperCase();
-    const { error: insertError } = await supabaseAdmin
+    // 6. Cria transacao como PENDENTE - o PLUGIN vai processar e marcar como CONCLUIDO
+    const { data: transaction, error: insertError } = await supabaseAdmin
       .from('rede_white_transactions')
       .insert({
         sender_name: sender.username,
         receiver_name: receiver.username,
         amount: parsedAmount,
-        status: 'CONCLUIDO',
-      });
+        status: 'PENDENTE',
+      })
+      .select('id')
+      .single();
 
-    if (insertError) {
-      console.log('[v0] Aviso: erro ao registrar transacao:', insertError.message);
+    if (insertError || !transaction) {
+      console.error('[v0] Erro ao criar transacao:', insertError?.message);
+      return NextResponse.json({ error: 'Erro ao criar transação' }, { status: 500 });
     }
 
-    console.log(`[v0] Transferencia OK: ${sender.username} -> ${receiver.username}: ${parsedAmount}`);
+    console.log(`[v0] Transacao PENDENTE criada id=${transaction.id}: ${sender.username} -> ${receiver.username}: ${parsedAmount}`);
 
     return NextResponse.json({
       success: true,
-      transactionId,
-      newBalance: novoSaldoSender,
+      transactionId: String(transaction.id),
+      newBalance: senderBalance - parsedAmount,
     });
 
   } catch (err) {
