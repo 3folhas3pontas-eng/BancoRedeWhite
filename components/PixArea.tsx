@@ -82,8 +82,9 @@ export default function PixArea({ onBack, player, sessionToken }: PixAreaProps) 
     setErrorMessage('');
     const val = parseFloat(amount.replace(',', '.'));
 
+    console.log('[v0] PIX - sessionToken presente:', !!sessionToken, '| receiver:', receiverData?.nick, '| amount:', val);
+
     try {
-      // Usa API segura no backend (validacao atomica de saldo)
       const response = await fetch('/api/transfer', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -93,6 +94,8 @@ export default function PixArea({ onBack, player, sessionToken }: PixAreaProps) 
           amount: val,
         }),
       });
+
+      console.log('[v0] PIX - response status:', response.status);
 
       const data = await response.json();
 
