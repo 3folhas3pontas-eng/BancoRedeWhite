@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { BlockType } from './types';
+// supabase usado apenas para leitura (fetchInventoryFromDB) - writes vao via API
 
 // Tipos de minerio que podem ser coletados
 export type OreType = 'coal' | 'raw_iron' | 'raw_copper' | 'lapis_lazuli' | 'raw_gold' | 'redstone' | 'diamond' | 'emerald';
@@ -263,32 +264,18 @@ const DUNGEON_KEYS: (keyof MiningInventory)[] = [
   'diamond_horse_armor', 'enchantment_book', 'experience_bottle',
 ];
 
-// Salva o inventario diretamente (sem sync - usado internamente)
+// Salva o inventario via API do backend (usa service_role_key no servidor)
 async function saveInventoryDirect(username: string, inventory: MiningInventory): Promise<boolean> {
-  const payload: Record<string, unknown> = { username, updated_at: new Date().toISOString() };
-  for (const key of ALL_INVENTORY_KEYS) {
-    payload[key] = inventory[key] ?? 0;
+  try {
+    const res = await fetch('/api/save-inventory', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, action: 'upsert', inventory }),
+    });
+    return res.ok;
+  } catch {
+    return false;
   }
-
-  const { error } = await supabase
-    .from('mining_inventory')
-    .upsert(payload, { onConflict: 'username' });
-
-  if (!error) return true;
-
-  // Fallback: tenta salvar apenas colunas base
-  if (error.code === 'PGRST204' || error.message?.includes('column')) {
-    const basePayload: Record<string, unknown> = { username, updated_at: new Date().toISOString() };
-    for (const key of BASE_ORE_KEYS) {
-      basePayload[key] = inventory[key] ?? 0;
-    }
-    const { error: fallbackError } = await supabase
-      .from('mining_inventory')
-      .upsert(basePayload, { onConflict: 'username' });
-    return !fallbackError;
-  }
-
-  return false;
 }
 
 // Salva inventario COM sincronizacao inteligente
@@ -332,53 +319,20 @@ export async function saveInventory(username: string, inventory: MiningInventory
   await saveInventoryDirect(username, inventory);
 }
 
-// NOVO: Salva APENAS o delta da sessao de forma INCREMENTAL
-// Faz UPDATE SET coal = coal + X, raw_iron = raw_iron + Y, etc.
-// NUNCA sobrescreve valores - apenas adiciona
+// Salva APENAS o delta da sessao de forma INCREMENTAL via API do backend
+// NUNCA sobrescreve valores - apenas adiciona ao banco
 export async function saveSessionDelta(username: string, delta: MiningInventory): Promise<boolean> {
-  // Verifica se tem algo para salvar
   const hasItems = ALL_INVENTORY_KEYS.some(key => delta[key] > 0);
-  if (!hasItems) return true; // Nada para salvar
-  
-  // Primeiro verifica se o usuario existe
-  const { data: existing } = await supabase
-    .from('mining_inventory')
-    .select('username')
-    .eq('username', username)
-    .single();
-  
-  if (!existing) {
-    // Usuario nao existe - cria com o delta
-    const payload: Record<string, unknown> = { 
-      username, 
-      updated_at: new Date().toISOString() 
-    };
-    for (const key of ALL_INVENTORY_KEYS) {
-      payload[key] = delta[key] ?? 0;
-    }
-    const { error } = await supabase
-      .from('mining_inventory')
-      .insert(payload);
-    return !error;
+  if (!hasItems) return true;
+
+  try {
+    const res = await fetch('/api/save-inventory', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, action: 'delta', delta }),
+    });
+    return res.ok;
+  } catch {
+    return false;
   }
-  
-  // Usuario existe - faz UPDATE incremental usando RPC ou update manual
-  // Busca valores atuais e soma o delta
-  const currentDb = await fetchInventoryFromDB(username);
-  if (!currentDb) return false;
-  
-  const newValues: Record<string, unknown> = { 
-    updated_at: new Date().toISOString() 
-  };
-  for (const key of ALL_INVENTORY_KEYS) {
-    // Valor final = banco atual + delta (NUNCA usa valor em memoria)
-    newValues[key] = currentDb[key] + delta[key];
-  }
-  
-  const { error } = await supabase
-    .from('mining_inventory')
-    .update(newValues)
-    .eq('username', username);
-  
-  return !error;
 }

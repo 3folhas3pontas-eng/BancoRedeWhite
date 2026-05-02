@@ -1,5 +1,3 @@
-import { supabase } from "@/lib/supabase";
-
 // Tipos de transacao
 export type TipoTransacao = 
   | 'upgrade_pickaxe'
@@ -26,35 +24,22 @@ export interface TransacaoMineracao {
   processed_at: string | null;
 }
 
-// Registra uma nova transacao
+// Registra uma nova transacao via API do backend (usa service_role_key)
 export async function registrarTransacao(
   username: string,
   tipo: TipoTransacao,
   valor: number,
   detalhes: Record<string, unknown> = {}
 ): Promise<{ success: boolean; transacao?: TransacaoMineracao; error?: string }> {
-  console.log('[v0] Registrando transacao:', { username, tipo, valor, detalhes });
-  
   try {
-    const { data, error } = await supabase
-      .from('transacoes_mineracao')
-      .insert({
-        username,
-        tipo,
-        valor,
-        detalhes,
-        status: 'pendente',
-      })
-      .select()
-      .single();
-
-    if (error) {
-      console.error('[v0] Erro ao registrar transacao:', error);
-      return { success: false, error: error.message };
-    }
-
-    console.log('[v0] Transacao registrada com sucesso:', data);
-    return { success: true, transacao: data as TransacaoMineracao };
+    const res = await fetch('/api/mineracao/transacao', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, tipo, valor, detalhes }),
+    });
+    const data = await res.json();
+    if (!res.ok) return { success: false, error: data.error };
+    return { success: true, transacao: data.transacao };
   } catch (err) {
     console.error('[v0] Erro inesperado ao registrar transacao:', err);
     return { success: false, error: 'Erro inesperado' };
