@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { View, PlayerData } from '@/lib/types';
-import { supabase } from '@/lib/supabase';
 import LoginView from '@/components/LoginView';
 import HomeView from '@/components/HomeView';
 import PixArea from '@/components/PixArea';
@@ -19,25 +18,28 @@ export default function WhiteBankApp() {
 
   const refreshUserData = useCallback(async (username: string) => {
     try {
-      const { data, error } = await supabase
-        .from('rede_white_accounts')
-        .select('*')
-        .eq('username', username)
-        .single();
+      const token = sessionToken || localStorage.getItem('whitebank_session_token');
+      if (!token) return;
 
-      if (data && !error) {
-        setUser({
-          nick: data.username,
-          uuid: data.uuid,
-          balance: parseFloat(data.balance || '0'),
-          creditLimit: 0,
-          currentInvoice: 0,
-        });
+      const response = await fetch('/api/user/balance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, session_token: token })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setUser((prev) => prev ? {
+            ...prev,
+            balance: data.balance
+          } : prev);
+        }
       }
     } catch (e) {
       console.error('Erro ao atualizar dados:', e);
     }
-  }, []);
+  }, [sessionToken]);
 
   useEffect(() => {
     const savedUser = localStorage.getItem('whitebank_saved_user');
@@ -101,13 +103,19 @@ export default function WhiteBankApp() {
             username={user.nick}
             bankBalance={user.balance}
             onSpend={async (amount: number) => {
-              // Debita no Supabase e atualiza estado local imediatamente
+              // Debita e atualiza estado local imediatamente
               const newBalance = user.balance - amount;
               setUser((prev) => prev ? { ...prev, balance: newBalance } : prev);
-              await supabase
-                .from('rede_white_accounts')
-                .update({ balance: newBalance })
-                .eq('username', user.nick);
+              const token = sessionToken || localStorage.getItem('whitebank_session_token');
+              await fetch('/api/user/update-balance', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                  username: user.nick, 
+                  session_token: token, 
+                  new_balance: newBalance 
+                })
+              });
             }}
           />
         );
