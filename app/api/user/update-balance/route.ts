@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 export async function POST(request: NextRequest) {
@@ -15,22 +15,33 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-    // Verifica se a sessão é válida
-    const { data: session, error: sessionError } = await supabase
-      .from('sessions')
-      .select('*')
-      .eq('session_token', session_token)
-      .eq('username', username)
-      .single();
-
-    if (sessionError || !session) {
+    // Valida o token de sessão (base64 encoded JSON)
+    try {
+      const sessionData = JSON.parse(Buffer.from(session_token, 'base64').toString());
+      
+      // Verifica se o token expirou
+      if (sessionData.exp < Date.now()) {
+        return NextResponse.json(
+          { error: 'Sessão expirada' },
+          { status: 401 }
+        );
+      }
+      
+      // Verifica se o username corresponde
+      if (sessionData.username !== username) {
+        return NextResponse.json(
+          { error: 'Sessão inválida' },
+          { status: 401 }
+        );
+      }
+    } catch {
       return NextResponse.json(
-        { error: 'Sessão inválida' },
+        { error: 'Token de sessão inválido' },
         { status: 401 }
       );
     }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Atualiza o saldo
     const { error: updateError } = await supabase
