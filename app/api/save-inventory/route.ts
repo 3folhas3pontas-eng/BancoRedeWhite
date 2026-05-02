@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true });
     }
 
-    // action=delta: soma o delta ao inventario atual de forma atomica
+    // action=delta: soma o delta ao inventario atual de forma atomica (incremental, nunca sobrescreve)
     if (action === 'delta' && delta) {
       // Busca valores atuais (ilike para ignorar diferenca de maiusculas)
       const { data: current, error: fetchError } = await supabase
