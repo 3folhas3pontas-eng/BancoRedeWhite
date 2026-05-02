@@ -295,20 +295,22 @@ export default function PixArea({ onBack, player, sessionToken }: PixAreaProps) 
               <p className="text-base font-bold text-gray-900">{receiverData?.nick}</p>
             </div>
           </div>
+          
+          {/* BOTAO TRANSFERIR */}
+          <div className="mt-8">
+            <button
+              disabled={!isValidAmount}
+              onClick={() => setStep('CONFIRM')}
+              className={cn(
+                'flex h-14 w-full items-center justify-center gap-2 rounded-2xl font-bold transition-all active:scale-[0.98]',
+                isValidAmount ? 'text-white shadow-lg shadow-cyan-400/20' : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+              )}
+              style={isValidAmount ? { backgroundColor: primaryColor } : {}}
+            >
+              <Send className="h-5 w-5" /> Transferir
+            </button>
+          </div>
         </main>
-        <footer className="flex-shrink-0 p-6 bg-white border-t border-gray-50">
-          <button
-            disabled={!isValidAmount}
-            onClick={() => setStep('CONFIRM')}
-            className={cn(
-              'flex h-14 w-full items-center justify-center gap-2 rounded-2xl font-bold transition-all active:scale-[0.98]',
-              isValidAmount ? 'text-white shadow-lg shadow-cyan-400/20' : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-            )}
-            style={isValidAmount ? { backgroundColor: primaryColor } : {}}
-          >
-            <Send className="h-5 w-5" /> Transferir
-          </button>
-        </footer>
       </div>
     );
   }
