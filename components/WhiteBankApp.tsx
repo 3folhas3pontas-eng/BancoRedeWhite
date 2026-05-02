@@ -19,6 +19,7 @@ export default function WhiteBankApp() {
   const refreshUserData = useCallback(async (username: string) => {
     try {
       const token = sessionToken || localStorage.getItem('whitebank_session_token');
+      console.log('[v0] refreshUserData chamado, token:', token ? 'existe' : 'null');
       if (!token) return;
 
       const response = await fetch('/api/user/balance', {
@@ -27,17 +28,19 @@ export default function WhiteBankApp() {
         body: JSON.stringify({ username, session_token: token })
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          setUser((prev) => prev ? {
-            ...prev,
-            balance: data.balance
-          } : prev);
-        }
+      console.log('[v0] API response status:', response.status);
+      const data = await response.json();
+      console.log('[v0] API response data:', data);
+
+      if (response.ok && data.success) {
+        console.log('[v0] Atualizando balance para:', data.balance);
+        setUser((prev) => prev ? {
+          ...prev,
+          balance: data.balance
+        } : prev);
       }
     } catch (e) {
-      console.error('Erro ao atualizar dados:', e);
+      console.error('[v0] Erro ao atualizar dados:', e);
     }
   }, [sessionToken]);
 
