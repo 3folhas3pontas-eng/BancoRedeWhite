@@ -294,15 +294,15 @@ export default function PixArea({ onBack, player, sessionToken }: PixAreaProps) 
             </div>
           </div>
           
-          {/* BOTAO TRANSFERIR - SEMPRE VISIVEL */}
           <div className="mt-8 mb-8">
             <button
               disabled={!isValidAmount}
               onClick={() => setStep('CONFIRM')}
+              style={{ backgroundColor: isValidAmount ? '#06b6d4' : undefined }}
               className={cn(
                 'flex h-16 w-full items-center justify-center gap-3 rounded-2xl text-lg font-bold transition-all active:scale-[0.98]',
-                isValidAmount 
-                  ? 'bg-gradient-to-r from-cyan-500 to-cyan-400 text-white shadow-lg shadow-cyan-400/30' 
+                isValidAmount
+                  ? 'text-white shadow-lg'
                   : 'bg-gray-200 text-gray-400 cursor-not-allowed'
               )}
             >
@@ -353,10 +353,11 @@ export default function PixArea({ onBack, player, sessionToken }: PixAreaProps) 
               <p className="text-sm font-medium text-red-600">{errorMessage}</p>
             </div>
           )}
-          <div className="mt-8">
+          <div className="mt-8 mb-8">
             <button
               onClick={startProcessing}
-              className="flex h-16 w-full items-center justify-center gap-3 rounded-2xl text-lg font-bold text-white shadow-lg shadow-cyan-400/30 bg-gradient-to-r from-cyan-500 to-cyan-400 transition-all active:scale-[0.98]"
+              style={{ backgroundColor: '#06b6d4' }}
+              className="flex h-16 w-full items-center justify-center gap-3 rounded-2xl text-lg font-bold text-white shadow-lg transition-all active:scale-[0.98]"
             >
               <Send className="h-6 w-6" /> Confirmar e Enviar
             </button>
