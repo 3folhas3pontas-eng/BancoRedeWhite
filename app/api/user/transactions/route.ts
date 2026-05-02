@@ -27,6 +27,7 @@ export async function POST(request: NextRequest) {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    // Busca transacoes onde o usuario e sender OU receiver (case-insensitive)
     const { data, error } = await supabase
       .from('rede_white_transactions')
       .select('*')
