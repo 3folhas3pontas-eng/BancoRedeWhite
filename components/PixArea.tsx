@@ -255,6 +255,8 @@ export default function PixArea({ onBack, player, sessionToken }: PixAreaProps) 
     const isValidAmount = parsedAmount > 0 && parsedAmount <= player.balance;
     return (
       <div className="flex flex-col h-screen bg-white overflow-hidden">
+        {/* TESTE DEPLOY - BOLINHA VERMELHA */}
+        <div className="fixed top-4 right-4 w-6 h-6 bg-red-500 rounded-full z-50"></div>
         <header className="flex-shrink-0 px-6 pt-12 pb-4">
           <button onClick={() => setStep('INPUT_NICK')} className="-ml-2 mb-6 flex h-10 w-10 items-center justify-center rounded-full text-gray-600">
             <ArrowLeft className="h-6 w-6" />
