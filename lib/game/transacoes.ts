@@ -1,5 +1,5 @@
 // Tipos de transacao
-export type TipoTransacao = 
+export type TipoTransacao =
   | 'upgrade_pickaxe'
   | 'upgrade_speed'
   | 'upgrade_tnt_radius'
@@ -46,62 +46,34 @@ export async function registrarTransacao(
   }
 }
 
-// Busca transacoes pendentes de um usuario
+// Busca transacoes pendentes de um usuario via API backend
 export async function buscarTransacoesPendentes(
   username: string
 ): Promise<TransacaoMineracao[]> {
-  const { data, error } = await supabase
-    .from('transacoes_mineracao')
-    .select('*')
-    .eq('username', username)
-    .eq('status', 'pendente')
-    .order('created_at', { ascending: true });
-
-  if (error) {
-    console.error('[v0] Erro ao buscar transacoes:', error);
+  try {
+    const res = await fetch('/api/mineracao/transacao', {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json', 'x-username': username },
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.transacoes ?? [];
+  } catch {
     return [];
   }
-
-  return (data as TransacaoMineracao[]) ?? [];
 }
 
-// Atualiza status de uma transacao
-export async function atualizarStatusTransacao(
-  id: string,
-  status: StatusTransacao
-): Promise<boolean> {
-  const { error } = await supabase
-    .from('transacoes_mineracao')
-    .update({
-      status,
-      processed_at: status === 'concluido' || status === 'erro' ? new Date().toISOString() : null,
-    })
-    .eq('id', id);
-
-  if (error) {
-    console.error('[v0] Erro ao atualizar transacao:', error);
-    return false;
-  }
-
-  return true;
-}
-
-// Busca historico de transacoes de um usuario
+// Busca historico de transacoes de um usuario via API backend
 export async function buscarHistoricoTransacoes(
   username: string,
   limite: number = 50
 ): Promise<TransacaoMineracao[]> {
-  const { data, error } = await supabase
-    .from('transacoes_mineracao')
-    .select('*')
-    .eq('username', username)
-    .order('created_at', { ascending: false })
-    .limit(limite);
-
-  if (error) {
-    console.error('[v0] Erro ao buscar historico:', error);
+  try {
+    const res = await fetch(`/api/mineracao/historico?username=${encodeURIComponent(username)}&limite=${limite}`);
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.transacoes ?? [];
+  } catch {
     return [];
   }
-
-  return (data as TransacaoMineracao[]) ?? [];
 }

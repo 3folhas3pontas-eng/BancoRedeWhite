@@ -1,4 +1,3 @@
-import { supabase } from '@/lib/supabase';
 import { PlayerStats, Enchantment } from '@/lib/game/types';
 
 export interface MiningSave {
@@ -19,39 +18,34 @@ export interface MiningSave {
 }
 
 export async function loadMiningSave(username: string): Promise<MiningSave | null> {
-  const { data, error } = await supabase
-    .from('mining_save')
-    .select('*')
-    .eq('username', username)
-    .single();
-
-  if (error) {
-    console.error('[v0] loadMiningSave error:', error.message, '| code:', error.code);
+  try {
+    const res = await fetch('/api/get-mining-save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.save) return null;
+    const s = data.save;
+    return {
+      xp:           s.xp,
+      level:        s.level,
+      depth:        s.depth,
+      blocks_mined: s.blocks_mined,
+      pickaxe_tier: s.pickaxe_tier,
+      pick_strength: parseFloat(s.pick_strength),
+      pick_speed:   parseFloat(s.pick_speed),
+      tnt_radius:   s.tnt_radius,
+      tnt_spawn:    parseFloat(s.tnt_spawn),
+      beacon_spawn: parseFloat(s.beacon_spawn),
+      dungeon_spawn:parseFloat(s.dungeon_spawn),
+      chest_spawn:  parseFloat(s.chest_spawn),
+      max_combo:    s.max_combo,
+      enchantments: s.enchantments ?? [],
+    };
+  } catch {
     return null;
   }
-  if (!data) {
-    console.warn('[v0] loadMiningSave: nenhum dado encontrado para', username);
-    return null;
-  }
-
-  console.log('[v0] loadMiningSave OK:', { username, pickaxe_tier: data.pickaxe_tier, pick_strength: data.pick_strength, level: data.level });
-
-  return {
-    xp:           data.xp,
-    level:        data.level,
-    depth:        data.depth,
-    blocks_mined: data.blocks_mined,
-    pickaxe_tier: data.pickaxe_tier,
-    pick_strength: parseFloat(data.pick_strength),
-    pick_speed:   parseFloat(data.pick_speed),
-    tnt_radius:   data.tnt_radius,
-    tnt_spawn:    parseFloat(data.tnt_spawn),
-    beacon_spawn: parseFloat(data.beacon_spawn),
-    dungeon_spawn:parseFloat(data.dungeon_spawn),
-    chest_spawn:  parseFloat(data.chest_spawn),
-    max_combo:    data.max_combo,
-    enchantments: data.enchantments ?? [],
-  };
 }
 
 export async function saveMiningSave(
@@ -74,10 +68,12 @@ export async function saveMiningSave(
     dungeon_spawn:stats.dungeonSpawn,
     chest_spawn:  stats.chestSpawn,
     max_combo:    stats.maxCombo,
-    enchantments: enchantments,
+    enchantments,
   };
 
-  await supabase
-    .from('mining_save')
-    .upsert(payload, { onConflict: 'username' });
+  await fetch('/api/save-mining', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
 }
