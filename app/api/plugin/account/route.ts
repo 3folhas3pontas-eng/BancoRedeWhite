@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import bcrypt from 'bcryptjs';
 
 // Usa service role para operacoes do plugin (nunca expor no cliente!)
 const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -48,10 +49,10 @@ export async function POST(request: NextRequest) {
 
 // Criar nova conta
 async function handleCreate(body: any) {
-  const { uuid, username, password_hash, initial_balance } = body;
+  const { uuid, username, password, password_hash, initial_balance } = body;
 
-  if (!username || !password_hash) {
-    return NextResponse.json({ error: 'username e password_hash obrigatorios' }, { status: 400 });
+  if (!username || (!password && !password_hash)) {
+    return NextResponse.json({ error: 'username e password obrigatorios' }, { status: 400 });
   }
 
   // Verifica se ja existe
@@ -65,13 +66,18 @@ async function handleCreate(body: any) {
     return NextResponse.json({ error: 'Conta ja existe', exists: true }, { status: 409 });
   }
 
+  // Hasheia a senha com bcrypt (nunca salva em texto puro)
+  const finalHash = password
+    ? await bcrypt.hash(password, 10)
+    : password_hash.startsWith('$2') ? password_hash : await bcrypt.hash(password_hash, 10);
+
   // Cria a conta
   const { data: newAccount, error } = await supabaseAdmin
     .from('rede_white_accounts')
     .insert({
       uuid: uuid || undefined,
       username: username.trim(),
-      password_hash,
+      password_hash: finalHash,
       balance: initial_balance || 0,
     })
     .select('uuid, username, balance')
@@ -133,29 +139,7 @@ async function handleSetBalance(body: any) {
     .single();
 
   if (fetchError || !account) {
-    // Se nao existe, cria a conta
-    const { data: newAccount, error: createError } = await supabaseAdmin
-      .from('rede_white_accounts')
-      .insert({
-        uuid: uuid || undefined,
-        username: username.trim(),
-        password_hash: 'auto_created',
-        balance: balance || 0,
-      })
-      .select('uuid, username, balance')
-      .single();
-
-    if (createError) {
-      return NextResponse.json({ error: createError.message }, { status: 500 });
-    }
-
-    return NextResponse.json({
-      success: true,
-      created: true,
-      uuid: newAccount.uuid,
-      username: newAccount.username,
-      new_balance: parseFloat(newAccount.balance || '0'),
-    });
+    return NextResponse.json({ error: 'Conta nao encontrada. Use action:create para criar a conta primeiro.', exists: false }, { status: 404 });
   }
 
   // Atualiza saldo
